@@ -12,6 +12,8 @@
 - [detail/01-product-and-content.md](detail/01-product-and-content.md): product, features, workflow, pricing and customers, with a source URL for every fact.
 - [detail/02-company-and-market.md](detail/02-company-and-market.md): ownership, financials, leadership, partners, reviews and competitors.
 - [detail/03-technical-forensics.md](detail/03-technical-forensics.md): website stack, product cloud architecture and how the recorder works.
+- [detail/04-revenue-and-financials.md](detail/04-revenue-and-financials.md): **actual revenue**, a revenue model for 2015–2025, every annual-report line item, verified ownership and the group structure (including the Indian subsidiary).
+- [detail/05-revenue-web-sources.md](detail/05-revenue-web-sources.md): FT1000 data, third-party revenue estimates, public procurement price points and other intelligence.
 - [screenshots/](screenshots/): full-page captures of the main site and its subdomains.
 
 **Evidence labels:** [V] = verified from a primary source. [3P] = third-party claim. [E] = estimate or inference.
@@ -199,19 +201,24 @@ The price is calculated as: **annual price = edition base + Σ platform fees + a
 | Item | Finding |
 |---|---|
 | Legal entity | CLICKLEARN ApS, incorporated **1 Aug 2010** [V]. Marketing uses "since 2009" and "since 2013" interchangeably. |
-| Founders and owners | Joachim Schiermacher (CEO), Michael Olsen (Founder and Chief Architect), Michael Randrup Sørensen. Each owns a third through a personal holding company [V/3P]. **Bootstrapped; no VC or PE found.** |
+| Founders and owners | Joachim Schiermacher (CEO), Michael Olsen (Founder and Chief Architect), Michael Randrup Sørensen. Each owns **33.33%** through a personal holding company (Enigma, MOL IT and Space Act Holding) [V, the holding companies' 2025 annual reports]. **Bootstrapped; no VC or PE found.** |
 | Other leadership | Theis Linnet Aagaard (director, CFO), Martin Flensborg (CCO), Mark Olesen (Head of Sales EMEA), Fadi Kanaan (Head of Sales NA). |
 | Offices | Copenhagen (HQ), St. Petersburg FL (North America HQ), Ahmedabad (development), East Perth (Australia). |
-| Subsidiaries | ClickLearn US Inc., Integdevelopment ApS. Goodwill on them suggests a small acquisition [E]. |
+| Subsidiaries | Clicklearn US Inc. (100%), and Integdevelopment ApS (100%, bought 2018), which owns **ClickLearn India Pvt Ltd** (formerly AzureTeam Software Development India; the Ahmedabad engineering centre, run at cost plus a small markup) [V]. |
 | Danish entity headcount | 26 FTE (2025). The whole group is probably about 50–80 people [E]; the website says "50+". |
 | Customers claimed | 800+ (/about/), "1,000+", or "1,281". The site contradicts itself. Also claimed: about 750–800k end users and 8,100 authors. |
-| Recognition | FT1000 2019 #136 (936% growth claim). G2 2026 badges: High Performer, Best Support, Momentum Leader. |
+| Recognition | FT1000 2019 #136 (936% growth, 2014–17); **FT1000 2026 #951** (18.75% CAGR, 2021–24). G2 2026 badges: High Performer, Best Support, Momentum Leader. |
 
-### 6.1 Financials (Danish annual reports; gross profit only, revenue not disclosed) [V]
+### 6.1 Financials [V]
+
+**Actual revenue:** **€7,890,731 in 2024** and **€4,726,163 in 2021**. Both figures come from the Statista data behind the FT1000 2026 ranking, where ClickLearn is #951. The Danish annual reports show gross profit only. For estimated revenue in the other years, see [detail/04](detail/04-revenue-and-financials.md).
 
 | Year | 2015 | 2016 | 2017 | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Gross profit (DKK m) | 2.4 | 8.6 | 12.3 | 16.9 | 27.5 | 25.5 | 22.3 | 29.6 | 34.6 | 39.4 | 41.3 |
+| Revenue (€m) | ~0.5 | ~1.8 | ~2.5 | ~3.5 | ~5.7 | ~5.2 | **4.73** | ~6.2 | ~7.1 | **7.89** | ~8.3–8.8 |
+
+Revenue figures in bold are actual; the rest are estimated from gross profit, using the 63–67% gross-profit-to-revenue ratio that the two actual years establish.
 
 - **The 2020–21 dip** coincides with the switch from perpetual licences to subscriptions and the Attain re-platform. Losses followed in 2021 and 2022. It returned to profit in 2023 (DKK 2.2m) and 2024 (DKK 4.2m).
 - **2025:**
@@ -219,7 +226,7 @@ The price is calculated as: **annual price = edition base + Σ platform fees + a
   - Cash DKK 23.5m.
   - **Deferred subscription income DKK 31.6m, up 39% year on year.** This is the clearest sign that bookings are still growing.
   - Dividends: DKK 3.0m paid, DKK 1.5m proposed.
-- **Size:** gross profit of DKK 41.3m is about US$6m. Group revenue is about **US$7–11m** [E].
+- **Size:** 2025 revenue was about **€8.3–8.8m (US$9–10m)** [E, calibrated on the actual 2024 figure]. Third-party estimates of $10–11.5m (Latka, Growjo, ZoomInfo) are too high.
 
 ### 6.2 Product timeline
 - **2010:** company founded.
@@ -417,7 +424,7 @@ The core is the **capture engine plus the output generator**; everything else is
 - **Windows support:** the documentation says both "Windows 7 or later" and "Windows 11 or above".
 - **SCORM:** Whatfix claims ClickLearn isn't SCORM compliant; ClickLearn's own docs list SCORM 1.2, SCORM 2004 and cmi5 in Enterprise.
 - **Not obtainable from public sources:**
-  - actual revenue (Danish class B accounts report gross profit only)
+  - revenue for 2025 (the figures for 2021 and 2024 are known; see §6.1)
   - group headcount
   - current Microsoft partner tier
   - whether ClickLearn appears in paywalled Gartner, Forrester or Everest reports
