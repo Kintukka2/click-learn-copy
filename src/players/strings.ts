@@ -5,6 +5,7 @@ import { uiStrings } from "../core/instructions.js";
 
 const EXTRA: Record<string, Record<string, string>> = {
   en: {
+    optOther: "Other", optNone: "None",
     start: "Start", prev: "Previous", speed: "Speed", narration: "Narration", fullscreen: "Full screen",
     mistakes: "Mistakes", correct: "Correct", incorrect: "Incorrect", review: "Review", passMark: "Pass mark",
     continue: "Continue", pressKey: "Press {k}", expected: "Hint: enter {v}", expectedOption: "Hint: choose {v}",
@@ -17,6 +18,7 @@ const EXTRA: Record<string, Record<string, string>> = {
     stepsLabel: "Steps", narrationOn: "Narration on", narrationOff: "Narration off", demo: "Demo", practice: "Practice", assessment: "Assessment",
   },
   da: {
+    optOther: "Andet", optNone: "Ingen",
     start: "Start", prev: "Forrige", speed: "Hastighed", narration: "Speak", fullscreen: "Fuld skærm",
     mistakes: "Fejl", correct: "Rigtigt", incorrect: "Forkert", review: "Gennemgang", passMark: "Beståelseskrav",
     continue: "Fortsæt", pressKey: "Tryk på {k}", expected: "Tip: indtast {v}", expectedOption: "Tip: vælg {v}",
@@ -29,6 +31,7 @@ const EXTRA: Record<string, Record<string, string>> = {
     stepsLabel: "Trin", narrationOn: "Speak til", narrationOff: "Speak fra", demo: "Demo", practice: "Øvelse", assessment: "Test",
   },
   de: {
+    optOther: "Sonstige", optNone: "Keine",
     start: "Starten", prev: "Zurück", speed: "Tempo", narration: "Sprecher", fullscreen: "Vollbild",
     mistakes: "Fehler", correct: "Richtig", incorrect: "Falsch", review: "Auswertung", passMark: "Bestehensgrenze",
     continue: "Weiter", pressKey: "Drücken Sie {k}", expected: "Hinweis: Geben Sie {v} ein", expectedOption: "Hinweis: Wählen Sie {v}",
@@ -41,6 +44,7 @@ const EXTRA: Record<string, Record<string, string>> = {
     stepsLabel: "Schritte", narrationOn: "Sprecher an", narrationOff: "Sprecher aus", demo: "Demo", practice: "Übung", assessment: "Test",
   },
   fr: {
+    optOther: "Autre", optNone: "Aucun",
     start: "Commencer", prev: "Précédent", speed: "Vitesse", narration: "Narration", fullscreen: "Plein écran",
     mistakes: "Erreurs", correct: "Correct", incorrect: "Incorrect", review: "Récapitulatif", passMark: "Seuil de réussite",
     continue: "Continuer", pressKey: "Appuyez sur {k}", expected: "Indice : saisissez {v}", expectedOption: "Indice : choisissez {v}",
@@ -53,6 +57,7 @@ const EXTRA: Record<string, Record<string, string>> = {
     stepsLabel: "Étapes", narrationOn: "Narration activée", narrationOff: "Narration désactivée", demo: "Démo", practice: "Exercice", assessment: "Évaluation",
   },
   es: {
+    optOther: "Otro", optNone: "Ninguno",
     start: "Empezar", prev: "Anterior", speed: "Velocidad", narration: "Narración", fullscreen: "Pantalla completa",
     mistakes: "Errores", correct: "Correcto", incorrect: "Incorrecto", review: "Revisión", passMark: "Nota mínima",
     continue: "Continuar", pressKey: "Pulse {k}", expected: "Pista: escriba {v}", expectedOption: "Pista: elija {v}",
@@ -65,6 +70,7 @@ const EXTRA: Record<string, Record<string, string>> = {
     stepsLabel: "Pasos", narrationOn: "Narración activada", narrationOff: "Narración desactivada", demo: "Demo", practice: "Práctica", assessment: "Evaluación",
   },
   nl: {
+    optOther: "Overig", optNone: "Geen",
     start: "Starten", prev: "Vorige", speed: "Snelheid", narration: "Gesproken tekst", fullscreen: "Volledig scherm",
     mistakes: "Fouten", correct: "Goed", incorrect: "Fout", review: "Overzicht", passMark: "Slaaggrens",
     continue: "Doorgaan", pressKey: "Druk op {k}", expected: "Hint: voer {v} in", expectedOption: "Hint: kies {v}",
@@ -77,6 +83,7 @@ const EXTRA: Record<string, Record<string, string>> = {
     stepsLabel: "Stappen", narrationOn: "Gesproken tekst aan", narrationOff: "Gesproken tekst uit", demo: "Demo", practice: "Oefening", assessment: "Toets",
   },
   sv: {
+    optOther: "Annat", optNone: "Inget",
     start: "Starta", prev: "Föregående", speed: "Hastighet", narration: "Uppläsning", fullscreen: "Helskärm",
     mistakes: "Fel", correct: "Rätt", incorrect: "Fel", review: "Genomgång", passMark: "Godkäntgräns",
     continue: "Fortsätt", pressKey: "Tryck på {k}", expected: "Tips: ange {v}", expectedOption: "Tips: välj {v}",

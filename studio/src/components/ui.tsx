@@ -1,5 +1,6 @@
 // Studio UI primitives: buttons, dialogs, menus, tabs, chips, toasts, confirm, skeletons.
 import {
+  forwardRef,
   useCallback,
   useEffect,
   useId,
@@ -16,24 +17,16 @@ import { Icon } from "./Icon";
 
 // ------------------------------------------------------------------ Button
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "subtle" | "teal";
-export function Button({
-  variant = "secondary",
-  size = "md",
-  icon,
-  iconRight,
-  loading,
-  children,
-  className,
-  ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: "sm" | "md" | "lg"; icon?: string; iconRight?: string; loading?: boolean }) {
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: "sm" | "md" | "lg"; icon?: string; iconRight?: string; loading?: boolean };
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({ variant = "secondary", size = "md", icon, iconRight, loading, children, className, ...rest }, ref) {
   return (
-    <button {...rest} className={cx("btn", `btn-${variant}`, `btn-${size}`, !children && "btn-icon", className)} disabled={rest.disabled || loading}>
+    <button ref={ref} type="button" {...rest} className={cx("btn", `btn-${variant}`, `btn-${size}`, !children && "btn-icon", className)} disabled={rest.disabled || loading} aria-busy={loading || undefined}>
       {loading ? <Spinner size={size === "lg" ? 16 : 14} /> : icon ? <Icon name={icon} size={size === "sm" ? 14 : 16} /> : null}
       {children && <span>{children}</span>}
       {iconRight && <Icon name={iconRight} size={14} className="btn-icon-right" />}
     </button>
   );
-}
+});
 
 export function IconButton({ icon, label, size = 16, className, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: string; label: string; size?: number }) {
   return (
@@ -175,7 +168,8 @@ export function Dialog({
       }}
     >
       <div ref={panel} className={cx("dialog", className)} style={{ width }} role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} tabIndex={-1}>
-        {(title || dismissable) && (
+        {!title && dismissable && <IconButton icon="x" label="Close" onClick={onClose} className="dialog-close floating" />}
+        {title && (
           <div className="dialog-head">
             {icon && (
               <div className="dialog-icon">
