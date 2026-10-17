@@ -9,6 +9,7 @@ import { chromium, type ElementHandle, type JSHandle, type Locator, type Page } 
 import { instructionFor } from "../core/instructions.js";
 import type { Lang, Process, ReplayReport, ReplayStepResult, Selector, Step, Target } from "../core/model.js";
 import { captureScript } from "../capture/bundle.js";
+import { joinUrl } from "../core/url.js";
 
 export interface ReplayOptions {
   /** "update" re-captures screenshots + bboxes and writes them into the process; "test" only verifies. */
@@ -22,6 +23,8 @@ export interface ReplayOptions {
   viewport?: { width: number; height: number };
   /** Base URL used to resolve relative startUrls (e.g. "http://localhost:4100"). */
   baseUrl?: string;
+  /** Maps an absolute URL to the one the headless browser should open (e.g. public → internal address). */
+  rewriteUrl?: (url: string) => string;
   headless?: boolean;
 }
 
@@ -59,7 +62,7 @@ function resolveUrl(url: string, baseUrl?: string): string {
     return new URL(url).toString();
   } catch {
     if (!baseUrl) throw new Error(`relative start URL "${url}" needs a baseUrl`);
-    return new URL(url, baseUrl.replace(/\/?$/, "/")).toString();
+    return joinUrl(baseUrl, url); // keeps a base path prefix such as /steplight
   }
 }
 
@@ -234,7 +237,8 @@ export async function replayProcess(proc: Process, opts: ReplayOptions): Promise
   let viewport = opts.viewport ?? proc.steps.find((s) => s.viewport)?.viewport ?? { width: 1280, height: 800 };
   const rawStart = proc.startUrl || proc.steps.find((s) => s.url)?.url;
   if (!rawStart) throw new Error("process has no startUrl");
-  const startUrl = withUrlParam(resolveUrl(rawStart, opts.baseUrl), "lang", lang);
+  const nav = (u: string) => (opts.rewriteUrl ? opts.rewriteUrl(u) : u);
+  const startUrl = nav(withUrlParam(resolveUrl(rawStart, opts.baseUrl), "lang", lang));
   const script = await captureScript();
 
   const browser = await chromium.launch({ headless: opts.headless ?? true });
@@ -258,7 +262,7 @@ export async function replayProcess(proc: Process, opts: ReplayOptions): Promise
         }
         if (step.action === "note") continue;
         if (step.action === "navigate") {
-          if (step.value) await page.goto(withUrlParam(resolveUrl(step.value, opts.baseUrl), "lang", lang), { waitUntil: "load" });
+          if (step.value) await page.goto(nav(withUrlParam(resolveUrl(step.value, opts.baseUrl), "lang", lang)), { waitUntil: "load" });
           continue;
         }
         if (!step.target) {

@@ -5,11 +5,12 @@ import { Icon } from "../components/Icon";
 import { Button, Chip, toast, useElapsed } from "../components/ui";
 import { api, download } from "../lib/api";
 import { formatBytes, formatDate, timeAgo } from "../lib/util";
+import { ROOT, withRoot } from "../lib/base";
 
 export function PublishingTab({ project, processes, onPublished }: { project: Project; processes: Process[]; onPublished: (p: Project) => void }) {
   const [busy, setBusy] = useState(false);
   const [zipBusy, setZipBusy] = useState(false);
-  const [url, setUrl] = useState<string | null>(project.publishedAt ? `${window.location.origin}/portal/${project.id}/` : null);
+  const [url, setUrl] = useState<string | null>(project.publishedAt ? `${window.location.origin}${ROOT}/portal/${project.id}/` : null);
   const [frameKey, setFrameKey] = useState(0);
   const elapsed = useElapsed(busy);
   const steps = processes.reduce((n, p) => n + p.steps.length, 0);
@@ -32,7 +33,7 @@ export function PublishingTab({ project, processes, onPublished }: { project: Pr
   const zip = async () => {
     setZipBusy(true);
     try {
-      const f = await download(`/api/projects/${project.id}/portal.zip`, `portal-${project.id}.zip`);
+      const f = await download(withRoot(`/api/projects/${project.id}/portal.zip`), `portal-${project.id}.zip`);
       toast.success("Download ready", `${f.name} · ${formatBytes(f.size)}`);
     } catch (e) {
       toast.error("Could not download the portal", e);
@@ -40,8 +41,8 @@ export function PublishingTab({ project, processes, onPublished }: { project: Pr
       setZipBusy(false);
     }
   };
-  const portalPath = `/portal/${project.id}/`;
-  const origin = window.location.origin;
+  const portalPath = withRoot(`/portal/${project.id}/`);
+  const origin = window.location.origin + ROOT;
 
   return (
     <div className="publish-layout">

@@ -161,6 +161,7 @@ export async function translateProcess(proc: Process, lang: Lang, opts: { replay
         mediaDir: opts.ctx.store.mediaDir(proc.projectId),
         saveMedia: (png) => opts.ctx.store.saveMedia(proc.projectId, png),
         baseUrl: opts.ctx.config.baseUrl,
+        rewriteUrl: opts.ctx.toInternal,
       });
       next = result.process;
       next.localizations[lang] ??= { steps: {} };

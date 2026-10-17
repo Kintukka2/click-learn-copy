@@ -6,6 +6,7 @@ import { Link, navigate } from "../lib/router";
 import { useStudio } from "../lib/store";
 import { initials, timeAgo } from "../lib/util";
 import { NewProjectDialog, SampleProjectDialog } from "./ProjectDialogs";
+import { withRoot } from "../lib/base";
 
 export function ProjectsHome() {
   const { projects, projectsError, refreshProjects } = useStudio();
@@ -143,7 +144,7 @@ function ProjectCard({ p, onChanged }: { p: ProjectSummary; onChanged: () => Pro
             items={[
               { id: "open", label: "Open", icon: "arrowRight", onSelect: () => navigate(`/projects/${p.id}`) },
               { id: "settings", label: "Settings", icon: "sliders", onSelect: () => navigate(`/projects/${p.id}/settings`) },
-              ...(p.publishedAt ? [{ id: "portal", label: "Open portal", icon: "external", onSelect: () => window.open(`/portal/${p.id}/`, "_blank") }] : []),
+              ...(p.publishedAt ? [{ id: "portal", label: "Open portal", icon: "external", onSelect: () => window.open(withRoot(`/portal/${p.id}/`), "_blank") }] : []),
               {
                 id: "delete",
                 label: "Delete project",

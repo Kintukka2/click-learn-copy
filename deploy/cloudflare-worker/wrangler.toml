@@ -1,0 +1,12 @@
+name = "steplight-proxy"
+main = "worker.js"
+compatibility_date = "2025-09-01"
+
+# Only these URLs go to the Worker; the rest of examplewebsite.app is untouched.
+routes = [
+  { pattern = "examplewebsite.app/steplight*", zone_name = "examplewebsite.app" },
+]
+
+[vars]
+# Where Steplight runs (served under the same /steplight prefix)
+STEPLIGHT_ORIGIN = "https://steplight-origin.examplewebsite.app"

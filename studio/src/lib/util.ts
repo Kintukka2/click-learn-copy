@@ -1,5 +1,6 @@
 import { SUPPORTED_LANGS } from "../../../src/core/instructions";
 import type { ActionType } from "../../../src/core/model";
+import { ROOT } from "./base";
 
 export { SUPPORTED_LANGS };
 
@@ -84,7 +85,9 @@ export function readFileAsDataUrl(file: File): Promise<string> {
 
 export function absoluteUrl(u: string): string {
   try {
-    return new URL(u, window.location.origin).toString();
+    if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return u;
+    if (u.startsWith("/")) return window.location.origin + ROOT + u;
+    return new URL(u, window.location.origin + ROOT + "/").toString();
   } catch {
     return u;
   }
@@ -92,7 +95,7 @@ export function absoluteUrl(u: string): string {
 
 /** Append query params the way Replay/Assist expect: inside the hash query for hash routes, else in search. */
 export function withParams(url: string, params: Record<string, string>): string {
-  const u = new URL(url, window.location.origin);
+  const u = new URL(absoluteUrl(url));
   const qs = Object.entries(params)
     .map(([k, v]) => `${k}=${v}`)
     .join("&");

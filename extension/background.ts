@@ -4,7 +4,7 @@
 // the page has not reacted yet), and posts CapturePayloads to /api/recordings/:token/events in order.
 /// <reference path="./lib/chrome.d.ts" />
 import type { CaptureEvent, CapturePayload, Target } from "../src/core/model.js";
-import { api, type RecState } from "./lib/shared.js";
+import { api, authHeaders, type RecState } from "./lib/shared.js";
 
 let state: RecState | null = null;
 const ready: Promise<void> = chrome.storage.session
@@ -143,7 +143,7 @@ function onCaptureEvent(ev: CaptureEvent, tab: { id: number; windowId: number })
   chain = chain.then(async () => {
     const payload: CapturePayload = { event: ev, screenshotDataUrl: await normalizeShot(await shot, ev) };
     try {
-      const res = await fetch(`${s.serverUrl}/api/recordings/${s.token}/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const res = await fetch(`${s.serverUrl}/api/recordings/${s.token}/events`, { method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) }, body: JSON.stringify(payload) });
       if (res.status === 410) {
         lastError = "The recording session ended on the server.";
         await stopRecording();

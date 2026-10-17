@@ -45,12 +45,18 @@ Record your own processes with the browser extension:
 1. `npm run build`, then open `chrome://extensions`, enable Developer mode, **Load unpacked** → `dist/extension`.
 2. In the extension popup, set the server URL, pick or create a process, press **Start recording**, and click through your application.
 
+### Put it on your own domain
+
+Docker image, Cloudflare Tunnel and a Worker route for serving Steplight under a path such as `https://examplewebsite.app/steplight`: see [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
 ### Configuration
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `PORT` | `4100` | HTTP port |
-| `STEPLIGHT_BASE_URL` | `http://localhost:$PORT` | Public origin (used in portal links, replay of relative URLs) |
+| `STEPLIGHT_BASE_URL` | `http://localhost:$PORT` | Public URL, including a path prefix if served under one (e.g. `https://examplewebsite.app/steplight`) |
+| `STEPLIGHT_ACCESS_KEY` | — | Requires this key for the Studio and authoring API (portals, players and Assist stay public) |
+| `STEPLIGHT_INTERNAL_URL` | `http://127.0.0.1:$PORT<prefix>` | How the server's own headless browser reaches it |
 | `STEPLIGHT_DATA` | `./data` | Where projects, screenshots and published portals are stored (plain JSON + PNG) |
 | `ANTHROPIC_API_KEY` | — | Enables Claude for AI help answers and translation of author-written text |
 | `STEPLIGHT_MODEL` | `claude-opus-5-5` | Claude model |

@@ -1,7 +1,7 @@
 // Steplight Recorder popup: server setting, project/process choice (or a new process),
 // Start/Stop recording with a live step counter.
 /// <reference path="./lib/chrome.d.ts" />
-import { $, api, esc, getServerUrl, send, setServerUrl, type RecState } from "./lib/shared.js";
+import { $, api, esc, getAccessKey, getServerUrl, send, setAccessKey, setServerUrl, type RecState } from "./lib/shared.js";
 
 interface ProjectRow { id: string; name: string; processCount: number; languages: string[] }
 interface ProcessRow { id: string; title: string; chapter?: string; steps: unknown[] }
@@ -120,6 +120,7 @@ async function stopRec() {
 async function init() {
   server = await getServerUrl();
   ($("#server") as HTMLInputElement).value = server;
+  ($("#access-key") as HTMLInputElement).value = await getAccessKey();
   ($("#open-studio") as HTMLAnchorElement).href = server + "/studio/";
   setStatus(null);
   try {
@@ -133,7 +134,11 @@ async function init() {
   }
   const r = await send<{ state: RecState | null; error?: string }>({ type: "steplight:state" });
   if (r?.state) renderRecording(r.state, r.error);
-  else await renderIdle().catch((err) => error("#error", (err as Error).message));
+  else
+    await renderIdle().catch((err) => {
+      error("#error", (err as Error).message);
+      if (/access key/i.test((err as Error).message)) ($("#settings") as HTMLDetailsElement).open = true;
+    });
 }
 
 $("#project").addEventListener("change", (e) => void loadProcesses((e.target as HTMLSelectElement).value));
@@ -142,6 +147,7 @@ $("#start").addEventListener("click", () => void start());
 $("#stop").addEventListener("click", () => void stopRec());
 $("#save-server").addEventListener("click", async () => {
   await setServerUrl(($("#server") as HTMLInputElement).value);
+  await setAccessKey(($("#access-key") as HTMLInputElement).value);
   await init();
 });
 $("#open-panel").addEventListener("click", async () => {

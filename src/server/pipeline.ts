@@ -40,9 +40,10 @@ export function pipelineRoutes(api: Router, ctx: AppContext) {
     current.startUrl = config.baseUrl + sc.startPath;
     store.saveProcess(current);
     await recordScripted({
-      startUrl: config.baseUrl + sc.startPath,
+      startUrl: ctx.toInternal(config.baseUrl + sc.startPath),
       actions: sc.actions,
       onCapture: async (payload: CapturePayload) => {
+        payload.event.url = ctx.toPublic(payload.event.url);
         current = store.getProcess(proc.id)!;
         applyCapture(store, current, payload);
       },
@@ -93,6 +94,7 @@ export function pipelineRoutes(api: Router, ctx: AppContext) {
           mediaDir: store.mediaDir(proc.projectId),
           saveMedia: (png) => store.saveMedia(proc.projectId, png),
           baseUrl: config.baseUrl,
+          rewriteUrl: ctx.toInternal,
         }),
       );
       const next = { ...result.process, lastReplay: result.report };

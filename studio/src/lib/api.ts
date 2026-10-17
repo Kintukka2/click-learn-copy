@@ -1,5 +1,6 @@
 // Thin typed client for the Steplight REST API (see docs/ARCHITECTURE.md, "Server API").
 import type { OutputFormat, Process, Project, ReplayReport, ResolvedProcess, Step } from "../../../src/core/model";
+import { ROOT } from "./base";
 
 export type ProjectSummary = Project & { processCount: number };
 
@@ -63,7 +64,7 @@ async function errorFrom(res: Response): Promise<ApiError> {
 export async function request<T>(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`/api${path}`, {
+    res = await fetch(`${ROOT}/api${path}`, {
       method,
       headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -147,7 +148,7 @@ export const api = {
 
   replay: (id: string, mode: "update" | "test", lang?: string) => post<{ report: ReplayReport; process: Process }>(`/processes/${id}/replay`, { mode, lang }),
   translate: (id: string, lang: string, replayUi: boolean) => post<Process>(`/processes/${id}/translate`, { lang, replayUi }),
-  exportUrl: (id: string, format: OutputFormat, lang: string) => `/api/processes/${id}/export/${format}?lang=${encodeURIComponent(lang)}`,
+  exportUrl: (id: string, format: OutputFormat, lang: string) => `${ROOT}/api/processes/${id}/export/${format}?lang=${encodeURIComponent(lang)}`,
 };
 
-export const mediaUrl = (pid: string, file?: string) => (file ? `/media/${pid}/${encodeURIComponent(file)}` : undefined);
+export const mediaUrl = (pid: string, file?: string) => (file ? `${ROOT}/media/${pid}/${encodeURIComponent(file)}` : undefined);

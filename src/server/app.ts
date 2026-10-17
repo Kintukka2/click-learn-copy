@@ -6,6 +6,8 @@ import { now } from "../core/ids.js";
 import { instructionFor, SUPPORTED_LANGS } from "../core/instructions.js";
 import type { AnalyticsEvent, CapturePayload, OutputFormat, Process, Step } from "../core/model.js";
 import { resolveProcess } from "../core/resolve.js";
+import { joinUrl, normalizeBasePath, swapPrefix } from "../core/url.js";
+import { accessKeyMiddleware } from "./auth.js";
 import { applyCapture, activeSessions, getSession, startSession, stopSession } from "./recording.js";
 import { Store } from "./store.js";
 import { pipelineRoutes } from "./pipeline.js";
@@ -15,13 +17,27 @@ export const LIB_DIR = path.join(ROOT, "dist", "lib");
 
 export interface AppConfig {
   dataDir: string;
-  /** Public origin of this server, e.g. http://localhost:4100 (used for replay/recorder base URLs). */
+  /**
+   * Public URL of this server, including a path prefix when it is served under one,
+   * e.g. http://localhost:4100 or https://examplewebsite.app/steplight.
+   */
   baseUrl: string;
+  /** Path prefix to mount under (default: the path of baseUrl), e.g. "/steplight". */
+  basePath?: string;
+  /** URL the server's own headless browser uses to reach it (default: baseUrl), e.g. http://127.0.0.1:4100/steplight. */
+  internalUrl?: string;
+  /** When set, the Studio and authoring API require this key (see auth.ts). */
+  accessKey?: string;
 }
 
 export interface AppContext {
   store: Store;
   config: AppConfig;
+  basePath: string;
+  /** Public URL → URL the headless browser should open. */
+  toInternal: (url: string) => string;
+  /** Internal URL captured by the headless browser → public URL stored in processes. */
+  toPublic: (url: string) => string;
 }
 
 type Handler = (req: Request, res: Response) => unknown | Promise<unknown>;
@@ -33,20 +49,32 @@ export const wrap =
 
 export function createApp(config: AppConfig) {
   const store = new Store(config.dataDir);
-  const ctx: AppContext = { store, config };
+  config.baseUrl = config.baseUrl.replace(/\/+$/, "");
+  const basePath = normalizeBasePath(config.basePath ?? new URL(config.baseUrl).pathname);
+  const internalUrl = (config.internalUrl ?? config.baseUrl).replace(/\/+$/, "");
+  const ctx: AppContext = {
+    store,
+    config,
+    basePath,
+    toInternal: (u) => swapPrefix(u, config.baseUrl, internalUrl),
+    toPublic: (u) => swapPrefix(u, internalUrl, config.baseUrl),
+  };
   const app = express();
   app.disable("x-powered-by");
+  app.set("trust proxy", true);
   app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ extended: false, limit: "10kb" }));
 
   // CORS for the browser extension and embedded Assist script
   app.use("/api", (req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", req.headers.origin ?? "*");
     res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Steplight-Key");
     if (req.method === "OPTIONS") return res.sendStatus(204);
     next();
   });
+  app.use(accessKeyMiddleware(config.accessKey, basePath));
 
   const api = express.Router();
 
@@ -230,7 +258,7 @@ export function createApp(config: AppConfig) {
         const urls = [proc.startUrl, ...proc.steps.map((s) => s.url)];
         for (const u of urls) {
           try {
-            const pu = new URL(u, config.baseUrl);
+            const pu = new URL(joinUrl(config.baseUrl, u));
             if (pu.host !== host) continue;
             score = Math.max(score, 1);
             const ph = (pu.hash.replace(/^#/, "").split("?")[0] || pu.pathname).toLowerCase();
@@ -297,18 +325,36 @@ export function createApp(config: AppConfig) {
     express.static(dir)(req, res, next);
   });
   const studioDir = path.join(ROOT, "dist", "studio");
-  app.use("/studio", express.static(studioDir));
+  app.use("/studio", express.static(studioDir, { index: false }));
+  let studioHtml: { mtime: number; html: string } | undefined;
   app.get(["/studio", "/studio/*"], (_req, res) => {
     const index = path.join(studioDir, "index.html");
-    if (fs.existsSync(index)) return res.sendFile(index);
-    res.status(503).send("Studio is not built yet. Run: npm run build");
+    if (!fs.existsSync(index)) return res.status(503).send("Studio is not built yet. Run: npm run build");
+    const mtime = fs.statSync(index).mtimeMs;
+    if (studioHtml?.mtime !== mtime) {
+      // the build references /studio/…; serve it under the base path and tell the app where it lives
+      const html = fs
+        .readFileSync(index, "utf8")
+        .replace(/(["'(])\/studio\//g, `$1${basePath}/studio/`)
+        .replace("</head>", `<script>window.STEPLIGHT_BASE=${JSON.stringify(basePath)}</script></head>`);
+      studioHtml = { mtime, html };
+    }
+    res.setHeader("Cache-Control", "no-cache");
+    res.type("html").send(studioHtml.html);
   });
-  app.get("/", (_req, res) => res.redirect("/studio/"));
+  app.get("/", (_req, res) => res.redirect(`${basePath}/studio/`));
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     console.error("[steplight]", err);
     res.status(500).json({ error: err.message || "internal error" });
   });
 
-  return { app, ctx };
+  if (!basePath) return { app, ctx };
+  // serve everything under the prefix, e.g. https://examplewebsite.app/steplight/…
+  const outer = express();
+  outer.disable("x-powered-by");
+  outer.set("trust proxy", true);
+  outer.use(basePath, app);
+  outer.get("/", (_req, res) => res.redirect(`${basePath}/studio/`));
+  return { app: outer, ctx };
 }
