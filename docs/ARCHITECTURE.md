@@ -64,7 +64,9 @@ SteplightCapture.resolve(target: Target): { element: Element; index: number; sel
 - `type` fires on `change`/blur. Its value is the final value of the field; password fields are marked sensitive.
 - `select` fires on change. Its value is the selected option's **label** and `optionValue` is its value.
 - `check` fires on change, with value `"true"` or `"false"`.
-- `press` fires for Enter/Escape/Tab in a field.
+- `press` fires for Enter/Escape in a field. Tab is not recorded, because it would add a step after every field.
+- Clicking into a text field, select or checkbox is not recorded as a step; the field's own type/select/check event is.
+- A field that has been typed into but not yet blurred is flushed before the next click, so the steps stay in order.
 - Element identity uses: `data-testid`/`data-test`/`data-qa`, `data-clid`, a stable `id` (not auto-generated looking), ARIA role + accessible name, label, placeholder, text and a CSS path.
 - Selector value formats:
   - `role` → `"button|Save"` (role, a pipe, then the accessible name)
