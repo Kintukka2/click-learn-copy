@@ -24,10 +24,25 @@ export async function setServerUrl(url: string): Promise<void> {
   await chrome.storage.local.set({ serverUrl: url.trim().replace(/\/+$/, "") || DEFAULT_SERVER });
 }
 
+/** Optional access key for servers started with STEPLIGHT_ACCESS_KEY (sent as X-Steplight-Key). */
+export async function getAccessKey(): Promise<string> {
+  const r = await chrome.storage.local.get("accessKey");
+  return String(r.accessKey || "");
+}
+
+export async function setAccessKey(key: string): Promise<void> {
+  await chrome.storage.local.set({ accessKey: key.trim() });
+}
+
+export async function authHeaders(): Promise<Record<string, string>> {
+  const key = await getAccessKey();
+  return key ? { "X-Steplight-Key": key } : {};
+}
+
 export async function api<T = unknown>(server: string, path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(server + "/api" + path, {
     ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+    headers: { "Content-Type": "application/json", ...(await authHeaders()), ...(init?.headers ?? {}) },
   });
   if (!res.ok) {
     let msg = `${res.status} ${res.statusText}`;

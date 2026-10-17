@@ -27,3 +27,20 @@ jobs:
           name: e2e-output
           path: tmp/e2e-out/
           retention-days: 7
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t steplight:ci .
+      - name: Smoke test under /steplight with an access key
+        run: |
+          docker run -d --name sl --init --shm-size=1g -p 4100:4100 \
+            -e STEPLIGHT_BASE_URL=http://localhost:4100/steplight -e STEPLIGHT_ACCESS_KEY=ci-key steplight:ci
+          for i in $(seq 1 30); do curl -sf http://localhost:4100/steplight/api/health && break; sleep 2; done
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:4100/steplight/api/projects)" = "401"
+          curl -sf -X POST -H 'X-Steplight-Key: ci-key' -H 'Content-Type: application/json' -d '{"languages":["en"]}' \
+            http://localhost:4100/steplight/api/demo-project | grep -q processIds
+      - if: failure()
+        run: docker logs sl

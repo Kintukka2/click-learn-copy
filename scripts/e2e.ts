@@ -11,7 +11,11 @@ import type { OutputFormat, Process, Project, ReplayReport } from "../src/core/m
 import { createApp, ROOT } from "../src/server/app.js";
 
 const PORT = Number(process.env.E2E_PORT ?? 4300);
-const BASE = `http://localhost:${PORT}`;
+// E2E_BASE_PATH=/steplight runs everything under a path prefix; E2E_ACCESS_KEY turns on the access key
+const BASE_PATH = (process.env.E2E_BASE_PATH ?? "").replace(/\/+$/, "");
+const ACCESS_KEY = process.env.E2E_ACCESS_KEY ?? "";
+const BASE = `http://localhost:${PORT}${BASE_PATH}`;
+const KEY_HEADER: Record<string, string> = ACCESS_KEY ? { "X-Steplight-Key": ACCESS_KEY } : {};
 const DATA = path.join(ROOT, "tmp", "e2e-data");
 const OUT = path.join(ROOT, "tmp", "e2e-out");
 const SHOTS = path.join(ROOT, "docs", "screenshots");
@@ -24,7 +28,7 @@ function check(name: string, ok: boolean, detail = "") {
 }
 
 async function api<T>(method: string, url: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${BASE}/api${url}`, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  const res = await fetch(`${BASE}/api${url}`, { method, headers: { "Content-Type": "application/json", ...KEY_HEADER }, body: body ? JSON.stringify(body) : undefined });
   if (!res.ok) throw new Error(`${method} ${url} → ${res.status} ${await res.text()}`);
   const ct = res.headers.get("content-type") ?? "";
   return (ct.includes("json") ? res.json() : res.arrayBuffer()) as Promise<T>;
@@ -43,7 +47,7 @@ async function main() {
   fs.rmSync(DATA, { recursive: true, force: true });
   fs.rmSync(OUT, { recursive: true, force: true });
   fs.mkdirSync(OUT, { recursive: true });
-  const { app } = createApp({ dataDir: DATA, baseUrl: BASE });
+  const { app } = createApp({ dataDir: DATA, baseUrl: BASE, internalUrl: `http://127.0.0.1:${PORT}${BASE_PATH}`, accessKey: ACCESS_KEY || undefined });
   const server: Server = await new Promise((r) => {
     const s = app.listen(PORT, () => r(s));
   });
@@ -118,6 +122,25 @@ async function main() {
     const stats = await api<{ totals: Record<string, number>; avgScore: Record<string, number> }>("GET", `/projects/${project.id}/analytics`);
     check("analytics aggregates events", (stats.totals.download ?? 0) > 0 && stats.avgScore[first.id] === 90, JSON.stringify(stats.totals));
 
+    // 9. base path + access key behave as configured
+    if (BASE_PATH) {
+      const studio = await fetch(`${BASE}/studio/`, { headers: KEY_HEADER }).then((r) => r.text());
+      check("studio served under the base path", studio.includes(`${BASE_PATH}/studio/assets/`) && studio.includes("STEPLIGHT_BASE"));
+      check("recorded URLs use the public base URL", processes.every((p) => p.startUrl.startsWith(BASE) && p.steps.every((s) => s.url.startsWith(BASE))), processes[0].startUrl);
+    }
+    if (ACCESS_KEY) {
+      const anon = await fetch(`${BASE}/api/projects`);
+      const studioAnon = await fetch(`${BASE}/studio/`).then((r) => r.text());
+      const resolved = await fetch(`${BASE}/api/processes/${first.id}/resolved`);
+      const portal = await fetch(pub.url);
+      const login = await fetch(`${BASE}/studio/login`, { method: "POST", body: new URLSearchParams({ key: ACCESS_KEY }), redirect: "manual" });
+      check(
+        "access key protects authoring, learners stay public",
+        anon.status === 401 && studioAnon.includes("Access key") && resolved.ok && portal.ok && login.status === 303 && (login.headers.get("set-cookie") ?? "").includes("steplight_key="),
+        `api ${anon.status}, resolved ${resolved.status}, portal ${portal.status}, login ${login.status}`,
+      );
+    }
+
     if (wantShots) await screenshots(project, processes);
   } finally {
     server.close();
@@ -139,7 +162,7 @@ async function screenshots(project: Project, processes: Process[]) {
     console.log(`  📸 docs/screenshots/${name}.png`);
   };
   try {
-    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, extraHTTPHeaders: KEY_HEADER });
     const page = await ctx.newPage();
     const first = processes[0];
 

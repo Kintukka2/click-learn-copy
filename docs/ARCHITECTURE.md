@@ -127,6 +127,10 @@ Portal search and the AI chat widget.
 | GET | `/lookup?url=` | processes relevant to a URL (extension side panel) |
 | POST | `/events`; GET `/projects/:pid/analytics` | analytics |
 
+Base path and access:
+- Everything above can be served under a prefix: set `STEPLIGHT_BASE_URL=https://host/steplight` (see `docs/DEPLOY.md`). The Studio receives the prefix as `window.STEPLIGHT_BASE`, injected into its `index.html`. The server's own headless browser uses `STEPLIGHT_INTERNAL_URL`, and URLs it captures are mapped back to the public URL.
+- With `STEPLIGHT_ACCESS_KEY` set, the Studio and authoring API need the key: the `X-Steplight-Key` header, or the cookie set by the sign-in page. Learner-facing requests stay public: portal, lib, media, demo app, `GET /processes/:id/resolved`, `GET /lookup`, `POST /events`, `POST /ask` (`src/server/auth.ts`).
+
 Static mounts:
 - `/studio/` (SPA)
 - `/lib/*` (dist/lib)

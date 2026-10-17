@@ -5,7 +5,7 @@ import { Icon } from "../components/Icon";
 import { Button, Chip, CopyButton, Dialog, EmptyState, Field, IconButton, Skeleton, Tabs, Toggle } from "../components/ui";
 import { api, type DemoScenarioInfo, type RecordingSession } from "../lib/api";
 import { useStudio } from "../lib/store";
-import { cx, formatDate, langName, langNative, timeAgo } from "../lib/util";
+import { absoluteUrl, cx, formatDate, langName, langNative, timeAgo } from "../lib/util";
 
 // ------------------------------------------------------------------ Record
 export function RecordDialog({
@@ -44,7 +44,7 @@ export function RecordDialog({
     );
   }, [open, tab, scenarios]);
 
-  const startUrl = proc.startUrl ? new URL(proc.startUrl, window.location.origin).toString() : "";
+  const startUrl = proc.startUrl ? absoluteUrl(proc.startUrl) : "";
   const sc = scenarios?.find((s) => s.id === picked);
 
   return (

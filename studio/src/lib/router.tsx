@@ -1,7 +1,8 @@
 // Minimal history router mounted under /studio/.
 import { useEffect, useState, type AnchorHTMLAttributes, type MouseEvent } from "react";
+import { ROOT } from "./base";
 
-export const BASE = "/studio";
+export const BASE = `${ROOT}/studio`;
 const listeners = new Set<() => void>();
 
 export function currentLocation() {

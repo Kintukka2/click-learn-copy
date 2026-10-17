@@ -1,10 +1,11 @@
 import { useStudio } from "../lib/store";
 import { Icon } from "./Icon";
 import { Button, CopyButton, Dialog } from "./ui";
+import { ROOT } from "../lib/base";
 
 export function ExtensionHelp() {
   const { helpOpen, setHelpOpen } = useStudio();
-  const origin = window.location.origin;
+  const origin = window.location.origin + ROOT;
   const steps: { title: string; body: JSX.Element }[] = [
     {
       title: "Build the extension",

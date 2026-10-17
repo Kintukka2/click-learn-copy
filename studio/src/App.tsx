@@ -8,6 +8,7 @@ import { StudioProvider, useStudio } from "./lib/store";
 import { cx, initials } from "./lib/util";
 import { ProjectPage, type ProjectTab } from "./pages/ProjectPage";
 import { ProjectsHome } from "./pages/ProjectsHome";
+import { withRoot } from "./lib/base";
 
 export function App() {
   return (
@@ -117,7 +118,7 @@ function Sidebar({ path }: { path: string }) {
           <Icon name="puzzle" size={16} />
           <span className="side-label">Browser extension</span>
         </button>
-        <a className="side-link" href="/demo-erp/" target="_blank" rel="noreferrer">
+        <a className="side-link" href={withRoot("/demo-erp/")} target="_blank" rel="noreferrer">
           <Icon name="monitor" size={16} />
           <span className="side-label">Demo app</span>
           <Icon name="external" size={13} className="side-ext" />

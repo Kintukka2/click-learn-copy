@@ -11,6 +11,7 @@ import { NoteDialog, RecordDialog, ReportPanel, TranslateDialog } from "./dialog
 import { PreviewModal } from "./PreviewModal";
 import { DraftText, StepInspector } from "./StepInspector";
 import { StepList, type StepView } from "./StepList";
+import { ROOT } from "../lib/base";
 
 type Job = { kind: "replay" | "test" | "translate" | "record"; label: string };
 
@@ -329,7 +330,7 @@ export function ProcessEditor({ id }: { id: string }) {
   const guideMe = () => {
     if (!proc) return;
     if (!proc.startUrl) return toast.error("No start URL", "Set a start URL for this process first (record a demo scenario or edit it in the header).");
-    const assistUrl = `${window.location.origin}/api/processes/${id}/resolved?lang=${lang}`;
+    const assistUrl = `${window.location.origin}${ROOT}/api/processes/${id}/resolved?lang=${lang}`;
     const params: Record<string, string> = { sl_assist: encodeURIComponent(assistUrl) };
     if (!isSource) params.lang = lang;
     window.open(withParams(absoluteUrl(proc.startUrl), params), "_blank", "noopener");

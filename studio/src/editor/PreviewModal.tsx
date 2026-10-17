@@ -5,6 +5,7 @@ import { Icon } from "../components/Icon";
 import { Button, Dialog, EmptyState, Segmented, Spinner, toast } from "../components/ui";
 import { api } from "../lib/api";
 import { langNative } from "../lib/util";
+import { withRoot } from "../lib/base";
 
 interface PlayerHandle {
   destroy(): void;
@@ -37,7 +38,7 @@ export function loadPlayer(): Promise<void> {
   if (!playerLoad)
     playerLoad = new Promise<void>((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "/lib/player.js";
+      s.src = withRoot("/lib/player.js");
       s.async = true;
       s.onload = () => (player() ? resolve() : reject(new Error("player.js loaded but did not define window.SteplightPlayer.")));
       s.onerror = () => {

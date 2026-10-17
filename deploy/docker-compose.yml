@@ -1,0 +1,29 @@
+# Steplight + a Cloudflare Tunnel, so it is reachable at your own domain without opening ports.
+#   cp deploy/.env.example deploy/.env   # fill in the values
+#   docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+services:
+  steplight:
+    build: ..
+    environment:
+      STEPLIGHT_BASE_URL: ${STEPLIGHT_BASE_URL:?set STEPLIGHT_BASE_URL, e.g. https://examplewebsite.app/steplight}
+      STEPLIGHT_ACCESS_KEY: ${STEPLIGHT_ACCESS_KEY:?set an access key so only you can edit projects}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - steplight-data:/app/data
+    ports:
+      - "127.0.0.1:4100:4100" # local access only; the internet reaches it through the tunnel
+    init: true
+    shm_size: "1gb" # Chromium needs more shared memory than Docker's default
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?paste the token from Cloudflare Zero Trust → Networks → Tunnels}
+    depends_on:
+      - steplight
+    restart: unless-stopped
+
+volumes:
+  steplight-data:

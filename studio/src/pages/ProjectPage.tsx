@@ -9,6 +9,7 @@ import { cx, initials, langName, timeAgo } from "../lib/util";
 import { AnalyticsTab } from "./AnalyticsTab";
 import { PublishingTab } from "./PublishingTab";
 import { SettingsTab } from "./SettingsTab";
+import { withRoot } from "../lib/base";
 
 export type ProjectTab = "processes" | "publishing" | "analytics" | "settings";
 
@@ -94,7 +95,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
         </div>
         <div className="page-actions">
           {project?.publishedAt && (
-            <Button icon="external" onClick={() => window.open(`/portal/${pid}/`, "_blank")}>
+            <Button icon="external" onClick={() => window.open(withRoot(`/portal/${pid}/`), "_blank")}>
               View portal
             </Button>
           )}
