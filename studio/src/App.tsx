@@ -93,7 +93,7 @@ function Sidebar({ path }: { path: string }) {
             <div key={p.id} className={cx("side-project", isActive && "is-open")}>
               <Link to={`/projects/${p.id}`} className={cx("side-link", isActive && !currentTab && "is-active")} title={p.name}>
                 <span className="side-avatar" style={{ background: `linear-gradient(135deg, ${p.branding?.primaryColor ?? "#2f6fed"}, ${p.branding?.accentColor ?? "#14b8a6"})` }}>
-                  {p.branding?.logoDataUrl ? <img src={p.branding.logoDataUrl} alt="" /> : initials(p.name)}
+                  {p.branding?.logoDataUrl ? <img src={p.branding.logoDataUrl} alt="" /> : initials(p.branding?.companyName || p.name)}
                 </span>
                 <span className="side-label">{p.name}</span>
               </Link>

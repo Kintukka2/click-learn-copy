@@ -44,12 +44,12 @@ export function AnalyticsTab({ project, processes }: { project: Project; process
   const scores = Object.values(data.avgScore);
   const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
   const kpis = [
-    { label: "Views", value: n(t, "view"), icon: "eye", tone: "brand" },
+    { label: "Views", value: n(t, "view"), icon: "eye", tone: "brand", sub: "Portal process pages" },
     { label: "Completions", value: completions, icon: "checkSquare", tone: "teal", sub: `${n(t, "show_complete")} show · ${n(t, "try_complete")} try · ${n(t, "test_complete")} test` },
-    { label: "Avg. test score", value: avgScore === null ? "–" : `${avgScore}%`, icon: "target", tone: "violet" },
+    { label: "Avg. test score", value: avgScore === null ? "–" : `${avgScore}%`, icon: "target", tone: "violet", sub: `Across ${scores.length} process${scores.length === 1 ? "" : "es"}` },
     { label: "Assist sessions", value: n(t, "assist_start"), icon: "compass", tone: "amber", sub: `${n(t, "assist_complete")} completed` },
-    { label: "Searches & questions", value: n(t, "search", "ask"), icon: "search", tone: "brand" },
-    { label: "Downloads", value: n(t, "download"), icon: "download", tone: "teal" },
+    { label: "Searches", value: n(t, "search", "ask"), icon: "search", tone: "brand", sub: `${n(t, "ask")} AI questions` },
+    { label: "Downloads", value: n(t, "download"), icon: "download", tone: "teal", sub: "Documents, SCORM and video" },
   ];
 
   // last 14 days

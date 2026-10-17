@@ -425,7 +425,7 @@ export function ProcessEditor({ id }: { id: string }) {
               className="title-input"
               aria-label="Process title"
               value={isSource ? proc.title : (loc?.title ?? "")}
-              placeholder={isSource ? "Untitled process" : `${proc.title} (${lang.toUpperCase()} title)`}
+              placeholder={isSource ? "Untitled process" : proc.title}
               onCommit={(v) => {
                 if (isSource) {
                   if (v.trim()) void patchProcess({ title: v.trim() });

@@ -267,7 +267,9 @@ function Onboarding({ onSample, onNew }: { onSample: () => void; onNew: () => vo
                 <i />
                 <span className="onb-tip">
                   <span className="onb-tip-step">Step 3 of 7</span>
-                  Click <strong>Post</strong>.
+                  <span>
+                    Click <strong>Post</strong>.
+                  </span>
                 </span>
               </div>
             </div>

@@ -38,7 +38,7 @@ export function RecordDialog({
     api.demoScenarios().then(
       (s) => {
         setScenarios(s);
-        setPicked(s[0]?.id ?? null);
+        setPicked((s.find((x) => x.title.toLowerCase() === proc.title.toLowerCase()) ?? s[0])?.id ?? null);
       },
       (e: Error) => setScErr(e.message),
     );

@@ -156,7 +156,7 @@ export function SettingsTab({ project, onSaved }: { project: Project; onSaved: (
         </div>
       </section>
 
-      <div className="settings-save">
+      <div className={dirty ? "settings-save is-dirty" : "settings-save"}>
         <span className="muted small">{dirty ? "You have unsaved changes" : "All changes saved"}</span>
         <Button variant="primary" icon="check" onClick={save} loading={busy} disabled={!dirty} data-testid="save-settings">
           Save changes
