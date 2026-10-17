@@ -168,3 +168,11 @@ export function isScorable(st: ResolvedStep): boolean {
   if (st.action === "press") return true;
   return !!st.bbox && (st.action === "click" || st.action === "type" || st.action === "select" || st.action === "check");
 }
+
+/** The area worth keeping in view for a step: the target, plus the dropdown list for selects. */
+export function focusRect(st: ResolvedStep): Rect | undefined {
+  const b = st.bbox;
+  if (!b) return undefined;
+  if (st.action !== "select") return b;
+  return { x: b.x, y: b.y, width: b.width, height: b.height + Math.max(b.height * 0.92, 18) * 4 + 12 };
+}

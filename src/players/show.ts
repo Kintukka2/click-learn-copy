@@ -3,7 +3,7 @@ import { plainText, richText } from "../core/instructions.js";
 import type { Rect, ResolvedStep } from "../core/model.js";
 import { Cancelled, Clock, clamp, h, icon, type Token } from "./dom.js";
 import { ICONS } from "./icons.js";
-import { checkBadge, FieldText, ListOverlay, ripple, selectOptions, Spot } from "./overlays.js";
+import { checkBadge, FieldText, focusRect, ListOverlay, ripple, selectOptions, Spot } from "./overlays.js";
 import { speak, speechAvailable, stopSpeaking } from "./speech.js";
 import { padRect, positionCard } from "./stage.js";
 import type { Controller, Ctx } from "./types.js";
@@ -404,7 +404,7 @@ export class ShowController implements Controller {
     this.clearStep();
     await stage.setStep(st, initial);
     if (this.i !== k) return;
-    if (this.ctx.compact() && st.bbox) stage.zoomTo(st.bbox, !initial);
+    if (this.ctx.compact() && st.bbox) stage.zoomTo(focusRect(st)!, !initial);
     this.showCaption(st);
     if (st.bbox && st.action !== "note" && st.action !== "navigate") {
       const p = this.aimPoint(st, st.bbox);
@@ -422,7 +422,7 @@ export class ShowController implements Controller {
     await stage.setStep(st);
     tok.check();
     const b = st.bbox && st.action !== "note" && st.action !== "navigate" ? st.bbox : undefined;
-    if (this.ctx.compact() && b) stage.zoomTo(b);
+    if (this.ctx.compact() && b) stage.zoomTo(focusRect(st)!);
     this.showCaption(st);
     const speech = this.voice ? speak([plainText(st.title), plainText(st.description)].filter(Boolean).join(" "), this.ctx.proc.lang, this.clock.speed) : Promise.resolve();
     let spent = T.fade;

@@ -183,11 +183,12 @@
   };
   function optLabel(list, value) {
     if (list === "currency") return value ? value : t("currency.lcy");
+    if (!value && list !== "blocked") return "";
     return t(list + "." + (value || "blank"));
   }
   function optionsHtml(list, selected, withBlank) {
     var vals = OPTIONS[list];
-    var out = withBlank ? '<option value="">' + "" + "</option>" : "";
+    var out = withBlank ? '<option value=""' + (selected ? "" : " selected") + "></option>" : "";
     vals.forEach(function (v) {
       out += '<option value="' + esc(v) + '"' + (v === selected ? " selected" : "") + ">" + esc(optLabel(list, v)) + "</option>";
     });
@@ -370,15 +371,15 @@
     opts = opts || {};
     return (
       '<div class="field' + (opts.wide ? " wide" : "") + (opts.cls ? " " + opts.cls : "") + '">' +
-      '<label for="' + id + '">' + esc(t(labelKey)) + (opts.required ? '<span class="req" aria-hidden="true">*</span>' : "") + "</label>" +
+      "<label for=\"" + id + "\"" + (opts.required ? ' class="required"' : "") + ">" + esc(t(labelKey)) + "</label>" +
       '<div class="control">' + control + (opts.error ? '<div class="field-error" id="' + id + '-error" hidden></div>' : "") + "</div></div>"
     );
   }
   function input(id, bind, value, attrs) {
     return '<input id="' + id + '" data-bind="' + bind + '" value="' + esc(value) + '" ' + (attrs || 'type="text"') + ">";
   }
-  function select(id, bind, list, value, attrs) {
-    return '<select id="' + id + '" data-bind="' + bind + '" ' + (attrs || "") + ">" + optionsHtml(list, value) + "</select>";
+  function select(id, bind, list, value, attrs, withBlank) {
+    return '<select id="' + id + '" data-bind="' + bind + '" ' + (attrs || "") + ">" + optionsHtml(list, value, withBlank) + "</select>";
   }
   function toggle(id, bind, checked, attrs) {
     return '<input type="checkbox" class="switch" id="' + id + '" data-bind="' + bind + '"' + (checked ? " checked" : "") + " " + (attrs || "") + ">";
@@ -430,7 +431,7 @@
 
     var recent = d.orders.slice().sort(function (a, b) { return a.no < b.no ? 1 : -1; }).slice(0, 6).map(function (o) {
       var c = customer(o.customerNo);
-      return '<tr><td><a href="#/sales-orders/' + o.no + '">' + o.no + "</a></td><td>" + esc(c ? c.name : "") + "</td><td>" + fdate(o.orderDate) + '</td><td class="num">' + num(orderAmount(o)) + "</td><td>" + badge(o.status, "orderStatus") + "</td></tr>";
+      return '<tr><td><a href="#/sales-orders/' + o.no + '">' + o.no + '</a></td><td class="ellipsis">' + esc(c ? c.name : "") + '</td><td class="num">' + num(orderAmount(o)) + "</td><td>" + badge(o.status, "orderStatus") + "</td></tr>";
     }).join("");
 
     var approvals = pending.map(function (i) {
@@ -461,7 +462,7 @@
       '<div class="home-grid">' +
       '<section class="panel" aria-labelledby="home-top"><h2 id="home-top">' + esc(t("home.topCustomers")) + '</h2><ul class="bars">' + bars + "</ul></section>" +
       '<section class="panel" aria-labelledby="home-recent"><h2 id="home-recent">' + esc(t("home.recentOrders")) + "</h2>" +
-      '<table class="grid compact"><thead><tr><th>' + esc(t("col.no")) + "</th><th>" + esc(t("col.customerName")) + "</th><th>" + esc(t("col.orderDate")) + '</th><th class="num">' + esc(t("col.amount")) + "</th><th>" + esc(t("col.status")) + "</th></tr></thead><tbody>" + recent + "</tbody></table></section>" +
+      '<table class="grid compact"><thead><tr><th>' + esc(t("col.no")) + "</th><th>" + esc(t("col.customerName")) + '</th><th class="num">' + esc(t("col.amount")) + "</th><th>" + esc(t("col.status")) + "</th></tr></thead><tbody>" + recent + "</tbody></table></section>" +
       '<section class="panel" aria-labelledby="home-approvals"><h2 id="home-approvals">' + esc(t("home.approvals")) + "</h2>" +
       (approvals ? '<ul class="approvals">' + approvals + "</ul>" : '<p class="empty">' + esc(t("home.noApprovals")) + "</p>") + "</section>" +
       "</div></div>";
@@ -550,8 +551,7 @@
     var sel = S.selected[name];
     var rowsAll = L.rows();
     if (sel && !rowsAll.some(function (r) { return r[L.key] === sel; })) sel = S.selected[name] = null;
-    var q = (S.filter[name] || "").toLowerCase();
-    var rows = q ? rowsAll.filter(function (r) { return L.text(r).toLowerCase().indexOf(q) >= 0; }) : rowsAll;
+    var rows = filteredRows(name);
     var canDel = sel && (!L.canDelete || L.canDelete(sel));
     var actions = [];
     if (!L.noNew) actions.push({ act: "new", label: t("ab.new"), icon: "plus", group: "manage" });
@@ -562,29 +562,47 @@
     var search = '<div class="list-search">' + icon("search") + '<input type="search" id="list-search" data-list="' + name + '" aria-label="' + esc(t("list.search")) + '" placeholder="' + esc(t("list.search")) + '" value="' + esc(S.filter[name] || "") + '"></div>';
 
     var head = "<tr>" + L.cols.map(function (c) { return '<th scope="col"' + (c.num ? ' class="num"' : "") + ">" + esc(t(c.h)) + "</th>"; }).join("") + "</tr>";
-    var body = rows.map(function (r) {
-      var k = r[L.key];
-      var isSel = k === sel;
-      return '<tr data-key="' + esc(k) + '" aria-selected="' + isSel + '"' + (S.highlight === k ? ' class="flash"' : "") + ">" +
-        L.cols.map(function (c) { return "<td" + (c.num || c.cls ? ' class="' + (c.num ? "num " : "") + (c.cls || "") + '"' : "") + ">" + c.v(r) + "</td>"; }).join("") + "</tr>";
-    }).join("");
-    S.highlight = null;
-
     document.getElementById("main").innerHTML =
       '<div class="page list-page" data-list="' + name + '">' +
       '<div class="list-head"><h1>' + esc(t(L.title)) + "</h1></div>" +
       actionBar(actions, search) +
-      '<div class="list-card"><table class="grid" aria-label="' + esc(t(L.title)) + '"><thead>' + head + "</thead><tbody>" +
-      (body || '<tr class="empty-row"><td colspan="' + L.cols.length + '">' + esc(t("list.empty")) + "</td></tr>") +
-      "</tbody></table>" +
-      '<div class="list-foot">' + esc(t(L.count, { n: String(rows.length) })) + "</div></div></div>";
+      '<div class="list-card"><table class="grid" aria-label="' + esc(t(L.title)) + '"><thead>' + head + '</thead><tbody id="list-body">' + listRowsHtml(name, rows) + "</tbody></table>" +
+      '<div class="list-foot" id="list-foot">' + esc(t(L.count, { n: String(rows.length) })) + "</div></div></div>";
+    S.highlight = null;
+  }
+
+  function filteredRows(name) {
+    var L = LISTS[name];
+    var q = (S.filter[name] || "").toLowerCase();
+    var rowsAll = L.rows();
+    return q ? rowsAll.filter(function (r) { return L.text(r).toLowerCase().indexOf(q) >= 0; }) : rowsAll;
+  }
+
+  function listRowsHtml(name, rows) {
+    var L = LISTS[name];
+    var sel = S.selected[name];
+    var body = rows.map(function (r) {
+      var k = r[L.key];
+      return '<tr data-key="' + esc(k) + '" aria-selected="' + (k === sel) + '"' + (S.highlight === k ? ' class="flash"' : "") + ">" +
+        L.cols.map(function (c) { return "<td" + (c.num || c.cls ? ' class="' + (c.num ? "num " : "") + (c.cls || "") + '"' : "") + ">" + c.v(r) + "</td>"; }).join("") + "</tr>";
+    }).join("");
+    return body || '<tr class="empty-row"><td colspan="' + L.cols.length + '">' + esc(t("list.empty")) + "</td></tr>";
+  }
+
+  /** Live filtering: only the rows change, so the search box keeps focus and its change event. */
+  function refreshListRows(name) {
+    var rows = filteredRows(name);
+    var body = document.getElementById("list-body");
+    var foot = document.getElementById("list-foot");
+    if (body) body.innerHTML = listRowsHtml(name, rows);
+    if (foot) foot.textContent = t(LISTS[name].count, { n: String(rows.length) });
   }
 
   // ------------------------------------------------------------------ customer card
   function customerDraft(no) {
     var c = no ? customer(no) : null;
     if (c) return JSON.parse(JSON.stringify(c));
-    return { no: "C" + pad(S.data.seq.customer, 5), name: "", address: "", postCode: "", city: "", country: "DK", contact: "", phone: "", email: "", postingGroup: "DOMESTIC", paymentTerms: "30D", currency: "", creditLimit: 0, taxLiable: false, blocked: "", balance: 0, isNew: true };
+    return { no: "C" + pad(S.data.seq.customer, 5), name: "", address: "", postCode: "", city: "", country: "", contact: "", phone: "", email: "", postingGroup: "DOMESTIC", paymentTerms: "30D", currency: "", creditLimit: 0, taxLiable: false, blocked: "", balance: 0, isNew: true };
   }
 
   function renderCustomerCard(no) {
@@ -600,7 +618,7 @@
       field("customer-address", "f.address", input("customer-address", "address", c.address)) +
       field("customer-post-code", "f.postCode", input("customer-post-code", "postCode", c.postCode)) +
       field("customer-city", "f.city", input("customer-city", "city", c.city)) +
-      field("customer-country", "f.country", select("customer-country", "country", "country", c.country)) +
+      field("customer-country", "f.country", select("customer-country", "country", "country", c.country, "", true)) +
       field("customer-contact", "f.contact", input("customer-contact", "contact", c.contact)) +
       (v2 ? emailField : "") +
       "</div>";
@@ -648,7 +666,7 @@
       fasttab("communication", "ft.communication", comm, [c.phone, v2 ? "" : c.email].filter(Boolean).join(" · ")) +
       fasttab("invoicing", "ft.invoicing", invoicing, optLabel("paymentTerms", c.paymentTerms)) +
       "</div>" + factbox + "</div></div>";
-    if (c.docLang) document.getElementById("customer-language").value = c.docLang;
+    document.getElementById("customer-language").value = c.docLang || ({ DK: "DAN", DE: "DEU" })[c.country] || "ENU";
   }
 
   function saveCustomer() {
@@ -783,8 +801,8 @@
         '<td class="num strong" data-cell="amount">' + (it ? num(lineAmount(l)) : "") + "</td>" +
         "<td>" + (ro ? "" : '<button type="button" class="icon-btn small" data-act="delete-line" aria-label="' + esc(t("ab.deleteLine")) + '">' + icon("trash") + "</button>") + "</td></tr>";
     }).join("");
-    return '<table class="grid lines" aria-label="' + esc(t("ft.lines")) + '"><thead><tr><th class="ln">#</th><th>' + esc(t("col.item")) + "</th><th>" + esc(t("col.no")) + '</th><th class="num">' + esc(t("col.quantity")) + "</th><th>" + esc(t("col.uom")) + '</th><th class="num">' + esc(t("col.unitPriceExcl")) + '</th><th class="num">' + esc(t("col.lineAmount")) + "</th><th></th></tr></thead><tbody>" +
-      (rows || '<tr class="empty-row"><td colspan="8">' + esc(t("lines.empty")) + "</td></tr>") + "</tbody></table>";
+    return '<div class="lines-wrap"><table class="grid lines" aria-label="' + esc(t("ft.lines")) + '"><thead><tr><th class="ln">#</th><th>' + esc(t("col.item")) + "</th><th>" + esc(t("col.no")) + '</th><th class="num">' + esc(t("col.quantity")) + "</th><th>" + esc(t("col.uom")) + '</th><th class="num">' + esc(t("col.unitPriceExcl")) + '</th><th class="num">' + esc(t("col.lineAmount")) + "</th><th></th></tr></thead><tbody>" +
+      (rows || '<tr class="empty-row"><td colspan="8">' + esc(t("lines.empty")) + "</td></tr>") + "</tbody></table></div>";
   }
 
   function totalsHtml(o) {
@@ -1283,12 +1301,7 @@
     if (el.id === "tell-me") return updateTellMe(el.value);
     if (el.id === "list-search") {
       S.filter[el.getAttribute("data-list")] = el.value;
-      clearTimeout(onInput.timer);
-      onInput.timer = setTimeout(function () {
-        renderList(el.getAttribute("data-list"));
-        var s = document.getElementById("list-search");
-        if (s) { s.focus(); s.setSelectionRange(s.value.length, s.value.length); }
-      }, 250);
+      refreshListRows(el.getAttribute("data-list"));
       return;
     }
     if (el.matches("input[type=text], input[type=email], input[type=tel], input[type=date], textarea")) bindValue(el);

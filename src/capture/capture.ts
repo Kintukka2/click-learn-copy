@@ -87,7 +87,19 @@ function onPointerDown(e: Event) {
   if (el.getAttribute("contenteditable") !== null && el.getAttribute("contenteditable") !== "false") return;
   if (isDisabled(el)) return;
   if (el === document.body || el === document.documentElement) return;
+  flushFocusedField(el);
   send(baseEvent("click", describeElement(el)));
+}
+
+/**
+ * The focused field only fires `change` when it blurs, which happens AFTER pointerdown on the
+ * next element. Emit its pending "type" first so steps stay in the order the user performed them.
+ */
+function flushFocusedField(next: Element) {
+  const f = document.activeElement;
+  if (!f || f === next || !(f instanceof HTMLInputElement || f instanceof HTMLTextAreaElement) || !isTextField(f) || isIgnored(f)) return;
+  const prev = state!.lastValue.get(f);
+  if (prev === undefined ? f.value !== f.defaultValue : prev !== f.value) emitType(f);
 }
 
 function onClick(e: Event) {
@@ -100,6 +112,7 @@ function onClick(e: Event) {
   state.lastKey = undefined;
   if (k.el !== el || Date.now() - k.time > 1000) return;
   if (isFormControl(el) || isDisabled(el)) return;
+  flushFocusedField(el);
   send(baseEvent("click", describeElement(el)));
 }
 

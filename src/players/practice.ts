@@ -88,7 +88,10 @@ export class PracticeController implements Controller {
     }
     this.renderTaskIntro();
     if (this.ctx.cfg.autoplay) void this.begin(0);
-    else this.showIntro();
+    else {
+      this.task.hidden = true; // the intro card carries the title; the task panel appears on Start
+      this.showIntro();
+    }
   }
 
   destroy(): void {
@@ -166,6 +169,7 @@ export class PracticeController implements Controller {
     const { stage, s } = this.ctx;
     this.card?.remove();
     this.card = undefined;
+    this.task.hidden = false;
     this.i = k;
     this.misses = 0;
     this.recorded = false;
@@ -252,7 +256,6 @@ export class PracticeController implements Controller {
       const go = h("button", { class: "sl-btn sl-btn-primary sl-icon-btn", type: "button", "aria-label": "Enter" }, icon(ICONS.next));
       go.addEventListener("click", () => this.submitValue(st, input.value));
       this.tActions.append(h("div", { class: "sl-answer" }, input, go));
-      this.transient.push({ remove: () => void 0 });
     } else {
       stage.place(input, b);
       sizeToField(input, b);

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Steplight Help</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body class="panel">
+  <header class="top">
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 16 16" fill="#fff"><rect x="2" y="10" width="3" height="4" rx="1"/><rect x="6.5" y="6.5" width="3" height="7.5" rx="1"/><rect x="11" y="2" width="3" height="12" rx="1"/></svg></span>
+    <div><h1>Help for this page</h1><div class="sub">Steplight guides for the application you are using</div></div>
+  </header>
+  <div class="page-url"><span id="url">…</span>
+    <label class="sr" for="lang" hidden>Language</label>
+    <select id="lang" aria-label="Language"></select>
+  </div>
+  <div class="list" id="list"><div class="empty">Loading…</div></div>
+  <div class="error" id="error" style="padding:0 14px" hidden></div>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

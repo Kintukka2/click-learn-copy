@@ -175,7 +175,7 @@ export class Stage {
     let tx = 0;
     let ty = 0;
     if (r) {
-      z = clamp(Math.min(this.vw / Math.max(r.width * 1.3, this.vw * 0.4), this.vh / Math.max(r.height * 4, this.vh * 0.4)), 1, 2.5);
+      z = clamp(Math.min(this.vw / Math.max(r.width * 1.3, this.vw * 0.4), this.vh / Math.max(r.height * 1.6, this.vh * 0.4)), 1, 2.5);
       const cx = (r.x + r.width / 2) * this.scale * z;
       const cy = (r.y + r.height / 2) * this.scale * z;
       tx = clamp(this.W / 2 - cx, this.W - this.W * z, 0);

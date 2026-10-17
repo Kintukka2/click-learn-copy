@@ -2,7 +2,7 @@
 // first one that matches exactly one visible element (ties broken by the recorded context).
 // Used by capture.js (SteplightCapture.resolve → Replay) and by the Assist overlay.
 import type { Selector, Target } from "../core/model.js";
-import { accessibleName, contextOf, getRole, INTERACTIVE_SELECTOR, isVisible, labelOf, norm, sameText, visibleText } from "./dom.js";
+import { accessibleName, contextOf, getRole, INTERACTIVE_SELECTOR, isIgnored, isVisible, labelOf, norm, sameText, visibleText } from "./dom.js";
 
 export interface ResolveResult {
   element: Element;
@@ -94,7 +94,7 @@ export function matchesForSelector(sel: Selector, doc: Document = document): Ele
 
 /** Pick the single visible element among matches, using the recorded context to break ties. */
 function pickUnique(matches: Element[], target: Target): Element | null {
-  const vis = matches.filter(isVisible);
+  const vis = matches.filter((el) => isVisible(el) && !isIgnored(el));
   if (vis.length === 1) return vis[0];
   if (vis.length > 1 && target.context) {
     const ctx = norm(target.context);
