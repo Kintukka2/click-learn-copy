@@ -252,6 +252,25 @@ export function coverMeta(ctx: GeneratorContext, date = new Date()): CoverMeta {
 
 export const isNote = (s: ResolvedStep) => s.action === "note";
 
+/**
+ * The step's display title. A note with no localized title resolves to an empty string in
+ * other languages, so fall back to its description, then to the "Note" label.
+ */
+export function stepTitle(s: ResolvedStep, lang: Lang): string {
+  if (s.title?.trim()) return s.title;
+  if (isNote(s)) return s.description?.split(/\n/)[0]?.trim() || label(lang, "note");
+  return "";
+}
+
+/** Description to show under the title (empty when it was already used as the title). */
+export function stepDescription(s: ResolvedStep): string | undefined {
+  if (!s.title?.trim() && isNote(s)) {
+    const rest = s.description?.split(/\n/).slice(1).join("\n").trim();
+    return rest || undefined;
+  }
+  return s.description?.trim() || undefined;
+}
+
 /** Plain one-line instruction (for alt text, speaker notes, outlines). */
 export const plain = (s: string | undefined) => plainText(s).replace(/\s+/g, " ").trim();
 

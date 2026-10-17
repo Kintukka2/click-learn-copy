@@ -17,6 +17,7 @@ export function resolveProcess(proc: Process, lang: Lang = proc.lang, opts: Reso
     let title = s.title;
     if (!isSource) {
       if (l?.title) title = l.title;
+      else if (s.action === "note" || s.titleEdited) title = s.title; // author text: keep until translated
       else
         title = instructionFor(
           { action: s.action, target: s.target, value: l?.value ?? s.value, sensitive: s.sensitive, name: l?.label ?? l?.name },

@@ -2,7 +2,7 @@
 // renderGuideHtml() is also the source for the PDF generator (print mode).
 import { richText } from "../core/instructions.js";
 import { pngDataUrl } from "./annotate.js";
-import { MIME, brandOf, coverMeta, escapeHtml, isNote, labels, outputFilename, plain, stepImages, stepOf, type Brand } from "./common.js";
+import { MIME, brandOf, coverMeta, escapeHtml, isNote, labels, outputFilename, plain, stepDescription, stepImages, stepOf, stepTitle, type Brand } from "./common.js";
 import type { GeneratedFile, GeneratorContext } from "./index.js";
 
 export interface GuideHtmlOptions {
@@ -52,7 +52,7 @@ export async function renderGuideHtml(ctx: GeneratorContext, opts: GuideHtmlOpti
     ${p.steps
       .map(
         (s) =>
-          `<li><a href="#step-${s.index}"><span class="toc-n">${s.index}</span><span class="toc-t">${richText(s.title)}</span></a></li>`,
+          `<li><a href="#step-${s.index}"><span class="toc-n">${s.index}</span><span class="toc-t">${richText(stepTitle(s, p.lang))}</span></a></li>`,
       )
       .join("\n    ")}
   </ol>
@@ -63,15 +63,17 @@ export async function renderGuideHtml(ctx: GeneratorContext, opts: GuideHtmlOpti
     .map((s) => {
       const img = images.get(s.id)?.full;
       const kicker = escapeHtml(stepOf(p.lang, s.index, total));
+      const title = stepTitle(s, p.lang);
+      const desc = stepDescription(s);
       if (isNote(s)) {
         return `
 <article class="step note-step" id="step-${s.index}">
   <aside class="callout">
     <div class="callout-label"><span class="callout-icon" aria-hidden="true">i</span>${escapeHtml(L("note"))}<span class="callout-kicker">${kicker}</span></div>
-    <div class="callout-title">${richText(s.title)}</div>
-    ${s.description ? `<p>${richText(s.description)}</p>` : ""}
+    <div class="callout-title">${richText(title)}</div>
+    ${desc ? `<p>${richText(desc)}</p>` : ""}
   </aside>
-  ${img ? figure(img.png, img.width, img.height, plain(s.title)) : ""}
+  ${img ? figure(img.png, img.width, img.height, plain(title)) : ""}
 </article>`;
       }
       return `
@@ -80,11 +82,11 @@ export async function renderGuideHtml(ctx: GeneratorContext, opts: GuideHtmlOpti
     <div class="badge" aria-hidden="true">${s.index}</div>
     <div class="step-text">
       <div class="kicker">${kicker}</div>
-      <h3 class="instr">${richText(s.title)}</h3>
-      ${s.description ? `<p class="desc">${richText(s.description)}</p>` : ""}
+      <h3 class="instr">${richText(title)}</h3>
+      ${desc ? `<p class="desc">${richText(desc)}</p>` : ""}
     </div>
   </div>
-  ${img ? figure(img.png, img.width, img.height, plain(s.title)) : ""}
+  ${img ? figure(img.png, img.width, img.height, plain(title)) : ""}
 </article>`;
     })
     .join("\n");
@@ -236,6 +238,7 @@ body.print .cover h1{font-size:32pt}
 body.print .lead{font-size:13.5pt}
 body.print .cover-meta{padding:9mm 14mm 10mm;background:#fff;border:0}
 body.print .meta{display:grid;grid-template-columns:repeat(5,auto);justify-content:space-between;gap:6mm}
+body.print .meta dd{white-space:nowrap}
 body.print .content{padding:0}
 `
     : ""
