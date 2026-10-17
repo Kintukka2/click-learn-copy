@@ -1,0 +1,332 @@
+/* Steplight Assist overlay (inside a shadow root). */
+:host {
+  all: initial;
+}
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+.ring,
+.card {
+  --p: var(--sl-primary, #2f6fed);
+  --p-soft: color-mix(in srgb, var(--p) 10%, #fff);
+  --p-ring: color-mix(in srgb, var(--p) 30%, transparent);
+  --p-deep: color-mix(in srgb, var(--p) 82%, #0b1020);
+  --ink: #0f172a;
+  --ink2: #334155;
+  --muted: #64748b;
+  --line: #e3e8ef;
+  --ok: #16a34a;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* highlight ring around the live element */
+.ring {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  border-radius: 9px;
+  border: 2.5px solid var(--p);
+  box-shadow: 0 0 0 4px var(--p-ring), 0 0 0 9999px rgba(15, 23, 42, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, left 0.18s ease-out, top 0.18s ease-out, width 0.18s ease-out, height 0.18s ease-out, border-color 0.2s;
+}
+.ring.on {
+  opacity: 1;
+}
+.ring.jump {
+  transition: opacity 0.2s;
+}
+.ring.ok {
+  border-color: var(--ok);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 28%, transparent), 0 0 0 9999px rgba(15, 23, 42, 0.12);
+}
+.beacon {
+  position: absolute;
+  inset: -2.5px;
+  border-radius: inherit;
+  animation: beacon 1.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes beacon {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--p) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 16px color-mix(in srgb, var(--p) 0%, transparent);
+  }
+}
+
+/* tooltip card */
+.card {
+  position: fixed;
+  width: min(340px, calc(100vw - 24px));
+  padding: 14px 16px 0;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 24px 60px -12px rgba(15, 23, 42, 0.32);
+  font-size: 14px;
+  line-height: 1.5;
+  pointer-events: auto;
+  overflow: visible;
+  transition: left 0.22s ease-out, top 0.22s ease-out;
+  animation: pop 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+.card.floating {
+  right: 20px;
+  bottom: 20px;
+  left: auto;
+  top: auto;
+}
+.card[data-side="dock"] {
+  left: 12px !important;
+  right: 12px;
+  bottom: 12px;
+  top: auto;
+  width: auto;
+}
+.card[data-side="dock"].dock-top {
+  bottom: auto;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 3px 0 0 0;
+}
+.card[data-side="below"]::before {
+  top: -8px;
+  left: calc(var(--sl-arrow, 50%) - 7px);
+  transform: rotate(45deg);
+}
+.card[data-side="above"]::before {
+  bottom: -8px;
+  left: calc(var(--sl-arrow, 50%) - 7px);
+  transform: rotate(225deg);
+}
+.card[data-side="right"]::before {
+  left: -8px;
+  top: calc(var(--sl-arrow, 50%) - 7px);
+  transform: rotate(-45deg);
+}
+.card[data-side="left"]::before {
+  right: -8px;
+  top: calc(var(--sl-arrow, 50%) - 7px);
+  transform: rotate(135deg);
+}
+.card[data-side="none"]::before,
+.card[data-side="dock"]::before,
+.card.floating::before {
+  display: none;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.count {
+  flex: none;
+  color: var(--p);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.proc {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+.x {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: -6px -8px -6px 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.x:hover {
+  background: #f1f4f8;
+  color: var(--ink);
+}
+.title {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink2);
+}
+.title strong,
+.desc strong {
+  color: var(--ink);
+  font-weight: 650;
+}
+.desc {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff8eb;
+  color: #92400e;
+  font-size: 13px;
+}
+.status .msg {
+  flex: 1 1 180px;
+}
+.spin {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding-bottom: 14px;
+}
+.right {
+  display: flex;
+  gap: 6px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #d5dce6;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.btn.primary {
+  background: var(--p);
+  border-color: var(--p);
+  color: #fff;
+}
+.btn.primary:hover {
+  background: var(--p-deep);
+  border-color: var(--p-deep);
+}
+.btn.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  padding: 0 6px;
+}
+.btn.ghost:hover {
+  color: var(--ink);
+  background: #f1f4f8;
+}
+.btn.link {
+  height: 28px;
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.7);
+  color: #92400e;
+  text-decoration: underline;
+}
+button:focus-visible {
+  outline: 3px solid var(--p-ring);
+  outline-offset: 2px;
+}
+.bar {
+  height: 3px;
+  margin: 0 -16px;
+  border-radius: 0 0 13px 13px;
+  background: #eef1f6;
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--p);
+  transition: width 0.4s;
+}
+.card.done {
+  text-align: center;
+  padding-top: 20px;
+}
+.card.done .actions {
+  justify-content: center;
+  padding-bottom: 18px;
+}
+.card.done .actions > span {
+  display: none;
+}
+.badge {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  background: #ecfdf3;
+  color: var(--ok);
+}
+.card.done .title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .beacon,
+  .spin,
+  .card {
+    animation: none;
+  }
+}

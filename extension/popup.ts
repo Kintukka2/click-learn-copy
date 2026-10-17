@@ -1,0 +1,162 @@
+// Steplight Recorder popup: server setting, project/process choice (or a new process),
+// Start/Stop recording with a live step counter.
+/// <reference path="./lib/chrome.d.ts" />
+import { $, api, esc, getServerUrl, send, setServerUrl, type RecState } from "./lib/shared.js";
+
+interface ProjectRow { id: string; name: string; processCount: number; languages: string[] }
+interface ProcessRow { id: string; title: string; chapter?: string; steps: unknown[] }
+
+let server = "";
+const NEW = "__new__";
+
+function show(id: "idle" | "recording" | "offline") {
+  for (const s of ["idle", "recording", "offline"]) ($("#" + s) as HTMLElement).hidden = s !== id;
+}
+
+function setStatus(on: boolean | null) {
+  const el = $("#status");
+  el.className = "status" + (on === null ? "" : on ? " on" : " off");
+  el.querySelector("span")!.textContent = on === null ? "…" : on ? "Connected" : "Offline";
+}
+
+function error(sel: string, msg: string) {
+  const e = $(sel);
+  e.textContent = msg;
+  e.hidden = !msg;
+}
+
+/** The tab to record: ?tab=<id> (automation) or the active tab of the last focused window. */
+async function targetTab(): Promise<{ id: number; windowId: number; url?: string }> {
+  const fromQuery = Number(new URLSearchParams(location.search).get("tab"));
+  if (fromQuery) return chrome.tabs.get(fromQuery);
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  return tab;
+}
+
+async function loadProcesses(projectId: string) {
+  const sel = $("#process") as HTMLSelectElement;
+  const procs = await api<ProcessRow[]>(server, `/projects/${projectId}/processes`);
+  sel.innerHTML =
+    `<option value="${NEW}">+ New process…</option>` +
+    procs.map((p) => `<option value="${esc(p.id)}">${esc(p.title)}${p.chapter ? " · " + esc(p.chapter) : ""} (${p.steps.length})</option>`).join("");
+  const remembered = (await chrome.storage.local.get("lastProcess")).lastProcess;
+  if (remembered && procs.some((p) => p.id === remembered)) sel.value = remembered;
+  onProcessChange();
+}
+
+function onProcessChange() {
+  const isNew = ($("#process") as HTMLSelectElement).value === NEW;
+  $("#new-wrap").hidden = !isNew;
+  $("#replace-wrap").hidden = isNew;
+}
+
+async function renderIdle() {
+  show("idle");
+  const projects = await api<ProjectRow[]>(server, "/projects");
+  const sel = $("#project") as HTMLSelectElement;
+  if (!projects.length) {
+    sel.innerHTML = `<option value="">No projects yet</option>`;
+    ($("#start") as HTMLButtonElement).disabled = true;
+    error("#error", "Create a project in Steplight Studio first.");
+    return;
+  }
+  sel.innerHTML = projects.map((p) => `<option value="${esc(p.id)}">${esc(p.name)} (${p.processCount})</option>`).join("");
+  const remembered = (await chrome.storage.local.get("lastProject")).lastProject;
+  if (remembered && projects.some((p) => p.id === remembered)) sel.value = remembered;
+  await loadProcesses(sel.value);
+}
+
+function renderRecording(st: RecState, err?: string) {
+  show("recording");
+  $("#rec-title").textContent = st.processTitle;
+  $("#rec-count").textContent = String(st.stepCount);
+  error("#rec-error", err ?? "");
+}
+
+async function start() {
+  error("#error", "");
+  const btn = $("#start") as HTMLButtonElement;
+  btn.disabled = true;
+  try {
+    const projectId = ($("#project") as HTMLSelectElement).value;
+    let processId = ($("#process") as HTMLSelectElement).value;
+    let title = ($("#process") as HTMLSelectElement).selectedOptions[0]?.textContent ?? "";
+    const tab = await targetTab();
+    if (processId === NEW) {
+      title = ($("#new-title") as HTMLInputElement).value.trim() || "New process";
+      const chapter = ($("#new-chapter") as HTMLInputElement).value.trim() || undefined;
+      const created = await api<{ id: string; title: string }>(server, `/projects/${projectId}/processes`, {
+        method: "POST",
+        body: JSON.stringify({ title, chapter, startUrl: tab.url }),
+      });
+      processId = created.id;
+    }
+    await chrome.storage.local.set({ lastProject: projectId, lastProcess: processId });
+    const r = await send<{ state?: RecState; error?: string }>({
+      type: "steplight:start",
+      serverUrl: server,
+      processId,
+      processTitle: title.replace(/\s*\(\d+\)$/, ""),
+      projectId,
+      tabId: tab.id,
+      replace: ($("#replace") as HTMLInputElement).checked,
+    });
+    if (r?.error || !r?.state) throw new Error(r?.error ?? "could not start");
+    renderRecording(r.state);
+  } catch (err) {
+    error("#error", (err as Error).message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function stopRec() {
+  ($("#stop") as HTMLButtonElement).disabled = true;
+  await send({ type: "steplight:stop" });
+  ($("#stop") as HTMLButtonElement).disabled = false;
+  await init();
+}
+
+async function init() {
+  server = await getServerUrl();
+  ($("#server") as HTMLInputElement).value = server;
+  ($("#open-studio") as HTMLAnchorElement).href = server + "/studio/";
+  setStatus(null);
+  try {
+    await api(server, "/health");
+    setStatus(true);
+  } catch {
+    setStatus(false);
+    show("offline");
+    ($("#settings") as HTMLDetailsElement).open = true;
+    return;
+  }
+  const r = await send<{ state: RecState | null; error?: string }>({ type: "steplight:state" });
+  if (r?.state) renderRecording(r.state, r.error);
+  else await renderIdle().catch((err) => error("#error", (err as Error).message));
+}
+
+$("#project").addEventListener("change", (e) => void loadProcesses((e.target as HTMLSelectElement).value));
+$("#process").addEventListener("change", onProcessChange);
+$("#start").addEventListener("click", () => void start());
+$("#stop").addEventListener("click", () => void stopRec());
+$("#save-server").addEventListener("click", async () => {
+  await setServerUrl(($("#server") as HTMLInputElement).value);
+  await init();
+});
+$("#open-panel").addEventListener("click", async () => {
+  const tab = await targetTab();
+  try {
+    await chrome.sidePanel.open({ windowId: tab.windowId });
+  } catch (err) {
+    error("#error", (err as Error).message);
+  }
+});
+chrome.runtime.onMessage.addListener((msg: { type: string; stepCount: number; recording: boolean; error?: string }) => {
+  if (msg.type !== "steplight:count") return;
+  if (!msg.recording) return void init();
+  $("#rec-count").textContent = String(msg.stepCount);
+  error("#rec-error", msg.error ?? "");
+});
+
+void init();

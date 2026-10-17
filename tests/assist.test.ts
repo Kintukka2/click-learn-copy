@@ -1,0 +1,211 @@
+// Assist (in-app guidance) browser tests: bundles src/assist/browser.ts and drives it on a copy of
+// the fixture form from scripts/make-fixture.ts.
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { build } from "esbuild";
+import { chromium, type Browser, type Page } from "playwright";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { resolveProcess } from "../src/core/resolve.js";
+import type { Process, ResolvedProcess } from "../src/core/model.js";
+
+const ROOT = path.resolve(__dirname, "..");
+const FX = path.join(ROOT, "tests/fixtures/out");
+const hasFixture = fs.existsSync(path.join(FX, "process.json"));
+
+let browser: Browser;
+let bundle = "";
+let proc: ResolvedProcess;
+let appHtml = "";
+
+async function bundleAssist(): Promise<string> {
+  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "sl-assist-")), "assist.js");
+  await build({ entryPoints: [path.join(ROOT, "src/assist/browser.ts")], outfile: out, bundle: true, format: "iife", globalName: "SteplightAssist", platform: "browser", target: ["chrome110"], loader: { ".css": "text" }, logLevel: "error" });
+  return out;
+}
+
+/** Serve the app at http://app.test/ (any path) with assist.js and the process JSON. */
+async function serve(page: Page, opts: { scriptAttrs?: string; extra?: string; lateName?: boolean } = {}) {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  let body = appHtml;
+  if (opts.lateName) {
+    // the "Customer name" field appears only after 900 ms (route/data loading)
+    body = body.replace('<label for="name">Customer name</label><input id="name">', '<div id="slot"></div>');
+    body = body.replace("</body>", `<script>setTimeout(function(){document.getElementById('slot').innerHTML='<label for="name">Customer name</label><input id="name">'},900)</script></body>`);
+  }
+  body = body.replace("</body>", `${opts.extra ?? ""}<script src="/assist.js" ${opts.scriptAttrs ?? ""}></script></body>`);
+  await page.route("http://app.test/**", (route) => {
+    const u = new URL(route.request().url());
+    if (u.pathname === "/assist.js") return route.fulfill({ path: bundle, contentType: "text/javascript" });
+    if (u.pathname === "/api/proc.json") return route.fulfill({ body: JSON.stringify(proc), contentType: "application/json" });
+    return route.fulfill({ body, contentType: "text/html; charset=utf-8" });
+  });
+  return errors;
+}
+
+const state = (page: Page) =>
+  page.evaluate(() => {
+    const host = document.querySelector("[data-steplight-assist]");
+    if (!host) return null;
+    const sr = host.shadowRoot!;
+    const ring = sr.querySelector(".ring") as HTMLElement;
+    const card = sr.querySelector(".card") as HTMLElement;
+    return {
+      ignore: host.hasAttribute("data-steplight-ignore"),
+      ringOn: ring.classList.contains("on"),
+      ring: ring.getBoundingClientRect().toJSON() as DOMRect,
+      count: card.querySelector(".count")?.textContent ?? "",
+      title: card.querySelector(".title")?.innerHTML ?? "",
+      text: card.textContent ?? "",
+      done: card.classList.contains("done"),
+      card: card.getBoundingClientRect().toJSON() as DOMRect,
+    };
+  });
+
+async function rectOf(page: Page, sel: string) {
+  return (await page.locator(sel).boundingBox())!;
+}
+
+function near(ring: DOMRect, el: { x: number; y: number; width: number; height: number }) {
+  return Math.abs(ring.x + ring.width / 2 - (el.x + el.width / 2)) < 2 && Math.abs(ring.y + ring.height / 2 - (el.y + el.height / 2)) < 2 && ring.width >= el.width;
+}
+
+describe.skipIf(!hasFixture)("SteplightAssist", () => {
+  beforeAll(async () => {
+    const raw = JSON.parse(fs.readFileSync(path.join(FX, "process.json"), "utf8")) as Process;
+    proc = resolveProcess(raw, "en", { media: (f) => `/media/${f}` });
+    const src = fs.readFileSync(path.join(ROOT, "scripts/make-fixture.ts"), "utf8");
+    appHtml = /const html = `([\s\S]*?)`;/.exec(src)![1];
+    bundle = await bundleAssist();
+    browser = await chromium.launch();
+  }, 60_000);
+  afterAll(async () => {
+    await browser?.close();
+  });
+
+  it("guides through every step, advancing on the user's real actions", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page);
+    await page.goto("http://app.test/app.html#/customers/new");
+    await page.evaluate((p) => {
+      (window as any).__ev = [];
+      (window as any).SteplightAssist.start(p, { onEvent: (t: string, d: unknown) => (window as any).__ev.push([t, d]) });
+    }, proc);
+    await expect.poll(async () => (await state(page))?.ringOn).toBe(true);
+    let s = (await state(page))!;
+    expect(s.ignore).toBe(true);
+    expect(s.count).toBe(`Step 1 of ${proc.steps.length}`);
+    expect(s.title).toContain("<strong>Customer name</strong>");
+    expect(near(s.ring, await rectOf(page, "#name"))).toBe(true);
+
+    // a click elsewhere does not advance; the overlay does not block the page
+    await page.click("h1");
+    expect((await state(page))!.count).toBe(`Step 1 of ${proc.steps.length}`);
+    await page.fill("#name", "Contoso Ltd");
+    await page.locator("#name").blur(); // change event
+    await expect.poll(async () => (await state(page))!.count).toBe(`Step 2 of ${proc.steps.length}`);
+    s = (await state(page))!;
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#country"))).toBe(true);
+
+    await page.selectOption("#country", "DK");
+    await expect.poll(async () => (await state(page))!.count).toBe(`Step 3 of ${proc.steps.length}`);
+    await page.fill("#email", "orders@contoso.com");
+    await page.press("#email", "Enter");
+    await expect.poll(async () => (await state(page))!.count).toBe(`Step 4 of ${proc.steps.length}`);
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#save"))).toBe(true);
+    await page.click("#save");
+    await expect.poll(async () => (await state(page))!.done).toBe(true);
+    const ev = (await page.evaluate(() => (window as any).__ev)) as [string, any][];
+    expect(ev[0][0]).toBe("start");
+    expect(ev.filter((e) => e[0] === "step")).toHaveLength(proc.steps.length);
+    expect(ev[ev.length - 1][0]).toBe("complete");
+    expect(await page.evaluate(() => sessionStorage.getItem("steplight.assist.active"))).toBeNull();
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 60_000);
+
+  it("auto-starts from sl_assist in the hash, strips it, and resumes after a reload", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page);
+    await page.goto(`http://app.test/app.html#/customers/new?sl_assist=${encodeURIComponent("http://app.test/api/proc.json")}`);
+    await expect.poll(async () => (await state(page))?.ringOn).toBe(true);
+    expect(page.url()).not.toContain("sl_assist");
+    expect(page.url()).toContain("#/customers/new");
+    await page.fill("#name", "Contoso Ltd");
+    await page.locator("#name").blur();
+    await expect.poll(async () => (await state(page))!.count).toBe(`Step 2 of ${proc.steps.length}`);
+    await page.reload();
+    await expect.poll(async () => (await state(page))?.count).toBe(`Step 2 of ${proc.steps.length}`);
+    // Back / Skip buttons
+    await page.evaluate(() => (document.querySelector("[data-steplight-assist]")!.shadowRoot!.querySelector(".fwd") as HTMLButtonElement).click());
+    await expect.poll(async () => (await state(page))!.count).toBe(`Step 3 of ${proc.steps.length}`);
+    await page.evaluate(() => (document.querySelector("[data-steplight-assist]")!.shadowRoot!.querySelectorAll(".right .btn")[0] as HTMLButtonElement).click());
+    await expect.poll(async () => (await state(page))!.count).toBe(`Step 2 of ${proc.steps.length}`);
+    // Exit removes the overlay and forgets the session
+    await page.evaluate(() => (document.querySelector("[data-steplight-assist]")!.shadowRoot!.querySelector(".x") as HTMLButtonElement).click());
+    expect(await state(page)).toBeNull();
+    await page.reload();
+    await page.waitForTimeout(500);
+    expect(await state(page)).toBeNull();
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 60_000);
+
+  it("auto-starts from the script tag's data-process-url", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await serve(page, { scriptAttrs: 'data-process-url="/api/proc.json"' });
+    await page.goto("http://app.test/");
+    await expect.poll(async () => (await state(page))?.count).toBe(`Step 1 of ${proc.steps.length}`);
+    await page.close();
+  }, 30_000);
+
+  it("waits for elements that appear later", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await serve(page, { lateName: true });
+    await page.goto("http://app.test/");
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p), proc);
+    await page.waitForTimeout(200);
+    const s = (await state(page))!;
+    expect(s.ringOn).toBe(false);
+    expect(s.text).toContain("Looking for this element");
+    await expect.poll(async () => (await state(page))!.ringOn, { timeout: 5000 }).toBe(true);
+    expect(near((await state(page))!.ring, await rectOf(page, "#name"))).toBe(true);
+    await page.close();
+  }, 30_000);
+
+  it("follows the element on scroll and docks the card on phones", async () => {
+    const page = await browser.newPage({ viewport: { width: 380, height: 300 } });
+    await serve(page);
+    await page.goto("http://app.test/");
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p, { startAt: 3 }), proc);
+    await expect.poll(async () => (await state(page))?.ringOn).toBe(true);
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#save"))).toBe(true);
+    const s = (await state(page))!;
+    expect(s.card.x).toBeGreaterThanOrEqual(0);
+    expect(s.card.x + s.card.width).toBeLessThanOrEqual(380);
+    await page.evaluate(() => window.scrollBy(0, 40));
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#save"))).toBe(true);
+    await page.close();
+  }, 30_000);
+
+  it("fallback resolver handles role|name, label, text and css selectors", async () => {
+    const page = await browser.newPage();
+    await serve(page);
+    await page.goto("http://app.test/");
+    const ids = await page.evaluate(() => {
+      const r = (window as any).SteplightAssist.resolveTarget;
+      const t = (selectors: unknown[]) => r({ selectors, tag: "" })?.element?.id || r({ selectors, tag: "" })?.element?.textContent || null;
+      return {
+        role: t([{ kind: "role", value: "button|Save" }]),
+        label: t([{ kind: "label", value: "E-mail" }]),
+        text: t([{ kind: "text", value: "Cancel" }]),
+        css: t([{ kind: "css", value: "select#country" }]),
+        healed: r({ selectors: [{ kind: "id", value: "nope" }, { kind: "label", value: "Country" }], tag: "select" })?.index,
+        none: r({ selectors: [{ kind: "id", value: "nope" }], tag: "div" }),
+      };
+    });
+    expect(ids).toEqual({ role: "save", label: "email", text: "Cancel", css: "country", healed: 1, none: null });
+    await page.close();
+  }, 30_000);
+});

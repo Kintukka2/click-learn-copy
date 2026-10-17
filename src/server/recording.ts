@@ -1,0 +1,114 @@
+// Recording sessions: the extension (or the Playwright recorder) streams CapturePayloads here and
+// they become Steps. Noise reduction happens here so every capture source benefits:
+//  - a click into a text field followed by typing into the same field collapses into one "type" step
+//  - repeated "type" events on the same field keep only the final value
+//  - a click on a <select>/checkbox immediately followed by its select/check event is dropped
+import { newId, now } from "../core/ids.js";
+import { instructionFor } from "../core/instructions.js";
+import type { CapturePayload, Process, Step, Target } from "../core/model.js";
+import type { Store } from "./store.js";
+
+interface Session {
+  token: string;
+  processId: string;
+  startedAt: string;
+  count: number;
+  active: boolean;
+}
+
+const sessions = new Map<string, Session>();
+
+export function startSession(store: Store, processId: string, replace = false): Session | undefined {
+  const proc = store.getProcess(processId);
+  if (!proc) return undefined;
+  if (replace) store.updateProcess(processId, { steps: [], localizations: {}, lastReplay: undefined });
+  // only one active session per process
+  for (const s of sessions.values()) if (s.processId === processId) s.active = false;
+  const s: Session = { token: newId("rec"), processId, startedAt: now(), count: 0, active: true };
+  sessions.set(s.token, s);
+  return s;
+}
+
+export function getSession(token: string) {
+  return sessions.get(token);
+}
+
+export function activeSessions() {
+  return [...sessions.values()].filter((s) => s.active);
+}
+
+export function stopSession(token: string) {
+  const s = sessions.get(token);
+  if (s) s.active = false;
+  return s;
+}
+
+function sameTarget(a?: Target, b?: Target): boolean {
+  if (!a || !b) return false;
+  const ka = a.selectors[0];
+  const kb = b.selectors[0];
+  if (ka && kb && ka.kind === kb.kind && ka.value === kb.value) return true;
+  return !!a.name && a.name === b.name && a.tag === b.tag && a.label === b.label;
+}
+
+function isTextField(t?: Target) {
+  if (!t) return false;
+  if (t.tag === "textarea") return true;
+  if (t.tag === "input") return !["checkbox", "radio", "button", "submit", "reset", "file", "range", "color"].includes(t.inputType ?? "text");
+  return t.role === "textbox" || t.role === "searchbox";
+}
+
+/** Apply one captured event to a process. Returns the affected step (or undefined if dropped). */
+export function applyCapture(store: Store, proc: Process, payload: CapturePayload): Step | undefined {
+  const ev = payload.event;
+  const steps = proc.steps;
+  const last = steps[steps.length - 1];
+
+  // collapse type-after-type on the same field
+  if (ev.action === "type" && last && last.action === "type" && sameTarget(last.target, ev.target)) {
+    last.value = ev.value;
+    last.sensitive = ev.sensitive || last.sensitive;
+    if (!last.titleEdited) last.title = instructionFor({ action: "type", target: last.target, value: last.value, sensitive: last.sensitive }, proc.lang);
+    store.saveProcess(proc);
+    return last;
+  }
+
+  // a click that only focused a field (or opened a select / toggled a checkbox) is replaced by the real action
+  const absorbs =
+    last &&
+    last.action === "click" &&
+    sameTarget(last.target, ev.target) &&
+    ((ev.action === "type" && isTextField(last.target)) || ev.action === "select" || ev.action === "check");
+
+  // Don't record pressing Enter right after typing as a separate step if the author didn't want it?
+  // We keep it: "Press Enter" is a real instruction in many ERPs.
+
+  let screenshot: string | undefined;
+  if (payload.screenshotDataUrl) screenshot = store.saveMedia(proc.projectId, payload.screenshotDataUrl);
+
+  const step: Step = {
+    id: newId("stp"),
+    action: ev.action,
+    target: ev.target,
+    value: ev.value,
+    optionValue: ev.optionValue,
+    sensitive: ev.sensitive,
+    url: ev.url,
+    pageTitle: ev.pageTitle,
+    title: instructionFor({ action: ev.action, target: ev.target, value: ev.value, sensitive: ev.sensitive }, proc.lang),
+    screenshot,
+    viewport: ev.viewport,
+    capturedAt: now(),
+  };
+
+  if (absorbs) {
+    // keep the click's screenshot (taken before the field had focus) if the new event has none
+    step.screenshot = step.screenshot ?? last.screenshot;
+    steps[steps.length - 1] = step;
+  } else {
+    steps.push(step);
+  }
+  if (!proc.startUrl) proc.startUrl = ev.url;
+  store.saveProcess(proc);
+  return step;
+}

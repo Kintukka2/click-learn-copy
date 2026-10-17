@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Steplight Recorder</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body class="popup">
+  <header class="top">
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 16 16" fill="#fff"><rect x="2" y="10" width="3" height="4" rx="1"/><rect x="6.5" y="6.5" width="3" height="7.5" rx="1"/><rect x="11" y="2" width="3" height="12" rx="1"/></svg></span>
+    <div><h1>Steplight Recorder</h1><div class="sub">Record once, publish everywhere</div></div>
+    <span class="status" id="status"><i></i><span>…</span></span>
+  </header>
+
+  <section class="body" id="idle" hidden>
+    <label class="f" for="project">Project</label>
+    <select id="project"></select>
+    <label class="f" for="process">Process</label>
+    <select id="process"></select>
+    <div id="new-wrap" hidden>
+      <label class="f" for="new-title">New process title</label>
+      <input type="text" id="new-title" placeholder="e.g. Create a new customer">
+      <label class="f" for="new-chapter">Chapter</label>
+      <input type="text" id="new-chapter" placeholder="e.g. Sales">
+    </div>
+    <label class="check" id="replace-wrap"><input type="checkbox" id="replace"> Replace the existing steps</label>
+    <div class="row"><button class="btn primary" id="start">Start recording</button></div>
+    <div class="hint">Steplight records clicks, typing and selections in the current tab, with a screenshot of each step.</div>
+    <div class="error" id="error" hidden></div>
+  </section>
+
+  <section class="body" id="recording" hidden>
+    <div class="rec-card">
+      <div><span class="dot"></span>Recording</div>
+      <div class="title" id="rec-title"></div>
+      <div class="count"><span id="rec-count">0</span><small>steps</small></div>
+    </div>
+    <div class="row"><button class="btn danger" id="stop">Stop recording</button></div>
+    <div class="error" id="rec-error" hidden></div>
+  </section>
+
+  <section class="body" id="offline" hidden>
+    <div class="error">Cannot reach the Steplight server. Check the server URL below and make sure Steplight is running.</div>
+  </section>
+
+  <footer class="links">
+    <button class="link" id="open-panel" type="button">Open help panel</button>
+    <a class="link" id="open-studio" href="#" target="_blank">Open Studio ↗</a>
+  </footer>
+  <details class="settings" id="settings">
+    <summary>Settings</summary>
+    <label class="f" for="server">Steplight server URL</label>
+    <input type="url" id="server" placeholder="http://localhost:4100">
+    <div class="row"><button class="btn" id="save-server">Save</button></div>
+  </details>
+  <script src="popup.js"></script>
+</body>
+</html>

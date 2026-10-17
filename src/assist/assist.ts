@@ -1,0 +1,477 @@
+// Assist: in-app guidance on the live application. Highlights the element of the current step,
+// shows a tooltip card next to it and advances when the user performs the recorded action.
+// The overlay lives in an open shadow root on a host marked data-steplight-ignore.
+import { plainText, richText } from "../core/instructions.js";
+import type { ResolvedProcess, ResolvedStep } from "../core/model.js";
+import { positionCard } from "../players/stage.js";
+import { playerStrings } from "../players/strings.js";
+import css from "./assist.css";
+import { isVisible, resolveTarget as fallbackResolve, type Resolved } from "./fallback-resolve.js";
+
+export type AssistEventType = "start" | "step" | "complete" | "exit";
+export interface AssistOptions {
+  ui?: Record<string, string>;
+  startAt?: number;
+  onEvent?: (type: AssistEventType, data?: unknown) => void;
+  /** Brand colour (hex), applied as --sl-primary. */
+  primaryColor?: string;
+}
+
+/** Optional external resolver (e.g. SteplightCapture.resolve when capture.js is on the page). */
+type ResolveFn = (t: NonNullable<ResolvedStep["target"]>, root?: Document) => Resolved | null;
+
+const KEY_ACTIVE = "steplight.assist.active";
+const keyFor = (pid: string) => `steplight.assist.${pid}`;
+
+function storage(): Storage | null {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+export interface SavedState {
+  pid: string;
+  i: number;
+  proc: ResolvedProcess;
+  ui?: Record<string, string>;
+}
+
+export function loadActive(): SavedState | null {
+  try {
+    const raw = storage()?.getItem(KEY_ACTIVE);
+    return raw ? (JSON.parse(raw) as SavedState) : null;
+  } catch {
+    return null;
+  }
+}
+
+const ICON_CHECK = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const ICON_X = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+
+function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, html?: string): HTMLElementTagNameMap[K] {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  return e;
+}
+
+function sameRect(a: DOMRect | null, b: DOMRect) {
+  return !!a && Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) < 0.5 && Math.abs(a.width - b.width) < 0.5 && Math.abs(a.height - b.height) < 0.5;
+}
+
+export class AssistSession {
+  readonly proc: ResolvedProcess;
+  private opts: AssistOptions;
+  private s: Record<string, string>;
+  private i = 0;
+  private host: HTMLElement;
+  private shadow: ShadowRoot;
+  private ring: HTMLElement;
+  private card: HTMLElement;
+  private target: Element | null = null;
+  private lastRect: DOMRect | null = null;
+  private raf = 0;
+  private poll = 0;
+  private searchStarted = 0;
+  private scrolled = false;
+  private advancing = false;
+  private done = false;
+  private stopped = false;
+  private resolver: ResolveFn;
+  private onDocClick = (e: Event) => this.handleClick(e);
+  private onDocChange = (e: Event) => this.handleChange(e);
+  private onDocKey = (e: KeyboardEvent) => this.handleKey(e);
+  private onNav = () => this.handleNav();
+  private onResize = () => this.place(true);
+
+  constructor(proc: ResolvedProcess, opts: AssistOptions = {}, resolver?: ResolveFn) {
+    this.proc = proc;
+    this.opts = opts;
+    this.s = playerStrings(proc.lang, opts.ui);
+    this.resolver = resolver ?? fallbackResolve;
+    this.host = document.createElement("div");
+    this.host.setAttribute("data-steplight-ignore", "");
+    this.host.setAttribute("data-steplight-assist", "");
+    this.host.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483000;";
+    this.shadow = this.host.attachShadow({ mode: "open" });
+    const style = document.createElement("style");
+    style.textContent = css;
+    this.ring = el("div", "ring");
+    this.ring.setAttribute("data-steplight-ignore", "");
+    this.ring.append(el("span", "beacon"));
+    this.card = el("div", "card");
+    this.card.setAttribute("role", "dialog");
+    this.card.setAttribute("aria-live", "polite");
+    this.card.setAttribute("data-steplight-ignore", "");
+    this.card.setAttribute("lang", proc.lang);
+    this.shadow.append(style, this.ring, this.card);
+    if (opts.primaryColor) this.host.style.setProperty("--sl-primary", opts.primaryColor);
+  }
+
+  start(at = 0) {
+    (document.body ?? document.documentElement).append(this.host);
+    document.addEventListener("click", this.onDocClick, true);
+    document.addEventListener("change", this.onDocChange, true);
+    document.addEventListener("keydown", this.onDocKey, true);
+    window.addEventListener("hashchange", this.onNav);
+    window.addEventListener("popstate", this.onNav);
+    window.addEventListener("resize", this.onResize);
+    window.addEventListener("scroll", this.onResize, true);
+    this.opts.onEvent?.("start", { processId: this.proc.id, step: at });
+    this.go(Math.max(0, Math.min(at, this.proc.steps.length - 1)));
+    const tick = () => {
+      if (this.stopped) return;
+      this.place(false);
+      this.raf = requestAnimationFrame(tick);
+    };
+    this.raf = requestAnimationFrame(tick);
+  }
+
+  stop(reason: "exit" | "complete" | "silent" = "silent") {
+    if (this.stopped) return;
+    this.stopped = true;
+    cancelAnimationFrame(this.raf);
+    window.clearInterval(this.poll);
+    document.removeEventListener("click", this.onDocClick, true);
+    document.removeEventListener("change", this.onDocChange, true);
+    document.removeEventListener("keydown", this.onDocKey, true);
+    window.removeEventListener("hashchange", this.onNav);
+    window.removeEventListener("popstate", this.onNav);
+    window.removeEventListener("resize", this.onResize);
+    window.removeEventListener("scroll", this.onResize, true);
+    this.host.remove();
+    if (reason !== "silent") this.clearSaved();
+    if (reason === "exit") this.opts.onEvent?.("exit", { processId: this.proc.id, step: this.i });
+  }
+
+  get index() {
+    return this.i;
+  }
+
+  // ------------------------------------------------------------------ persistence
+
+  private save(i: number) {
+    try {
+      const st = storage();
+      st?.setItem(keyFor(this.proc.id), JSON.stringify({ i }));
+      st?.setItem(KEY_ACTIVE, JSON.stringify({ pid: this.proc.id, i, proc: this.proc, ui: this.opts.ui } satisfies SavedState));
+    } catch {
+      /* storage full or blocked */
+    }
+  }
+
+  private clearSaved() {
+    try {
+      storage()?.removeItem(keyFor(this.proc.id));
+      storage()?.removeItem(KEY_ACTIVE);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // ------------------------------------------------------------------ steps
+
+  private get step(): ResolvedStep | undefined {
+    return this.proc.steps[this.i];
+  }
+
+  go(i: number) {
+    if (this.stopped) return;
+    if (i >= this.proc.steps.length) {
+      this.complete();
+      return;
+    }
+    this.i = Math.max(0, i);
+    this.done = false;
+    this.advancing = false;
+    this.target = null;
+    this.lastRect = null;
+    this.scrolled = false;
+    this.searchStarted = Date.now();
+    this.save(this.i);
+    this.renderCard();
+    this.ring.classList.remove("on");
+    this.opts.onEvent?.("step", { index: this.i, stepId: this.step?.id });
+    this.find();
+    window.clearInterval(this.poll);
+    this.poll = window.setInterval(() => this.find(), 350);
+  }
+
+  next() {
+    this.go(this.i + 1);
+  }
+
+  private needsTarget(st: ResolvedStep) {
+    return !!st.target && st.action !== "note" && st.action !== "navigate" && !(st.action === "press" && !st.target.selectors?.length);
+  }
+
+  private find() {
+    const st = this.step;
+    if (!st || this.stopped || this.done) return;
+    if (st.action === "navigate" && st.value && this.urlMatches(st.value)) {
+      this.next();
+      return;
+    }
+    if (!this.needsTarget(st)) {
+      this.target = null;
+      this.updateStatus();
+      return;
+    }
+    if (this.target && this.target.isConnected && isVisible(this.target)) return;
+    let r: Resolved | null = null;
+    try {
+      r = this.resolver(st.target!, document);
+    } catch {
+      r = null;
+    }
+    if (!r && this.resolver !== fallbackResolve) r = fallbackResolve(st.target!, document);
+    const found = r?.element ?? null;
+    if (found !== this.target) {
+      this.target = found;
+      this.lastRect = null;
+      if (found && !this.scrolled) {
+        this.scrolled = true;
+        const rect = found.getBoundingClientRect();
+        if (rect.top < 0 || rect.bottom > window.innerHeight || rect.left < 0 || rect.right > window.innerWidth) {
+          found.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+        }
+      }
+      this.updateStatus();
+      this.place(true);
+    } else if (!found) this.updateStatus();
+  }
+
+  private urlMatches(url: string): boolean {
+    try {
+      const want = new URL(url, location.href);
+      const here = new URL(location.href);
+      return want.pathname === here.pathname && (want.hash.split("?")[0] || "") === (here.hash.split("?")[0] || "");
+    } catch {
+      return false;
+    }
+  }
+
+  // ------------------------------------------------------------------ rendering
+
+  private renderCard() {
+    const st = this.step!;
+    const n = this.proc.steps.length;
+    const s = this.s;
+    this.card.className = "card";
+    this.card.innerHTML = "";
+    this.card.setAttribute("aria-label", `${s.step} ${st.index} ${s.of} ${n}`);
+    const head = el("div", "head");
+    const count = el("span", "count");
+    count.textContent = `${s.step} ${st.index} ${s.of} ${n}`;
+    const proc = el("span", "proc");
+    proc.textContent = plainText(this.proc.title);
+    const close = el("button", "x", ICON_X);
+    close.type = "button";
+    close.setAttribute("aria-label", s.exit);
+    close.title = s.exit;
+    close.addEventListener("click", () => this.stop("exit"));
+    head.append(count, proc, close);
+    const title = el("div", "title", richText(st.title));
+    this.card.append(head, title);
+    if (st.description) this.card.append(el("div", "desc", richText(st.description)));
+    const status = el("div", "status");
+    status.hidden = true;
+    this.card.append(status);
+    const bar = el("div", "bar");
+    const fill = el("i");
+    fill.style.width = `${((st.index - 1) / n) * 100}%`;
+    bar.append(fill);
+    const actions = el("div", "actions");
+    const exit = this.button(s.exit, "ghost", () => this.stop("exit"));
+    const back = this.button(s.back, "", () => this.go(this.i - 1));
+    back.disabled = this.i === 0;
+    const needsAction = this.needsTarget(st) || st.action === "press";
+    const fwd = needsAction ? this.button(s.skip, "", () => this.next()) : this.button(s.next, "primary", () => this.next());
+    fwd.classList.add("fwd");
+    const right = el("div", "right");
+    right.append(back, fwd);
+    actions.append(exit, right);
+    this.card.append(actions, bar);
+    if (st.action === "navigate" && st.value) {
+      const go = this.button(s.goToPage, "primary", () => (location.href = st.value!));
+      right.prepend(go);
+    }
+  }
+
+  private button(label: string, kind: string, on: () => void) {
+    const b = el("button", `btn ${kind}`.trim());
+    b.type = "button";
+    b.textContent = label;
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      on();
+    });
+    return b;
+  }
+
+  private updateStatus() {
+    const st = this.step;
+    const status = this.card.querySelector<HTMLElement>(".status");
+    if (!st || !status) return;
+    if (!this.needsTarget(st) || this.target) {
+      status.hidden = true;
+      this.card.classList.remove("searching");
+      return;
+    }
+    const waited = Date.now() - this.searchStarted;
+    status.hidden = false;
+    this.card.classList.add("searching");
+    const lost = waited > 5000;
+    const key = lost ? "lost" : "finding";
+    if (status.dataset.key === key) return;
+    status.dataset.key = key;
+    status.innerHTML = "";
+    const msg = el("span", "msg");
+    msg.textContent = lost ? this.s.notFound : this.s.finding;
+    if (!lost) status.append(el("span", "spin"));
+    status.append(msg);
+    if (lost && st.url && !this.urlMatches(st.url)) {
+      const go = this.button(this.s.goToPage, "link", () => (location.href = st.url));
+      status.append(go);
+    }
+  }
+
+  /** Position ring and card; `force` re-positions even if the target did not move. */
+  private place(force: boolean) {
+    if (this.stopped) return;
+    const t = this.target;
+    if (this.done) return;
+    if (t && !t.isConnected) {
+      this.target = null;
+      this.lastRect = null;
+      this.find();
+      return;
+    }
+    if (!t) {
+      this.ring.classList.remove("on");
+      this.card.classList.add("floating");
+      this.card.dataset.side = "none";
+      this.card.style.left = "";
+      this.card.style.top = "";
+      return;
+    }
+    const r = t.getBoundingClientRect();
+    if (!force && sameRect(this.lastRect, r)) return;
+    this.lastRect = r;
+    const pad = 4;
+    // First placement for a (new) element: jump there instead of animating from the old spot.
+    const jump = !this.ring.classList.contains("on");
+    if (jump) this.ring.classList.add("jump");
+    this.ring.style.left = `${r.left - pad}px`;
+    this.ring.style.top = `${r.top - pad}px`;
+    this.ring.style.width = `${r.width + pad * 2}px`;
+    this.ring.style.height = `${r.height + pad * 2}px`;
+    this.ring.classList.add("on");
+    if (jump) {
+      void this.ring.offsetWidth;
+      this.ring.classList.remove("jump");
+    }
+    this.card.classList.remove("floating");
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    if (W < 520) {
+      // Phones: dock the card at the bottom, away from the element if it sits low.
+      this.card.dataset.side = "dock";
+      this.card.style.left = "";
+      this.card.style.top = r.top > H * 0.55 ? "12px" : "";
+      this.card.classList.toggle("dock-top", r.top > H * 0.55);
+      return;
+    }
+    this.card.classList.remove("dock-top");
+    positionCard(this.card, { x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2 }, W, H, 14, 12);
+  }
+
+  // ------------------------------------------------------------------ action detection
+
+  private isTarget(node: EventTarget | null): boolean {
+    const t = this.target;
+    if (!t || !(node instanceof Node)) return false;
+    if (t === node || t.contains(node)) return true;
+    // A click on the <label> of the target control (or the control of a target label).
+    if (node instanceof HTMLLabelElement && node.control === t) return true;
+    if (t instanceof HTMLLabelElement && t.control === node) return true;
+    return false;
+  }
+
+  private advanceSoon(delay = 120) {
+    if (this.advancing) return;
+    this.advancing = true;
+    this.ring.classList.add("ok");
+    // Persist first: the action may navigate away.
+    this.save(this.i + 1);
+    const at = this.i;
+    window.setTimeout(() => {
+      this.ring.classList.remove("ok");
+      if (!this.stopped && this.i === at) this.next();
+    }, delay);
+  }
+
+  private handleClick(e: Event) {
+    const st = this.step;
+    if (!st || this.done || this.host.contains(e.target as Node)) return;
+    if (!this.isTarget(e.target)) return;
+    if (st.action === "click") this.advanceSoon();
+    else if (st.action === "check" && !(this.target instanceof HTMLInputElement)) this.advanceSoon(); // custom checkbox
+    else if (st.action === "select" && !(this.target instanceof HTMLSelectElement) && this.target?.getAttribute("role") !== "combobox") this.advanceSoon();
+  }
+
+  private handleChange(e: Event) {
+    const st = this.step;
+    if (!st || this.done || !this.isTarget(e.target)) return;
+    const t = e.target as HTMLInputElement | HTMLSelectElement;
+    if (st.action === "type") {
+      if ((t as HTMLInputElement).value?.trim()) this.advanceSoon(60);
+    } else if (st.action === "select" || st.action === "check") this.advanceSoon(60);
+  }
+
+  private handleKey(e: KeyboardEvent) {
+    const st = this.step;
+    if (!st || this.done || this.host.contains(e.target as Node)) return;
+    if (e.key === "Escape" && e.target === document.body) return;
+    if (st.action === "press") {
+      if (e.key.toLowerCase() === (st.value || "Enter").toLowerCase() && (!this.target || this.isTarget(e.target) || e.target === document.body)) this.advanceSoon(60);
+      return;
+    }
+    if (st.action === "type" && e.key === "Enter" && this.isTarget(e.target) && (e.target as HTMLInputElement).value?.trim()) this.advanceSoon(60);
+  }
+
+  private handleNav() {
+    this.target = null;
+    this.lastRect = null;
+    this.searchStarted = Date.now();
+    this.find();
+  }
+
+  // ------------------------------------------------------------------ completion
+
+  private complete() {
+    this.done = true;
+    window.clearInterval(this.poll);
+    this.target = null;
+    this.ring.classList.remove("on");
+    this.clearSaved();
+    const s = this.s;
+    this.card.className = "card floating done";
+    this.card.dataset.side = "none";
+    this.card.style.left = "";
+    this.card.style.top = "";
+    this.card.innerHTML = "";
+    const badge = el("div", "badge", ICON_CHECK);
+    const title = el("div", "title");
+    title.textContent = s.done;
+    const sub = el("div", "desc", richText(this.proc.title));
+    const actions = el("div", "actions");
+    const close = this.button(s.close, "primary", () => this.stop("silent"));
+    actions.append(el("span"), close);
+    this.card.append(badge, title, sub, actions);
+    this.opts.onEvent?.("complete", { processId: this.proc.id });
+    close.focus({ preventScroll: true });
+  }
+}
