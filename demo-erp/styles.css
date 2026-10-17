@@ -418,3 +418,5 @@ input.switch:focus-visible { outline: 3px solid var(--brand-100); }
 .layout-v2 .card-layout { grid-template-columns: minmax(0, 1fr) 260px; }
 .layout-v2 .field-grid { column-gap: 28px; }
 .layout-v2 .page { padding-left: 24px; padding-right: 24px; }
+.layout-v2 .lines .c-uom { display: none; }
+.layout-v2 .lines td select { min-width: 180px; }

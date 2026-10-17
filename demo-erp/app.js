@@ -796,12 +796,12 @@
         '<td><select id="line-' + n + '-item" aria-label="' + esc(t("col.item")) + '" data-lfield="itemNo"' + (ro ? " disabled" : "") + ">" + itemOpts(l.itemNo) + "</select></td>" +
         '<td class="muted" data-cell="no">' + esc(it ? it.no : "") + "</td>" +
         '<td><input id="line-' + n + '-qty" type="text" inputmode="decimal" class="num" aria-label="' + esc(t("col.quantity")) + '" data-lfield="qty" value="' + esc(l.qty === "" ? "" : num(l.qty, 0)) + '"' + (ro ? " disabled" : "") + "></td>" +
-        '<td class="muted" data-cell="uom">' + esc(it ? optLabel("uom", it.uom) : "") + "</td>" +
+        '<td class="muted c-uom" data-cell="uom">' + esc(it ? optLabel("uom", it.uom) : "") + "</td>" +
         '<td class="num" data-cell="price">' + (it ? num(l.unitPrice) : "") + "</td>" +
         '<td class="num strong" data-cell="amount">' + (it ? num(lineAmount(l)) : "") + "</td>" +
         "<td>" + (ro ? "" : '<button type="button" class="icon-btn small" data-act="delete-line" aria-label="' + esc(t("ab.deleteLine")) + '">' + icon("trash") + "</button>") + "</td></tr>";
     }).join("");
-    return '<div class="lines-wrap"><table class="grid lines" aria-label="' + esc(t("ft.lines")) + '"><thead><tr><th class="ln">#</th><th>' + esc(t("col.item")) + "</th><th>" + esc(t("col.no")) + '</th><th class="num">' + esc(t("col.quantity")) + "</th><th>" + esc(t("col.uom")) + '</th><th class="num">' + esc(t("col.unitPriceExcl")) + '</th><th class="num">' + esc(t("col.lineAmount")) + "</th><th></th></tr></thead><tbody>" +
+    return '<div class="lines-wrap"><table class="grid lines" aria-label="' + esc(t("ft.lines")) + '"><thead><tr><th class="ln">#</th><th>' + esc(t("col.item")) + "</th><th>" + esc(t("col.no")) + '</th><th class="num">' + esc(t("col.quantity")) + '</th><th class="c-uom">' + esc(t("col.uom")) + '</th><th class="num">' + esc(t("col.unitPriceExcl")) + '</th><th class="num">' + esc(t("col.lineAmount")) + "</th><th></th></tr></thead><tbody>" +
       (rows || '<tr class="empty-row"><td colspan="8">' + esc(t("lines.empty")) + "</td></tr>") + "</tbody></table></div>";
   }
 
