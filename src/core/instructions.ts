@@ -217,7 +217,8 @@ export function instructionFor(input: InstructionInput, lang: Lang = "en"): stri
   return tpl
     .replace("{n}", n)
     .replace("{n}", kind === "typeSecret" ? n.toLowerCase() : n)
-    .replace("{v}", v);
+    .replace("{v}", v)
+    .replace(/([.!?])(\*\*)?\.$/, "$1$2"); // "Ext. Doc. No.**." → no double full stop
 }
 
 function kindFallbackName(input: InstructionInput, lang: Lang): string {

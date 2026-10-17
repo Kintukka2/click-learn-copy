@@ -157,7 +157,7 @@ describe("replay", () => {
       "Klik på **Ny**.",
       "Indtast **Fjord Kontormøbler ApS** i feltet **Navn**.",
       "Indtast **Strandvejen 60** i feltet **Adresse**.",
-      "Indtast **2900** i feltet **Postnr.**.",
+      "Indtast **2900** i feltet **Postnr.**",
       "Indtast **Hellerup** i feltet **By**.",
       "Vælg **Danmark** i **Land/område**.",
       "Indtast **indkob@fjordkontor.dk** i feltet **E-mail**.",

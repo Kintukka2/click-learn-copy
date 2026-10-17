@@ -58,6 +58,15 @@ Record your own processes with the browser extension:
 
 Without an API key everything still works: AI help answers by retrieval over the documented processes, and instructions are localized by templates + localized replay.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Process editor](docs/screenshots/studio-editor.png) **Studio — process editor** | ![Localized](docs/screenshots/studio-editor-danish.png) **Danish version from a localized replay** |
+| ![Show Me](docs/screenshots/player-show.png) **Show Me player in the portal** | ![Test Me](docs/screenshots/player-test.png) **Test Me assessment** |
+| ![Assist](docs/screenshots/assist-in-app.png) **Assist guiding inside the live app** | ![Portal](docs/screenshots/portal-home.png) **Learning portal** |
+| ![Project](docs/screenshots/studio-project.png) **Processes with automated test status** | ![Demo ERP](docs/screenshots/demo-erp-dashboard.png) **Bundled Northwind ERP demo app** |
+
 ## How it works
 
 ```

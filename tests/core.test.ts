@@ -21,6 +21,11 @@ describe("instructions", () => {
     expect(instructionFor({ action: "press", value: "Enter" })).toBe("Press **Enter**.");
   });
 
+  it("avoids a double full stop after abbreviations", () => {
+    expect(instructionFor({ action: "type", target: field("Eksternt bilagsnr."), value: "X-1" }, "da")).toBe("Indtast **X-1** i feltet **Eksternt bilagsnr.**");
+    expect(instructionFor({ action: "type", target: field("Name"), value: "Contoso Ltd." })).toBe("In the **Name** field, enter **Contoso Ltd.**");
+  });
+
   it("masks sensitive values", () => {
     const t = instructionFor({ action: "type", target: field("Password"), value: "hunter2", sensitive: true });
     expect(t).not.toContain("hunter2");

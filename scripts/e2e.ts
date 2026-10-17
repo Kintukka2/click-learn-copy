@@ -149,9 +149,27 @@ async function screenshots(project: Project, processes: Process[]) {
     await page.goto(`${BASE}/demo-erp/#/customers?lang=da`);
     await shot(page, "demo-erp-danish");
 
+    await page.goto(`${BASE}/demo-erp/#/customers?v=2`);
+    await shot(page, "demo-erp-layout-v2");
+    await page.goto(`${BASE}/demo-erp/#/?v=1`); // back to the standard layout (persisted in localStorage)
+
     // studio
     await page.goto(`${BASE}/studio/`);
+    await page.waitForSelector("text=Northwind ERP Training");
     await shot(page, "studio-projects");
+    await page.goto(`${BASE}/studio/projects/${project.id}`);
+    await page.waitForTimeout(800);
+    await shot(page, "studio-project");
+    const order = processes.find((p) => /sales order/i.test(p.title)) ?? first;
+    await page.goto(`${BASE}/studio/processes/${order.id}`);
+    await page.waitForTimeout(1500);
+    await shot(page, "studio-editor");
+    await page.goto(`${BASE}/studio/processes/${order.id}?lang=da`);
+    await page.waitForTimeout(1500);
+    await shot(page, "studio-editor-danish");
+    await page.goto(`${BASE}/studio/projects/${project.id}/analytics`);
+    await page.waitForTimeout(800);
+    await shot(page, "studio-analytics");
 
     // portal
     await page.goto(`${BASE}/portal/${project.id}/`);
@@ -162,7 +180,9 @@ async function screenshots(project: Project, processes: Process[]) {
     await shot(page, "portal-written-guide");
     for (const mode of ["show", "try", "test"]) {
       await page.goto(`${BASE}/portal/${project.id}/#/p/${first.id}/${mode}`);
-      await page.waitForTimeout(mode === "show" ? 3500 : 1200);
+      await page.waitForTimeout(800);
+      await page.locator(".sl-card-intro button").first().click().catch(() => undefined);
+      await page.waitForTimeout(mode === "show" ? 7000 : 1500);
       await shot(page, `player-${mode}`);
     }
 
