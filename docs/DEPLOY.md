@@ -64,6 +64,7 @@ After about a minute, `https://steplight-origin.examplewebsite.app/steplight/api
 2. Open **Edit code**, replace the code with the contents of [`deploy/cloudflare-worker/worker.js`](../deploy/cloudflare-worker/worker.js), and deploy again.
 3. Under **Settings → Variables and secrets**, add `STEPLIGHT_ORIGIN` = `https://steplight-origin.examplewebsite.app`.
 4. Under **Settings → Domains & Routes → Add → Route**, set the route to `examplewebsite.app/steplight*` and the zone to `examplewebsite.app`.
+5. A Worker route only runs on a hostname that has a proxied DNS record. If `examplewebsite.app` doesn't serve a site yet (the browser shows `DNS_PROBE_FINISHED_NXDOMAIN`), go to **examplewebsite.app → DNS → Records → Add record** and add type `AAAA`, name `@`, IPv6 address `100::`, with proxy status **Proxied**. `100::` is Cloudflare's placeholder for hostnames that are served entirely by Workers.
 
 **Or from a computer:**
 
