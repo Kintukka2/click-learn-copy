@@ -1,9 +1,10 @@
 // Bundles the browser-side libraries into dist/lib and assembles the browser extension in dist/extension.
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, "dist", "lib");
 fs.mkdirSync(out, { recursive: true });
 
