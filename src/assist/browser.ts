@@ -1,5 +1,5 @@
 // esbuild entry for dist/lib/assist.js → window.SteplightAssist (see docs/ARCHITECTURE.md).
-//   SteplightAssist.start(process, { ui?, startAt?, onEvent?, primaryColor? })
+//   SteplightAssist.start(process, { ui?, startAt?, onEvent?, primaryColor?, eventsUrl? })
 //   SteplightAssist.stop()
 // Auto-start: resumes a session saved in sessionStorage, or loads the process from a
 // `sl_assist=<url-encoded resolved-process URL>` parameter (query or hash) or from the
@@ -23,11 +23,47 @@ function externalResolver(): (t: Target, root?: Document) => Resolved | null {
   return (t, root) => captureResolve(t, root ?? document) as Resolved | null;
 }
 
+/** The analytics endpoint of the Steplight server a resolved process was loaded from, if any. */
+function eventsUrlFor(processUrl: string): string | undefined {
+  try {
+    const u = new URL(processUrl, location.href);
+    const i = u.pathname.indexOf("/api/processes/");
+    return i < 0 ? undefined : `${u.origin}${u.pathname.slice(0, i)}/api/events`;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Reports assist_start (fresh sessions only, not resumes after navigation) and assist_complete. */
+function withAnalytics(process: ResolvedProcess, opts: AssistOptions, fresh: boolean): AssistOptions {
+  const url = opts.eventsUrl;
+  if (!url) return opts;
+  const send = (type: "assist_start" | "assist_complete") =>
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId: process.projectId, processId: process.id, type, lang: process.lang }),
+      keepalive: true,
+    }).catch(() => undefined);
+  return {
+    ...opts,
+    onEvent: (type, data) => {
+      if (type === "start" && fresh) void send("assist_start");
+      if (type === "complete") void send("assist_complete");
+      opts.onEvent?.(type, data);
+    },
+  };
+}
+
 export function start(process: ResolvedProcess, opts: AssistOptions = {}): void {
+  begin(process, opts, true);
+}
+
+function begin(process: ResolvedProcess, opts: AssistOptions, fresh: boolean): void {
   if (!process || !Array.isArray(process.steps)) throw new Error("SteplightAssist.start: invalid process");
   stop();
   const run = () => {
-    current = new AssistSession(process, opts, externalResolver());
+    current = new AssistSession(process, withAnalytics(process, opts, fresh), externalResolver());
     current.start(opts.startAt ?? 0);
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run, { once: true });
@@ -95,14 +131,14 @@ async function autoStart() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const proc = (await res.json()) as ResolvedProcess;
       if (param) stripParam();
-      const startAt = saved && saved.pid === proc.id ? saved.i : 0;
-      start(proc, { startAt, ui: saved?.pid === proc.id ? saved.ui : undefined });
+      const resuming = saved?.pid === proc.id;
+      begin(proc, { startAt: resuming ? saved.i : 0, ui: resuming ? saved.ui : undefined, eventsUrl: (resuming && saved.eventsUrl) || eventsUrlFor(url) }, !resuming);
     } catch (e) {
       console.warn("[Steplight Assist] could not load process", e);
     }
     return;
   }
-  if (saved?.proc) start(saved.proc, { startAt: saved.i, ui: saved.ui });
+  if (saved?.proc) begin(saved.proc, { startAt: saved.i, ui: saved.ui, eventsUrl: saved.eventsUrl }, false);
 }
 
 if (typeof window !== "undefined" && !(window as unknown as { __steplightAssistLoaded?: boolean }).__steplightAssistLoaded) {
