@@ -15,6 +15,8 @@ export interface AssistOptions {
   onEvent?: (type: AssistEventType, data?: unknown) => void;
   /** Brand colour (hex), applied as --sl-primary. */
   primaryColor?: string;
+  /** Steplight analytics endpoint (…/api/events); kept with the saved session so it survives navigation. */
+  eventsUrl?: string;
 }
 
 /** Optional external resolver (e.g. SteplightCapture.resolve when capture.js is on the page). */
@@ -36,6 +38,7 @@ export interface SavedState {
   i: number;
   proc: ResolvedProcess;
   ui?: Record<string, string>;
+  eventsUrl?: string;
 }
 
 export function loadActive(): SavedState | null {
@@ -156,7 +159,7 @@ export class AssistSession {
     try {
       const st = storage();
       st?.setItem(keyFor(this.proc.id), JSON.stringify({ i }));
-      st?.setItem(KEY_ACTIVE, JSON.stringify({ pid: this.proc.id, i, proc: this.proc, ui: this.opts.ui } satisfies SavedState));
+      st?.setItem(KEY_ACTIVE, JSON.stringify({ pid: this.proc.id, i, proc: this.proc, ui: this.opts.ui, eventsUrl: this.opts.eventsUrl } satisfies SavedState));
     } catch {
       /* storage full or blocked */
     }
