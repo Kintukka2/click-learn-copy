@@ -152,6 +152,39 @@ describe.skipIf(!hasFixture)("SteplightAssist", () => {
     await page.close();
   }, 60_000);
 
+  it("reports assist_start once per session and assist_complete to the server it loaded from", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page);
+    const events: Record<string, unknown>[] = [];
+    await page.route("http://app.test/steplight/api/**", (route) => {
+      const u = new URL(route.request().url());
+      if (u.pathname === "/steplight/api/events") {
+        events.push(route.request().postDataJSON());
+        return route.fulfill({ status: 204 });
+      }
+      return route.fulfill({ body: JSON.stringify(proc), contentType: "application/json" });
+    });
+    const src = `http://app.test/steplight/api/processes/${proc.id}/resolved?lang=en`;
+    await page.goto(`http://app.test/app.html#/customers/new?sl_assist=${encodeURIComponent(src)}`);
+    await expect.poll(async () => (await state(page))?.ringOn).toBe(true);
+    await page.fill("#name", "Contoso Ltd");
+    await page.locator("#name").blur();
+    await expect.poll(async () => (await state(page))!.count).toBe(`Step 2 of ${proc.steps.length}`);
+    await page.reload(); // resuming is the same session
+    await expect.poll(async () => (await state(page))?.count).toBe(`Step 2 of ${proc.steps.length}`);
+    await page.selectOption("#country", "DK");
+    await expect.poll(async () => (await state(page))!.count).toBe(`Step 3 of ${proc.steps.length}`);
+    await page.fill("#email", "orders@contoso.com");
+    await page.press("#email", "Enter");
+    await expect.poll(async () => (await state(page))!.count).toBe(`Step 4 of ${proc.steps.length}`);
+    await page.click("#save");
+    await expect.poll(async () => (await state(page))!.done).toBe(true);
+    await expect.poll(() => events.map((e) => e.type)).toEqual(["assist_start", "assist_complete"]);
+    expect(events[0]).toMatchObject({ projectId: proc.projectId, processId: proc.id, lang: "en" });
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 60_000);
+
   it("auto-starts from the script tag's data-process-url", async () => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await serve(page, { scriptAttrs: 'data-process-url="/api/proc.json"' });

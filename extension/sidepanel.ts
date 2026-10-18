@@ -76,8 +76,8 @@ async function guide(processId: string) {
     const [out] = await chrome.scripting.executeScript({
       target: { tabId: currentTab.id },
       world: "MAIN",
-      args: [code, proc, uiStrings(lang)],
-      func: (src: string, p: unknown, ui: Record<string, string>) => {
+      args: [code, proc, uiStrings(lang), `${server}/api/events`],
+      func: (src: string, p: unknown, ui: Record<string, string>, eventsUrl: string) => {
         const w = window as unknown as { SteplightAssist?: { start(p: unknown, o?: unknown): void; stop?(): void } };
         if (!w.SteplightAssist) {
           const s = document.createElement("script");
@@ -91,7 +91,7 @@ async function guide(processId: string) {
         } catch {
           /* not running */
         }
-        w.SteplightAssist.start(p, { ui });
+        w.SteplightAssist.start(p, { ui, eventsUrl });
         return "";
       },
     });
