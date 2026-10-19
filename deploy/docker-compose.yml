@@ -7,6 +7,8 @@ services:
     environment:
       STEPLIGHT_BASE_URL: ${STEPLIGHT_BASE_URL:?set STEPLIGHT_BASE_URL, e.g. https://examplewebsite.app/steplight}
       STEPLIGHT_ACCESS_KEY: ${STEPLIGHT_ACCESS_KEY:?set an access key so only you can edit projects}
+      STEPLIGHT_PUBLISHER: ${STEPLIGHT_PUBLISHER:-}
+      STEPLIGHT_CONTACT_EMAIL: ${STEPLIGHT_CONTACT_EMAIL:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - steplight-data:/app/data

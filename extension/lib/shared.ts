@@ -39,6 +39,13 @@ export async function authHeaders(): Promise<Record<string, string>> {
   return key ? { "X-Steplight-Key": key } : {};
 }
 
+/** A failed server call; status is the HTTP status (401: an access key is needed or wrong). */
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
+}
+
 export async function api<T = unknown>(server: string, path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(server + "/api" + path, {
     ...init,
@@ -52,7 +59,7 @@ export async function api<T = unknown>(server: string, path: string, init?: Requ
     } catch {
       /* not json */
     }
-    throw new Error(msg);
+    throw new ApiError(msg, res.status);
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;

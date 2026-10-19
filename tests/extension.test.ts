@@ -1,5 +1,6 @@
-// Browser extension: toolbar badge with the number of guides recorded on the page, and the popup's
-// "Guides for this page" section. Loads the built extension (dist/extension) in Chromium against a
+// Browser extension: toolbar badge with the number of guides recorded on the page, the popup's
+// "Guides for this page" section, Guide me with the Assist bundled in the extension, and learner mode
+// (no Record or Studio without a valid access key). Loads the built extension (dist/extension) in Chromium against a
 // Steplight server on an ephemeral port; the application pages are served by route interception.
 /// <reference path="../extension/lib/chrome.d.ts" />
 import { execFileSync } from "node:child_process";
@@ -19,6 +20,10 @@ const DASH = "http://erp.test/?cmp=101a&mi=DefaultDashboard";
 
 let server: Server;
 let origin = "";
+let keyServer: Server;
+let keyOrigin = "";
+const KEY = "author-key";
+const libRequests: string[] = [];
 let ctx: BrowserContext;
 let sw: Worker;
 let extId = "";
@@ -44,6 +49,7 @@ describe("extension: guides for the page", () => {
     const outer = express();
     outer.use((req, _res, next) => {
       if (req.path === "/api/lookup") lookups.push(String(req.query.url));
+      if (req.path.startsWith("/lib/")) libRequests.push(req.path);
       next();
     });
     server = await new Promise<Server>((r) => {
@@ -55,6 +61,13 @@ describe("extension: guides for the page", () => {
     const prj = c.store.createProject({ name: "D365" });
     c.store.createProcess(prj.id, { title: "Create a PR", chapter: "Procurement", startUrl: DASH, steps: [step("s1", DASH)] });
     c.store.createProcess(prj.id, { title: "Approve a PR", startUrl: "http://erp.test/?cmp=101a&mi=PurchReqTableListPage", steps: [step("s1", "http://erp.test/?cmp=101a&mi=PurchReqTableListPage")] });
+
+    // a server with an access key, as deployed: without the key the extension is in learner mode
+    const { app: keyApp } = createApp({ dataDir: fs.mkdtempSync(path.join(os.tmpdir(), "sl-ext-key-")), baseUrl: "http://localhost", accessKey: KEY });
+    keyServer = await new Promise<Server>((r) => {
+      const s = keyApp.listen(0, () => r(s));
+    });
+    keyOrigin = `http://127.0.0.1:${(keyServer.address() as AddressInfo).port}`;
 
     ctx = await chromium.launchPersistentContext(fs.mkdtempSync(path.join(os.tmpdir(), "sl-ext-profile-")), {
       channel: "chromium",
@@ -70,6 +83,7 @@ describe("extension: guides for the page", () => {
   afterAll(async () => {
     await ctx?.close();
     server?.close();
+    keyServer?.close();
   });
 
   it("badges the icon with the number of guides recorded on the page, following in-page navigation", async () => {
@@ -107,6 +121,8 @@ describe("extension: guides for the page", () => {
     await popup.click("#guides [data-guide]");
     await closed; // the popup closes so the guidance is visible
     await expect.poll(() => app.evaluate(() => !!document.querySelector("[data-steplight-assist]")), { timeout: 5000 }).toBe(true);
+    // Assist comes from the extension package, not from the server (web store rule: no remote code)
+    expect(libRequests).toEqual([]);
     await app.close();
   }, 30_000);
 
@@ -124,10 +140,46 @@ describe("extension: guides for the page", () => {
     expect(await popup.locator("#start").isVisible()).toBe(false);
     await popup.click("#record > summary");
     await expect.poll(() => popup.locator("#start").isVisible()).toBe(true);
+    // the open state is saved by the toggle event, a moment after the click: reload only once it is
+    await expect.poll(() => sw.evaluate(async () => (await chrome.storage.local.get("recordOpen")).recordOpen), { timeout: 5000 }).toBe(true);
     await popup.reload();
     await expect.poll(() => popup.locator("#start").isVisible(), { timeout: 5000 }).toBe(true);
     await popup.click("#record > summary"); // leave it collapsed for the other tests
     await popup.close();
     await app.close();
+  }, 30_000);
+
+  it("shows learners only the guides: Record and Studio need a valid access key", async () => {
+    const app = await ctx.newPage();
+    await app.goto(DASH);
+    const id = await tabId(app);
+    const popup = await ctx.newPage();
+    const open = async (accessKey: string) => {
+      await sw.evaluate((o) => chrome.storage.local.set(o), { serverUrl: keyOrigin, accessKey, recordOpen: true });
+      await popup.goto(`chrome-extension://${extId}/popup.html?tab=${id}`);
+      await expect.poll(() => popup.locator("#status").textContent(), { timeout: 5000 }).toBe("Connected");
+      await popup.waitForTimeout(500);
+    };
+    try {
+      await open("");
+      expect(await popup.locator("#record").isVisible()).toBe(false);
+      expect(await popup.locator("#open-studio").isVisible()).toBe(false);
+      expect(await popup.locator("#settings > summary").isVisible()).toBe(true);
+      expect(await popup.locator("#settings-error").isVisible()).toBe(false);
+
+      await open("wrong");
+      expect(await popup.locator("#record").isVisible()).toBe(false);
+      expect(await popup.locator("#settings-error").textContent()).toContain("access key is not right");
+      expect(await popup.locator("#access-key").isVisible()).toBe(true); // Settings opened
+
+      await open(KEY);
+      await expect.poll(() => popup.locator("#start").isVisible(), { timeout: 5000 }).toBe(true);
+      expect(await popup.locator("#open-studio").isVisible()).toBe(true);
+      expect(await popup.locator("#settings-error").isVisible()).toBe(false);
+    } finally {
+      await sw.evaluate((s) => chrome.storage.local.set({ serverUrl: s, accessKey: "", recordOpen: false }), origin);
+      await popup.close();
+      await app.close();
+    }
   }, 30_000);
 });

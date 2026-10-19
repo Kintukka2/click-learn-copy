@@ -11,6 +11,7 @@ import { accessKeyMiddleware } from "./auth.js";
 import { applyCapture, activeSessions, getSession, startSession, stopSession } from "./recording.js";
 import { Store } from "./store.js";
 import { pipelineRoutes } from "./pipeline.js";
+import { privacyPage } from "./privacy.js";
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 export const LIB_DIR = path.join(ROOT, "dist", "lib");
@@ -28,6 +29,9 @@ export interface AppConfig {
   internalUrl?: string;
   /** When set, the Studio and authoring API require this key (see auth.ts). */
   accessKey?: string;
+  /** Publisher name and contact address shown in the extension's privacy policy (<base>/privacy). */
+  publisher?: string;
+  contactEmail?: string;
 }
 
 export interface AppContext {
@@ -339,6 +343,10 @@ export function createApp(config: AppConfig) {
     }
     res.setHeader("Cache-Control", "no-cache");
     res.type("html").send(studioHtml.html);
+  });
+  app.get("/privacy", (_req, res) => {
+    res.setHeader("Cache-Control", "no-cache");
+    res.type("html").send(privacyPage(config));
   });
   app.get("/", (_req, res) => res.redirect(`${basePath}/studio/`));
 

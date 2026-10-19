@@ -1,4 +1,4 @@
-// Steplight Recorder: MV3 service worker.
+// Steplight extension: MV3 service worker.
 // Owns the recording session (persisted in chrome.storage.session so it survives worker restarts),
 // takes the viewport screenshot the moment a capture event arrives (clicks fire on pointerdown, so
 // the page has not reacted yet), and posts CapturePayloads to /api/recordings/:token/events in order.
@@ -233,7 +233,7 @@ async function showBadge(tabId: number) {
   const recording = !!state && state.tabId === tabId;
   const n = guideCount.get(tabId) ?? 0;
   const text = recording ? String(state!.stepCount) : n ? String(n) : "";
-  const title = recording ? "Steplight Recorder: recording" : n ? `Steplight: ${n} guide${n === 1 ? "" : "s"} for this page` : "Steplight Recorder";
+  const title = recording ? "Steplight: recording" : n ? `Steplight: ${n} guide${n === 1 ? "" : "s"} for this page` : "Steplight";
   try {
     await chrome.action.setBadgeText({ tabId, text });
     await chrome.action.setBadgeBackgroundColor({ tabId, color: recording ? "#d92d20" : "#2f6fed" });

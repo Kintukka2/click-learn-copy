@@ -1,5 +1,5 @@
-// "Guide me": loads the Assist library (served by the Steplight server at /lib/assist.js) into a tab
-// and starts a process there. Shared by the side panel and the popup.
+// "Guide me": loads the Assist library (bundled in the extension) into a tab and starts a process
+// there. Shared by the side panel and the popup.
 /// <reference path="./chrome.d.ts" />
 import { uiStrings } from "../../src/core/instructions.js";
 import type { ResolvedProcess } from "../../src/core/model.js";
@@ -10,37 +10,37 @@ export interface LookupRow { id: string; projectId: string; projectName: string;
 /** Lookup relevance of a guide recorded on this very page (see pageMatch in src/core/url.ts). */
 export const SAME_PAGE = 3;
 
-/** Starts Assist for a process in the tab; resolves to an error message, or "" on success. */
+/** Starts Assist for a process in the tab; resolves to an error message, or "" on success. The Assist
+ * library ships inside the extension (assist.js, copied there by scripts/build-lib.mjs): web stores do
+ * not allow extensions to run code fetched from a server, so only the process itself comes from it. */
 export async function startGuide(server: string, tabId: number, processId: string, lang: string): Promise<string> {
   const proc = await api<ResolvedProcess>(server, `/processes/${processId}/resolved?lang=${encodeURIComponent(lang)}`);
-  const res = await fetch(`${server}/lib/assist.js`);
-  if (!res.ok || !/javascript/.test(res.headers.get("content-type") ?? "")) throw new Error("The Assist library is not available on the server (run npm run build:lib).");
-  const code = await res.text();
-  const [out] = await chrome.scripting.executeScript({
-    target: { tabId },
+  const version = chrome.runtime.getManifest().version;
+  const target = { tabId };
+  // Stop a running guide; tell whether this extension version of Assist is already in the tab.
+  const [loaded] = await chrome.scripting.executeScript({
+    target,
     world: "MAIN",
-    args: [code, proc, uiStrings(lang), `${server}/api/events`],
-    func: (src: string, p: unknown, ui: Record<string, string>, eventsUrl: string) => {
-      const w = window as unknown as { SteplightAssist?: { start(p: unknown, o?: unknown): void; stop?(): void }; __steplightAssistSrc?: string };
-      // (Re)load when the server has a different version than the one already in this tab.
-      if (!w.SteplightAssist || w.__steplightAssistSrc !== src) {
-        try {
-          w.SteplightAssist?.stop?.();
-        } catch {
-          /* not running */
-        }
-        const s = document.createElement("script");
-        s.textContent = src;
-        (document.head || document.documentElement).appendChild(s);
-        s.remove();
-        w.__steplightAssistSrc = src;
-      }
-      if (!w.SteplightAssist) return "Assist could not be loaded into this page (blocked by its Content Security Policy?).";
+    args: [version],
+    func: (v: string) => {
+      const w = window as unknown as { SteplightAssist?: { stop?(): void }; __steplightAssistExt?: string };
       try {
-        w.SteplightAssist.stop?.();
+        w.SteplightAssist?.stop?.();
       } catch {
         /* not running */
       }
+      return !!w.SteplightAssist && w.__steplightAssistExt === v;
+    },
+  });
+  if (!loaded?.result) await chrome.scripting.executeScript({ target, world: "MAIN", files: ["assist.js"] });
+  const [out] = await chrome.scripting.executeScript({
+    target,
+    world: "MAIN",
+    args: [proc, uiStrings(lang), `${server}/api/events`, version],
+    func: (p: unknown, ui: Record<string, string>, eventsUrl: string, v: string) => {
+      const w = window as unknown as { SteplightAssist?: { start(p: unknown, o?: unknown): void }; __steplightAssistExt?: string };
+      if (!w.SteplightAssist) return "Assist could not be loaded into this page.";
+      w.__steplightAssistExt = v;
       w.SteplightAssist.start(p, { ui, eventsUrl });
       return "";
     },

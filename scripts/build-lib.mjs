@@ -63,5 +63,7 @@ if (fs.existsSync(path.join(extSrc, "manifest.json"))) {
       logLevel: "warning",
     });
   }
-  console.log(`built dist/extension (${tsFiles.length} scripts)`);
+  // Guide me runs this copy of Assist: web stores do not allow extensions to load code from a server
+  fs.copyFileSync(path.join(out, "assist.js"), path.join(extOut, "assist.js"));
+  console.log(`built dist/extension (${tsFiles.length} scripts + assist.js)`);
 }

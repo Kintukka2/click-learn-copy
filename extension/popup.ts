@@ -1,19 +1,22 @@
-// Steplight Recorder popup: guides recorded on the current page ("Guide me"), server setting,
+// Steplight popup: guides recorded on the current page ("Guide me") and the server setting for
+// everyone; for authors (the server accepts their access key, or needs none) also the recorder:
 // project/process choice (or a new process), Start/Stop recording with a live step counter.
 /// <reference path="./lib/chrome.d.ts" />
 import { SAME_PAGE, startGuide, type LookupRow } from "./lib/guide.js";
-import { $, api, esc, getAccessKey, getServerUrl, send, setAccessKey, setServerUrl, type RecState } from "./lib/shared.js";
+import { $, api, ApiError, esc, getAccessKey, getServerUrl, send, setAccessKey, setServerUrl, type RecState } from "./lib/shared.js";
 
 interface ProjectRow { id: string; name: string; processCount: number; languages: string[] }
 interface ProcessRow { id: string; title: string; chapter?: string; steps: unknown[] }
 
 let server = "";
+/** Learners (no access key for a server that needs one) see only the guides: no Record, no Studio. */
+let author = false;
 const NEW = "__new__";
 
 /** "idle" is the recorder form, inside the collapsible Record section; a running recording and the
  * offline notice are shown at the top instead. */
 function show(id: "idle" | "recording" | "offline") {
-  $("#record").hidden = id !== "idle";
+  $("#record").hidden = id !== "idle" || !author;
   $("#recording").hidden = id !== "recording";
   $("#offline").hidden = id !== "offline";
 }
@@ -55,9 +58,8 @@ function onProcessChange() {
   $("#replace-wrap").hidden = isNew;
 }
 
-async function renderIdle() {
+async function renderIdle(projects: ProjectRow[]) {
   show("idle");
-  const projects = await api<ProjectRow[]>(server, "/projects");
   const sel = $("#project") as HTMLSelectElement;
   if (!projects.length) {
     sel.innerHTML = `<option value="">No projects yet</option>`;
@@ -155,8 +157,23 @@ async function stopRec() {
   await init();
 }
 
+/** The projects for the recorder, or null for a learner; a rejected access key is reported in Settings. */
+async function authorProjects(): Promise<ProjectRow[] | null> {
+  try {
+    return await api<ProjectRow[]>(server, "/projects");
+  } catch (err) {
+    if (!(err instanceof ApiError) || err.status !== 401) throw err;
+    if (await getAccessKey()) {
+      error("#settings-error", "That access key is not right. Clear it if you only follow guides.");
+      ($("#settings") as HTMLDetailsElement).open = true;
+    }
+    return null;
+  }
+}
+
 async function init() {
   server = await getServerUrl();
+  error("#settings-error", "");
   ($("#record") as HTMLDetailsElement).open = !!(await chrome.storage.local.get("recordOpen")).recordOpen;
   ($("#server") as HTMLInputElement).value = server;
   ($("#access-key") as HTMLInputElement).value = await getAccessKey();
@@ -172,13 +189,22 @@ async function init() {
     return;
   }
   const r = await send<{ state: RecState | null; error?: string }>({ type: "steplight:state" });
-  if (r?.state) renderRecording(r.state, r.error);
-  else {
-    void renderGuides();
-    await renderIdle().catch((err) => {
-      error("#error", (err as Error).message);
-      if (/access key/i.test((err as Error).message)) ($("#settings") as HTMLDetailsElement).open = true;
-    });
+  if (r?.state) {
+    author = true;
+    $("#open-studio").hidden = false;
+    return renderRecording(r.state, r.error);
+  }
+  void renderGuides();
+  try {
+    const projects = await authorProjects();
+    author = !!projects;
+    $("#open-studio").hidden = !author;
+    if (projects) await renderIdle(projects);
+    else show("idle");
+  } catch (err) {
+    author = true; // e.g. the server failed: keep the recorder visible with the reason
+    show("idle");
+    error("#error", (err as Error).message);
   }
 }
 

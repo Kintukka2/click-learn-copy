@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { joinUrl, normalizeBasePath, pageKey, pageMatch, swapPrefix } from "../src/core/url.js";
 import { isPublicRequest } from "../src/server/auth.js";
 import { createApp } from "../src/server/app.js";
+import { privacyPage } from "../src/server/privacy.js";
 
 describe("url helpers", () => {
   it("normalizes base paths", () => {
@@ -132,5 +133,18 @@ describe("server under /steplight with an access key", () => {
     expect((await fetch(`${origin}/steplight/demo-erp/`)).status).toBe(200);
     const events = await fetch(`${origin}/steplight/api/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projectId: created.id, type: "view" }) });
     expect(events.status).toBe(204);
+  });
+
+  it("serves the extension's privacy policy publicly, asking for the publisher until it is set", async () => {
+    const res = await fetch(`${origin}/steplight/privacy`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/html");
+    const html = await res.text();
+    expect(html).toContain("Steplight privacy policy");
+    expect(html).toContain("STEPLIGHT_PUBLISHER");
+    const set = privacyPage({ publisher: "Acme <Ltd>", contactEmail: "help@acme.test" });
+    expect(set).toContain("published by Acme &lt;Ltd&gt;");
+    expect(set).toContain('href="mailto:help@acme.test"');
+    expect(set).not.toContain("has not set its publisher");
   });
 });
