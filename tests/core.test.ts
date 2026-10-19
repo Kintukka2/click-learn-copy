@@ -77,11 +77,16 @@ describe("resolveProcess", () => {
     expect(r.steps[0].screenshot).toBe("/m/a.png");
     expect(r.steps[2].value).toBeUndefined();
     expect(r.steps.map((s) => s.index)).toEqual([1, 2, 3]);
+    // Assist matches live elements against the name shown in the localized UI
+    expect(r.steps[1].target?.name).toBe("Gem");
+    expect(r.steps[1].target?.selectors).toEqual(sampleProcess().steps[1].target!.selectors);
+    expect(r.steps[0].target?.name).toBe(sampleProcess().steps[0].target!.name);
   });
 
   it("keeps source texts for the source language", () => {
     const r = resolveProcess(sampleProcess(), "en");
     expect(r.steps[1].title).toBe("Click **Save**.");
+    expect(r.steps[1].target?.name).toBe(sampleProcess().steps[1].target!.name);
   });
 });
 

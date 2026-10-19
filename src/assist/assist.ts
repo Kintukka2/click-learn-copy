@@ -2,11 +2,11 @@
 // shows a tooltip card next to it and advances when the user performs the recorded action.
 // The overlay lives in an open shadow root on a host marked data-steplight-ignore.
 import { plainText, richText } from "../core/instructions.js";
-import type { ResolvedProcess, ResolvedStep } from "../core/model.js";
+import type { ResolvedProcess, ResolvedStep, Target } from "../core/model.js";
 import { positionCard } from "../players/stage.js";
 import { playerStrings } from "../players/strings.js";
 import css from "./assist.css";
-import { isVisible, resolveTarget as fallbackResolve, type Resolved } from "./fallback-resolve.js";
+import { accessibleName, isVisible, resolveTarget as fallbackResolve, type Resolved } from "./fallback-resolve.js";
 
 export type AssistEventType = "start" | "step" | "complete" | "exit";
 export interface AssistOptions {
@@ -60,6 +60,32 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, html?: 
   return e;
 }
 
+const norm = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+
+/**
+ * A structural match (css / xpath path) is only trusted while the element still has the recorded
+ * name: once the real element is hidden (e.g. its menu group was collapsed), the same path can
+ * point at a neighbouring element.
+ */
+function plausible(r: Resolved, t: Target): boolean {
+  if (r.selector.kind !== "css" && r.selector.kind !== "xpath") return true;
+  const want = norm(t.name ?? t.label);
+  if (!want) return true;
+  const got = accessibleName(r.element);
+  return got === want || (got.length > 2 && (got.includes(want) || want.includes(got)));
+}
+
+/**
+ * aria-expanded of an expander element (on itself, a descendant or its parent), if any. A link's
+ * parent is not consulted: a link inside an expanded tree node navigates, it does not collapse.
+ */
+function expandedState(e: Element): "true" | "false" | null {
+  const parent = e.parentElement;
+  const host = e.hasAttribute("aria-expanded") ? e : (e.querySelector("[aria-expanded]") ?? (!e.matches("a[href]") && parent?.hasAttribute("aria-expanded") ? parent : null));
+  const v = host?.getAttribute("aria-expanded");
+  return v === "true" || v === "false" ? v : null;
+}
+
 function sameRect(a: DOMRect | null, b: DOMRect) {
   return !!a && Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) < 0.5 && Math.abs(a.width - b.width) < 0.5 && Math.abs(a.height - b.height) < 0.5;
 }
@@ -80,6 +106,9 @@ export class AssistSession {
   private searchStarted = 0;
   private scrolled = false;
   private advancing = false;
+  /** The current step was reached by moving forward (not Back / start), so it may be skipped. */
+  private forward = false;
+  private skipChecked = false;
   private done = false;
   private stopped = false;
   private resolver: ResolveFn;
@@ -180,12 +209,14 @@ export class AssistSession {
     return this.proc.steps[this.i];
   }
 
-  go(i: number) {
+  go(i: number, forward = false) {
     if (this.stopped) return;
     if (i >= this.proc.steps.length) {
       this.complete();
       return;
     }
+    this.forward = forward;
+    this.skipChecked = false;
     this.i = Math.max(0, i);
     this.done = false;
     this.advancing = false;
@@ -203,7 +234,7 @@ export class AssistSession {
   }
 
   next() {
-    this.go(this.i + 1);
+    this.go(this.i + 1, true);
   }
 
   private needsTarget(st: ResolvedStep) {
@@ -223,14 +254,9 @@ export class AssistSession {
       return;
     }
     if (this.target && this.target.isConnected && isVisible(this.target)) return;
-    let r: Resolved | null = null;
-    try {
-      r = this.resolver(st.target!, document);
-    } catch {
-      r = null;
-    }
-    if (!r && this.resolver !== fallbackResolve) r = fallbackResolve(st.target!, document);
-    const found = r?.element ?? null;
+    const found = this.resolve(st.target!);
+    if (found && this.skipExpanded(found)) return;
+    if (!found && this.backToExpander()) return;
     if (found !== this.target) {
       this.target = found;
       this.lastRect = null;
@@ -244,6 +270,50 @@ export class AssistSession {
       this.updateStatus();
       this.place(true);
     } else if (!found) this.updateStatus();
+  }
+
+  private resolve(t: Target): Element | null {
+    let r: Resolved | null = null;
+    try {
+      r = this.resolver(t, document);
+    } catch {
+      r = null;
+    }
+    if (r && !plausible(r, t)) r = null;
+    if (!r && this.resolver !== fallbackResolve) {
+      r = fallbackResolve(t, document);
+      if (r && !plausible(r, t)) r = null;
+    }
+    return r?.element ?? null;
+  }
+
+  /**
+   * Arriving at "click <expander>" while it is already expanded and the next step's element is
+   * already visible: skip it, since the click would collapse what the next step needs.
+   */
+  private skipExpanded(found: Element): boolean {
+    if (this.skipChecked) return false;
+    this.skipChecked = true;
+    const st = this.step!;
+    const nxt = this.proc.steps[this.i + 1];
+    if (!this.forward || st.action !== "click" || !nxt?.target || !this.needsTarget(nxt)) return false;
+    if (expandedState(found) !== "true" || !this.resolve(nxt.target)) return false;
+    this.next();
+    return true;
+  }
+
+  /**
+   * The element is missing and the previous step's expander is collapsed (e.g. the user clicked an
+   * open menu group and closed it): go back to that step so it gets expanded again.
+   */
+  private backToExpander(): boolean {
+    const prev = this.proc.steps[this.i - 1];
+    if (!prev?.target || prev.action !== "click" || !this.needsTarget(prev)) return false;
+    if (Date.now() - this.searchStarted < 600) return false;
+    const el = this.resolve(prev.target);
+    if (!el || expandedState(el) !== "false") return false;
+    this.go(this.i - 1);
+    return true;
   }
 
   private urlMatches(url: string): boolean {

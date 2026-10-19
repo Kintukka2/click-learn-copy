@@ -7,7 +7,7 @@ import { build } from "esbuild";
 import { chromium, type Browser, type Page } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { resolveProcess } from "../src/core/resolve.js";
-import type { Process, ResolvedProcess } from "../src/core/model.js";
+import type { Process, ResolvedProcess, ResolvedStep, Target } from "../src/core/model.js";
 
 const ROOT = path.resolve(__dirname, "..");
 const FX = path.join(ROOT, "tests/fixtures/out");
@@ -25,10 +25,10 @@ async function bundleAssist(): Promise<string> {
 }
 
 /** Serve the app at http://app.test/ (any path) with assist.js and the process JSON. */
-async function serve(page: Page, opts: { scriptAttrs?: string; extra?: string; lateName?: boolean } = {}) {
+async function serve(page: Page, opts: { scriptAttrs?: string; extra?: string; lateName?: boolean; html?: string } = {}) {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  let body = appHtml;
+  let body = opts.html ?? appHtml;
   if (opts.lateName) {
     // the "Customer name" field appears only after 900 ms (route/data loading)
     body = body.replace('<label for="name">Customer name</label><input id="name">', '<div id="slot"></div>');
@@ -219,6 +219,78 @@ describe.skipIf(!hasFixture)("SteplightAssist", () => {
     expect(s.card.x + s.card.width).toBeLessThanOrEqual(380);
     await page.evaluate(() => window.scrollBy(0, 40));
     await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#save"))).toBe(true);
+    await page.close();
+  }, 30_000);
+
+  // A D365-style navigation group that starts expanded. Collapsing it removes its links, so the
+  // recorded css path of "All purchase requisitions" then points at the next link in the pane.
+  const menuHtml = `<!doctype html><html><body><h1>Procurement</h1>
+<div id="menu"><button id="pr" aria-expanded="true">Purchase requisitions</button><a href="#all" class="pr">All purchase requisitions</a><a href="#mine" class="pr">Purchase requisitions prepared by me</a><a href="#cons">Consignment replenishment orders</a><a href="#cat">Procurement categories</a></div>
+<button id="new">New</button>
+<script>
+var pr = document.getElementById("pr"), links = Array.from(document.querySelectorAll(".pr"));
+pr.addEventListener("click", function () {
+  var open = pr.getAttribute("aria-expanded") === "true";
+  pr.setAttribute("aria-expanded", String(!open));
+  if (open) links.forEach(function (a) { a.remove(); });
+  else links.slice().reverse().forEach(function (a) { pr.after(a); });
+});
+</script></body></html>`;
+  const bbox = { x: 0, y: 0, width: 10, height: 10 };
+  const tgt = (role: string, name: string, css: string): Target => ({ selectors: [{ kind: "role", value: `${role}|${name}` }, { kind: "css", value: css }], tag: role === "link" ? "a" : "button", role, name, bbox });
+  const menuSteps: Omit<ResolvedStep, "index" | "url">[] = [
+    { id: "s1", action: "click", title: "Click the Procurement heading.", target: { ...tgt("heading", "Procurement", "body > h1"), selectors: [{ kind: "text", value: "Procurement" }], tag: "h1" } },
+    { id: "s2", action: "click", title: "Click the Purchase requisitions button.", target: tgt("button", "Purchase requisitions", "#pr") },
+    { id: "s3", action: "click", title: "Click the All purchase requisitions link.", target: tgt("link", "All purchase requisitions", "#menu > a:nth-of-type(1)") },
+    { id: "s4", action: "click", title: "Click New.", target: tgt("button", "New", "#new") },
+  ];
+  const menuProc = (): ResolvedProcess => ({ ...proc, id: "menu", title: "Create a PR", steps: menuSteps.map((s, i) => ({ ...s, index: i + 1, url: "http://app.test/" })) });
+
+  it("skips clicking an expander that is already open when the next element is visible", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page, { html: menuHtml });
+    await page.goto("http://app.test/");
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p), menuProc());
+    await expect.poll(async () => (await state(page))?.count).toBe("Step 1 of 4");
+    await page.click("h1");
+    // "Purchase requisitions" is already expanded: the next step is shown right away
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 4");
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "a[href='#all']"))).toBe(true);
+    expect(await page.getAttribute("#pr", "aria-expanded")).toBe("true");
+    // Back from there stays on the expander step
+    await page.evaluate(() => ((document.querySelector("[data-steplight-assist]")!.shadowRoot!.querySelectorAll(".actions .btn")[1]) as HTMLElement).click());
+    await page.waitForTimeout(800);
+    expect((await state(page))!.count).toBe("Step 2 of 4");
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
+  it("does not highlight a neighbour when a collapsed menu hides the element, and goes back to the expander", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page, { html: menuHtml });
+    await page.goto("http://app.test/");
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p, { startAt: 1 }), menuProc());
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#pr"))).toBe(true);
+    // the user follows "Click Purchase requisitions" on an open group and collapses it
+    await page.click("#pr");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 4");
+    expect(await page.locator("#menu > a:nth-of-type(1)").textContent()).toBe("Consignment replenishment orders");
+    const cons = await rectOf(page, "a[href='#cons']");
+    for (let k = 0; k < 4; k++) {
+      const s = (await state(page))!;
+      if (s.count !== "Step 3 of 4") break;
+      expect(s.ringOn && near(s.ring, cons)).toBe(false);
+      await page.waitForTimeout(100);
+    }
+    // the link is gone and its group is collapsed: back to the expander step
+    await expect.poll(async () => (await state(page))!.count, { timeout: 3000 }).toBe("Step 2 of 4");
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#pr"))).toBe(true);
+    await page.click("#pr");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 4");
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "a[href='#all']"))).toBe(true);
+    await page.click("a[href='#all']");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 4 of 4");
+    expect(errors).toEqual([]);
     await page.close();
   }, 30_000);
 
