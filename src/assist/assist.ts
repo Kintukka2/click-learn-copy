@@ -62,17 +62,42 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, html?: 
 
 const norm = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim().toLowerCase();
 
+/** The element still carries the recorded name (or the target has none to compare). */
+function nameMatches(e: Element, t: Target): boolean {
+  const want = norm(t.name ?? t.label);
+  if (!want) return true;
+  const got = accessibleName(e);
+  return got === want || (got.length > 2 && (got.includes(want) || want.includes(got)));
+}
+
 /**
  * A structural match (css / xpath path) is only trusted while the element still has the recorded
  * name: once the real element is hidden (e.g. its menu group was collapsed), the same path can
  * point at a neighbouring element.
  */
 function plausible(r: Resolved, t: Target): boolean {
-  if (r.selector.kind !== "css" && r.selector.kind !== "xpath") return true;
-  const want = norm(t.name ?? t.label);
-  if (!want) return true;
-  const got = accessibleName(r.element);
-  return got === want || (got.length > 2 && (got.includes(want) || want.includes(got)));
+  return (r.selector.kind !== "css" && r.selector.kind !== "xpath") || nameMatches(r.element, t);
+}
+
+// Steps learned to be toggles (clicking them hid the next step's element), per browser.
+const KEY_TOGGLES = "steplight.assist.toggles";
+
+function knownToggles(): string[] {
+  try {
+    const v = JSON.parse(window.localStorage.getItem(KEY_TOGGLES) ?? "[]");
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberToggle(key: string) {
+  try {
+    const all = knownToggles().filter((k) => k !== key);
+    window.localStorage.setItem(KEY_TOGGLES, JSON.stringify([...all, key].slice(-200)));
+  } catch {
+    /* storage blocked */
+  }
 }
 
 /**
@@ -109,6 +134,8 @@ export class AssistSession {
   /** The current step was reached by moving forward (not Back / start), so it may be skipped. */
   private forward = false;
   private skipChecked = false;
+  /** Index of the step whose click happened while the next step's element was already visible. */
+  private clickedWithNextVisible = -1;
   private done = false;
   private stopped = false;
   private resolver: ResolveFn;
@@ -217,6 +244,7 @@ export class AssistSession {
     }
     this.forward = forward;
     this.skipChecked = false;
+    if (i !== this.clickedWithNextVisible + 1) this.clickedWithNextVisible = -1;
     this.i = Math.max(0, i);
     this.done = false;
     this.advancing = false;
@@ -253,7 +281,8 @@ export class AssistSession {
       this.updateStatus();
       return;
     }
-    if (this.target && this.target.isConnected && isVisible(this.target)) return;
+    // Apps that re-use elements (D365's navigation pane) can relabel the highlighted one.
+    if (this.target && this.target.isConnected && isVisible(this.target) && nameMatches(this.target, st.target!)) return;
     const found = this.resolve(st.target!);
     if (found && this.skipExpanded(found)) return;
     if (!found && this.backToExpander()) return;
@@ -287,9 +316,14 @@ export class AssistSession {
     return r?.element ?? null;
   }
 
+  private toggleKey(st: ResolvedStep) {
+    return `${this.proc.id}:${st.id}`;
+  }
+
   /**
    * Arriving at "click <expander>" while it is already expanded and the next step's element is
-   * already visible: skip it, since the click would collapse what the next step needs.
+   * already visible: skip it, since the click would collapse what the next step needs. An expander
+   * is recognised by aria-expanded="true", or by having collapsed the next element before.
    */
   private skipExpanded(found: Element): boolean {
     if (this.skipChecked) return false;
@@ -297,21 +331,28 @@ export class AssistSession {
     const st = this.step!;
     const nxt = this.proc.steps[this.i + 1];
     if (!this.forward || st.action !== "click" || !nxt?.target || !this.needsTarget(nxt)) return false;
-    if (expandedState(found) !== "true" || !this.resolve(nxt.target)) return false;
+    const expanded = expandedState(found) === "true" || (expandedState(found) === null && knownToggles().includes(this.toggleKey(st)));
+    if (!expanded || !this.resolve(nxt.target)) return false;
     this.next();
     return true;
   }
 
   /**
    * The element is missing and the previous step's expander is collapsed (e.g. the user clicked an
-   * open menu group and closed it): go back to that step so it gets expanded again.
+   * open menu group and closed it): go back to that step so it gets expanded again. Collapsed means
+   * aria-expanded="false", or that clicking it hid this element, which was visible at the time.
    */
   private backToExpander(): boolean {
     const prev = this.proc.steps[this.i - 1];
     if (!prev?.target || prev.action !== "click" || !this.needsTarget(prev)) return false;
     if (Date.now() - this.searchStarted < 600) return false;
     const el = this.resolve(prev.target);
-    if (!el || expandedState(el) !== "false") return false;
+    if (!el) return false;
+    const state = expandedState(el);
+    const hidIt = this.clickedWithNextVisible === this.i - 1;
+    if (state !== "false" && !(state === null && hidIt)) return false;
+    if (hidIt) rememberToggle(this.toggleKey(prev));
+    this.clickedWithNextVisible = -1;
     this.go(this.i - 1);
     return true;
   }
@@ -490,7 +531,12 @@ export class AssistSession {
     const st = this.step;
     if (!st || this.done || this.host.contains(e.target as Node)) return;
     if (!this.isTarget(e.target)) return;
-    if (st.action === "click") this.advanceSoon();
+    if (st.action === "click") {
+      // Runs in the capture phase, before the app reacts to the click.
+      const nxt = this.proc.steps[this.i + 1];
+      this.clickedWithNextVisible = nxt?.target && this.needsTarget(nxt) && this.resolve(nxt.target) ? this.i : -1;
+      this.advanceSoon();
+    }
     else if (st.action === "check" && !(this.target instanceof HTMLInputElement)) this.advanceSoon(); // custom checkbox
     else if (st.action === "select" && !(this.target instanceof HTMLSelectElement) && this.target?.getAttribute("role") !== "combobox") this.advanceSoon();
   }

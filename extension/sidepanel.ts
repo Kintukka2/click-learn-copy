@@ -78,12 +78,19 @@ async function guide(processId: string) {
       world: "MAIN",
       args: [code, proc, uiStrings(lang), `${server}/api/events`],
       func: (src: string, p: unknown, ui: Record<string, string>, eventsUrl: string) => {
-        const w = window as unknown as { SteplightAssist?: { start(p: unknown, o?: unknown): void; stop?(): void } };
-        if (!w.SteplightAssist) {
+        const w = window as unknown as { SteplightAssist?: { start(p: unknown, o?: unknown): void; stop?(): void }; __steplightAssistSrc?: string };
+        // (Re)load when the server has a different version than the one already in this tab.
+        if (!w.SteplightAssist || w.__steplightAssistSrc !== src) {
+          try {
+            w.SteplightAssist?.stop?.();
+          } catch {
+            /* not running */
+          }
           const s = document.createElement("script");
           s.textContent = src;
           (document.head || document.documentElement).appendChild(s);
           s.remove();
+          w.__steplightAssistSrc = src;
         }
         if (!w.SteplightAssist) return "Assist could not be loaded into this page (blocked by its Content Security Policy?).";
         try {
