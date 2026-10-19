@@ -57,7 +57,8 @@ button.btn:disabled { opacity: 0.55; cursor: default; }
 .guides .card .btn { flex: none; height: 30px; padding: 0 12px; }
 details.settings { border-top: 1px solid var(--border); padding: 10px 14px 12px; }
 details.settings summary { cursor: pointer; color: var(--muted); font-weight: 600; font-size: 12px; }
-footer.links { display: flex; justify-content: space-between; padding: 0 14px 12px; }
+footer.links { display: flex; justify-content: space-between; padding: 10px 14px 12px; }
+details.record section.body { padding: 2px 0 0; }
 
 /* side panel */
 .panel { min-height: 100vh; background: var(--bg); }

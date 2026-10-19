@@ -10,8 +10,12 @@ interface ProcessRow { id: string; title: string; chapter?: string; steps: unkno
 let server = "";
 const NEW = "__new__";
 
+/** "idle" is the recorder form, inside the collapsible Record section; a running recording and the
+ * offline notice are shown at the top instead. */
 function show(id: "idle" | "recording" | "offline") {
-  for (const s of ["idle", "recording", "offline"]) ($("#" + s) as HTMLElement).hidden = s !== id;
+  $("#record").hidden = id !== "idle";
+  $("#recording").hidden = id !== "recording";
+  $("#offline").hidden = id !== "offline";
 }
 
 function setStatus(on: boolean | null) {
@@ -153,6 +157,7 @@ async function stopRec() {
 
 async function init() {
   server = await getServerUrl();
+  ($("#record") as HTMLDetailsElement).open = !!(await chrome.storage.local.get("recordOpen")).recordOpen;
   ($("#server") as HTMLInputElement).value = server;
   ($("#access-key") as HTMLInputElement).value = await getAccessKey();
   ($("#open-studio") as HTMLAnchorElement).href = server + "/studio/";
@@ -181,6 +186,7 @@ $("#guides-list").addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-guide]");
   if (b) void guide(b);
 });
+$("#record").addEventListener("toggle", () => void chrome.storage.local.set({ recordOpen: ($("#record") as HTMLDetailsElement).open }));
 $("#project").addEventListener("change", (e) => void loadProcesses((e.target as HTMLSelectElement).value));
 $("#process").addEventListener("change", onProcessChange);
 $("#start").addEventListener("click", () => void start());

@@ -116,8 +116,17 @@ describe("extension: guides for the page", () => {
     const id = await tabId(app);
     const popup = await ctx.newPage();
     await popup.goto(`chrome-extension://${extId}/popup.html?tab=${id}`);
-    await expect.poll(() => popup.locator("#idle").isVisible(), { timeout: 5000 }).toBe(true);
+    await expect.poll(() => popup.locator("#status").textContent(), { timeout: 5000 }).toBe("Connected");
+    await popup.waitForTimeout(500);
     expect(await popup.locator("#guides").isVisible()).toBe(false);
+    // the recorder is in a collapsed "Record" section, which remembers being opened
+    expect(await popup.locator("#record > summary").textContent()).toBe("Record");
+    expect(await popup.locator("#start").isVisible()).toBe(false);
+    await popup.click("#record > summary");
+    await expect.poll(() => popup.locator("#start").isVisible()).toBe(true);
+    await popup.reload();
+    await expect.poll(() => popup.locator("#start").isVisible(), { timeout: 5000 }).toBe(true);
+    await popup.click("#record > summary"); // leave it collapsed for the other tests
     await popup.close();
     await app.close();
   }, 30_000);
