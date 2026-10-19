@@ -140,6 +140,8 @@ describe("extension: guides for the page", () => {
     expect(await popup.locator("#start").isVisible()).toBe(false);
     await popup.click("#record > summary");
     await expect.poll(() => popup.locator("#start").isVisible()).toBe(true);
+    // the open state is saved by the toggle event, a moment after the click: reload only once it is
+    await expect.poll(() => sw.evaluate(async () => (await chrome.storage.local.get("recordOpen")).recordOpen), { timeout: 5000 }).toBe(true);
     await popup.reload();
     await expect.poll(() => popup.locator("#start").isVisible(), { timeout: 5000 }).toBe(true);
     await popup.click("#record > summary"); // leave it collapsed for the other tests
