@@ -37,7 +37,8 @@ export function resolveProcess(proc: Process, lang: Lang = proc.lang, opts: Reso
       screenshot: shot ? media(shot) : undefined,
       bbox,
       viewport: s.viewport,
-      target: s.target,
+      // Assist checks live elements against the name shown in this language's UI.
+      target: s.target && (l?.name || l?.label) ? { ...s.target, name: l?.name ?? s.target.name, label: l?.label ?? s.target.label } : s.target,
       url: s.url,
     };
   });
