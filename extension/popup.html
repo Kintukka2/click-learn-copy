@@ -12,22 +12,16 @@
     <span class="status" id="status"><i></i><span>…</span></span>
   </header>
 
-  <section class="body" id="idle" hidden>
-    <label class="f" for="project">Project</label>
-    <select id="project"></select>
-    <label class="f" for="process">Process</label>
-    <select id="process"></select>
-    <div id="new-wrap" hidden>
-      <label class="f" for="new-title">New process title</label>
-      <input type="text" id="new-title" placeholder="e.g. Create a new customer">
-      <label class="f" for="new-chapter">Chapter</label>
-      <input type="text" id="new-chapter" placeholder="e.g. Sales">
-    </div>
-    <label class="check" id="replace-wrap"><input type="checkbox" id="replace"> Replace the existing steps</label>
-    <div class="row"><button class="btn primary" id="start">Start recording</button></div>
-    <div class="hint">Steplight records clicks, typing and selections in the current tab, with a screenshot of each step.</div>
-    <div class="error" id="error" hidden></div>
+  <section class="guides" id="guides" hidden>
+    <div class="guides-head" id="guides-head">Guides for this page</div>
+    <div id="guides-list"></div>
+    <div class="error" id="guides-error" hidden></div>
   </section>
+
+  <footer class="links">
+    <button class="link" id="open-panel" type="button">Open help panel</button>
+    <a class="link" id="open-studio" href="#" target="_blank">Open Studio ↗</a>
+  </footer>
 
   <section class="body" id="recording" hidden>
     <div class="rec-card">
@@ -43,10 +37,25 @@
     <div class="error">Cannot reach the Steplight server. Check the server URL below and make sure Steplight is running.</div>
   </section>
 
-  <footer class="links">
-    <button class="link" id="open-panel" type="button">Open help panel</button>
-    <a class="link" id="open-studio" href="#" target="_blank">Open Studio ↗</a>
-  </footer>
+  <details class="settings record" id="record">
+    <summary>Record</summary>
+    <section class="body" id="idle">
+      <label class="f" for="project">Project</label>
+      <select id="project"></select>
+      <label class="f" for="process">Process</label>
+      <select id="process"></select>
+      <div id="new-wrap" hidden>
+        <label class="f" for="new-title">New process title</label>
+        <input type="text" id="new-title" placeholder="e.g. Create a new customer">
+        <label class="f" for="new-chapter">Chapter</label>
+        <input type="text" id="new-chapter" placeholder="e.g. Sales">
+      </div>
+      <label class="check" id="replace-wrap"><input type="checkbox" id="replace"> Replace the existing steps</label>
+      <div class="row"><button class="btn primary" id="start">Start recording</button></div>
+      <div class="hint">Steplight records clicks, typing and selections in the current tab, with a screenshot of each step.</div>
+      <div class="error" id="error" hidden></div>
+    </section>
+  </details>
   <details class="settings" id="settings">
     <summary>Settings</summary>
     <label class="f" for="server">Steplight server URL</label>

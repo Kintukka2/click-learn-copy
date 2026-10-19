@@ -4,7 +4,7 @@ import type { AddressInfo, Server } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { joinUrl, normalizeBasePath, swapPrefix } from "../src/core/url.js";
+import { joinUrl, normalizeBasePath, pageKey, pageMatch, swapPrefix } from "../src/core/url.js";
 import { isPublicRequest } from "../src/server/auth.js";
 import { createApp } from "../src/server/app.js";
 
@@ -31,11 +31,31 @@ describe("url helpers", () => {
     expect(swapPrefix("https://elsewhere/", pub, int)).toBe("https://elsewhere/");
   });
 
+  it("matches pages by path and identifying query parameters", () => {
+    const m = (here: string, rec: string) => pageMatch(pageKey(here)!, pageKey(rec)!);
+    const d365 = "https://erp.example.com/?cmp=101a&mi=DefaultDashboard";
+    // D365 keeps the path at "/" and names the page in ?mi=; the company (cmp) does not matter
+    expect(m(d365, d365)).toBe(3);
+    expect(m("https://erp.example.com/?cmp=202b&mi=DefaultDashboard&utm_source=mail", d365)).toBe(3);
+    expect(m("https://erp.example.com/?cmp=101a&mi=PurchReqTableListPage", d365)).toBe(2);
+    expect(m("https://erp.example.com/", d365)).toBe(2);
+    expect(m("https://other.example.com/?mi=DefaultDashboard", d365)).toBe(0);
+    // hash routes, with a query in the hash
+    expect(m("http://app.test/demo-erp/#/customers/new", "http://app.test/demo-erp/#/customers/new?x=1")).toBe(2);
+    expect(m("http://app.test/demo-erp/#/customers/new?sl_assist=abc", "http://app.test/demo-erp/#/customers/new")).toBe(3);
+    expect(m("http://app.test/demo-erp/#/customers/new", "http://app.test/demo-erp/#/customers")).toBe(2);
+    expect(m("http://app.test/demo-erp/#/orders", "http://app.test/demo-erp/#/customers")).toBe(1);
+    // a page recorded without parameters only matches the same page without parameters
+    expect(m("https://erp.example.com/?mi=X", "https://erp.example.com/")).toBe(2);
+    expect(pageKey("not a url")).toBeNull();
+  });
+
   it("classifies learner-facing requests as public", () => {
     expect(isPublicRequest("GET", "/portal/prj_1/")).toBe(true);
     expect(isPublicRequest("GET", "/lib/assist.js")).toBe(true);
     expect(isPublicRequest("GET", "/api/processes/prc_1/resolved")).toBe(true);
     expect(isPublicRequest("POST", "/api/ask")).toBe(true);
+    expect(isPublicRequest("GET", "/api/lookup/hosts")).toBe(true);
     expect(isPublicRequest("GET", "/api/projects")).toBe(false);
     expect(isPublicRequest("POST", "/api/processes/prc_1/replay")).toBe(false);
     expect(isPublicRequest("GET", "/studio/")).toBe(false);

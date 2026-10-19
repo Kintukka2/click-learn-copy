@@ -49,9 +49,16 @@ button.btn:disabled { opacity: 0.55; cursor: default; }
 .error { color: var(--red); font-size: 12px; margin-top: 8px; }
 .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
 .link { color: var(--brand); text-decoration: none; cursor: pointer; background: none; border: 0; font: inherit; padding: 0; }
+.guides { padding: 12px 14px 2px; background: var(--brand-50); border-bottom: 1px solid #c9d8fb; }
+.guides-head { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--brand-600); font-weight: 700; }
+.guides .card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 8px 0 10px; border-color: #c9d8fb; }
+.guides .card > div { flex: 1; min-width: 0; }
+.guides .card h2 { font-size: 13.5px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.guides .card .btn { flex: none; height: 30px; padding: 0 12px; }
 details.settings { border-top: 1px solid var(--border); padding: 10px 14px 12px; }
 details.settings summary { cursor: pointer; color: var(--muted); font-weight: 600; font-size: 12px; }
-footer.links { display: flex; justify-content: space-between; padding: 0 14px 12px; }
+footer.links { display: flex; justify-content: space-between; padding: 10px 14px 12px; }
+details.record section.body { padding: 2px 0 0; }
 
 /* side panel */
 .panel { min-height: 100vh; background: var(--bg); }

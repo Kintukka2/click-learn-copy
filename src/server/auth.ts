@@ -14,6 +14,7 @@ const PUBLIC_API: [string, RegExp][] = [
   ["GET", /^\/api\/languages$/],
   ["GET", /^\/api\/processes\/[^/]+\/resolved$/],
   ["GET", /^\/api\/lookup$/],
+  ["GET", /^\/api\/lookup\/hosts$/],
   ["POST", /^\/api\/events$/],
   ["POST", /^\/api\/ask$/],
 ];
