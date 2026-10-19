@@ -29,6 +29,8 @@ Edit `deploy/.env`:
 |---|---|
 | `STEPLIGHT_BASE_URL` | `https://examplewebsite.app/steplight`. The path after the domain is the prefix. |
 | `STEPLIGHT_ACCESS_KEY` | A long random string. You enter it once on the Studio sign-in page. Learners never need it. |
+| `STEPLIGHT_PUBLISHER` | Optional. Your name or company, shown in the extension's privacy policy at `/steplight/privacy`. |
+| `STEPLIGHT_CONTACT_EMAIL` | Optional. The contact address shown in that privacy policy. |
 | `TUNNEL_TOKEN` | From step 2. |
 | `ANTHROPIC_API_KEY` | Optional. Turns on Claude for AI help answers and translations. |
 
@@ -95,6 +97,8 @@ In the extension popup, open **Settings** and enter:
 
 - **Server URL:** `https://examplewebsite.app/steplight`
 - **Access key:** your key
+
+Learners enter only the server URL. Without the access key, the popup shows guides only: **Record** and **Open Studio** stay hidden. Publishing the extension in the Chrome Web Store is covered in [WEB-STORE.md](WEB-STORE.md).
 
 ## Notes
 

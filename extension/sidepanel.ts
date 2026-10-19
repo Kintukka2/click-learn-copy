@@ -25,7 +25,7 @@ async function activeTab() {
 function render() {
   const list = $("#list");
   if (!rows.length) {
-    list.innerHTML = '<div class="empty">No guides for this page yet.<br>Record one with the Steplight Recorder.</div>';
+    list.innerHTML = '<div class="empty">No guides for this page yet.</div>';
     return;
   }
   list.innerHTML = rows

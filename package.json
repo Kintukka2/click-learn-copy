@@ -11,6 +11,7 @@
     "build:lib": "node scripts/build-lib.mjs",
     "build:studio": "vite build --config studio/vite.config.ts",
     "build": "npm run build:lib && npm run build:studio",
+    "package:extension": "npm run build:lib && node scripts/package-extension.mjs",
     "start": "tsx src/server/index.ts",
     "dev": "tsx watch src/server/index.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
