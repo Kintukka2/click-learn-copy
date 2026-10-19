@@ -2,11 +2,8 @@
 // active tab (/api/lookup?url=) and starts in-app guidance ("Guide me") by injecting the Assist
 // library (served by the Steplight server at /lib/assist.js) into the tab.
 /// <reference path="./lib/chrome.d.ts" />
-import { uiStrings } from "../src/core/instructions.js";
-import type { ResolvedProcess } from "../src/core/model.js";
+import { SAME_PAGE, startGuide, type LookupRow } from "./lib/guide.js";
 import { $, api, esc, getServerUrl } from "./lib/shared.js";
-
-interface LookupRow { id: string; projectId: string; projectName: string; title: string; chapter?: string; steps: number; relevance: number }
 
 let server = "";
 let currentTab: { id: number; url?: string; windowId: number } | null = null;
@@ -34,7 +31,7 @@ function render() {
   list.innerHTML = rows
     .map(
       (r, i) =>
-        `<div class="card${r.relevance >= 3 && i === 0 ? " best" : ""}">` +
+        `<div class="card${r.relevance >= SAME_PAGE && i === 0 ? " best" : ""}">` +
         `<div class="chapter">${esc(r.chapter || r.projectName)}</div>` +
         `<h2>${esc(r.title)}</h2>` +
         `<div class="meta">${r.steps} steps · ${esc(r.projectName)}</div>` +
@@ -69,40 +66,7 @@ async function guide(processId: string) {
   if (!currentTab) return;
   const lang = ($("#lang") as HTMLSelectElement).value || "en";
   try {
-    const proc = await api<ResolvedProcess>(server, `/processes/${processId}/resolved?lang=${encodeURIComponent(lang)}`);
-    const res = await fetch(`${server}/lib/assist.js`);
-    if (!res.ok || !/javascript/.test(res.headers.get("content-type") ?? "")) throw new Error("The Assist library is not available on the server (run npm run build:lib).");
-    const code = await res.text();
-    const [out] = await chrome.scripting.executeScript({
-      target: { tabId: currentTab.id },
-      world: "MAIN",
-      args: [code, proc, uiStrings(lang), `${server}/api/events`],
-      func: (src: string, p: unknown, ui: Record<string, string>, eventsUrl: string) => {
-        const w = window as unknown as { SteplightAssist?: { start(p: unknown, o?: unknown): void; stop?(): void }; __steplightAssistSrc?: string };
-        // (Re)load when the server has a different version than the one already in this tab.
-        if (!w.SteplightAssist || w.__steplightAssistSrc !== src) {
-          try {
-            w.SteplightAssist?.stop?.();
-          } catch {
-            /* not running */
-          }
-          const s = document.createElement("script");
-          s.textContent = src;
-          (document.head || document.documentElement).appendChild(s);
-          s.remove();
-          w.__steplightAssistSrc = src;
-        }
-        if (!w.SteplightAssist) return "Assist could not be loaded into this page (blocked by its Content Security Policy?).";
-        try {
-          w.SteplightAssist.stop?.();
-        } catch {
-          /* not running */
-        }
-        w.SteplightAssist.start(p, { ui, eventsUrl });
-        return "";
-      },
-    });
-    if (out?.result) error(String(out.result));
+    error(await startGuide(server, currentTab.id, processId, lang));
   } catch (err) {
     error((err as Error).message);
   }

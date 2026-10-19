@@ -1,6 +1,7 @@
-// Steplight Recorder popup: server setting, project/process choice (or a new process),
-// Start/Stop recording with a live step counter.
+// Steplight Recorder popup: guides recorded on the current page ("Guide me"), server setting,
+// project/process choice (or a new process), Start/Stop recording with a live step counter.
 /// <reference path="./lib/chrome.d.ts" />
+import { SAME_PAGE, startGuide, type LookupRow } from "./lib/guide.js";
 import { $, api, esc, getAccessKey, getServerUrl, send, setAccessKey, setServerUrl, type RecState } from "./lib/shared.js";
 
 interface ProjectRow { id: string; name: string; processCount: number; languages: string[] }
@@ -66,8 +67,41 @@ async function renderIdle() {
   await loadProcesses(sel.value);
 }
 
+/** Guides recorded on this page, with Guide me, above the recorder (the badge counts the same). */
+async function renderGuides() {
+  const box = $("#guides");
+  box.hidden = true;
+  const tab = await targetTab();
+  if (!tab?.url || !/^https?:/.test(tab.url)) return;
+  const rows = (await api<LookupRow[]>(server, `/lookup?url=${encodeURIComponent(tab.url)}`).catch(() => [] as LookupRow[])).filter((r) => r.relevance >= SAME_PAGE);
+  if (!rows.length) return;
+  $("#guides-head").textContent = rows.length === 1 ? "1 guide for this page" : `${rows.length} guides for this page`;
+  $("#guides-list").innerHTML = rows
+    .slice(0, 3)
+    .map((r) => `<div class="card"><div><h2 title="${esc(r.title)}">${esc(r.title)}</h2><div class="meta">${r.steps} steps · ${esc(r.chapter || r.projectName)}</div></div><button class="btn primary" data-guide="${esc(r.id)}">Guide me</button></div>`)
+    .join("");
+  if (rows.length > 3) $("#guides-list").insertAdjacentHTML("beforeend", `<div class="hint" style="margin:-4px 0 10px">${rows.length - 3} more in the help panel</div>`);
+  box.hidden = false;
+}
+
+async function guide(btn: HTMLButtonElement) {
+  error("#guides-error", "");
+  btn.disabled = true;
+  try {
+    const tab = await targetTab();
+    const lang = String((await chrome.storage.local.get("guideLang")).guideLang || "en");
+    const msg = await startGuide(server, tab.id, btn.dataset.guide!, lang);
+    if (msg) throw new Error(msg);
+    window.close();
+  } catch (err) {
+    error("#guides-error", (err as Error).message);
+    btn.disabled = false;
+  }
+}
+
 function renderRecording(st: RecState, err?: string) {
   show("recording");
+  $("#guides").hidden = true;
   $("#rec-title").textContent = st.processTitle;
   $("#rec-count").textContent = String(st.stepCount);
   error("#rec-error", err ?? "");
@@ -134,13 +168,19 @@ async function init() {
   }
   const r = await send<{ state: RecState | null; error?: string }>({ type: "steplight:state" });
   if (r?.state) renderRecording(r.state, r.error);
-  else
+  else {
+    void renderGuides();
     await renderIdle().catch((err) => {
       error("#error", (err as Error).message);
       if (/access key/i.test((err as Error).message)) ($("#settings") as HTMLDetailsElement).open = true;
     });
+  }
 }
 
+$("#guides-list").addEventListener("click", (e) => {
+  const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-guide]");
+  if (b) void guide(b);
+});
 $("#project").addEventListener("change", (e) => void loadProcesses((e.target as HTMLSelectElement).value));
 $("#process").addEventListener("change", onProcessChange);
 $("#start").addEventListener("click", () => void start());

@@ -2,9 +2,11 @@
 // Owns the recording session (persisted in chrome.storage.session so it survives worker restarts),
 // takes the viewport screenshot the moment a capture event arrives (clicks fire on pointerdown, so
 // the page has not reacted yet), and posts CapturePayloads to /api/recordings/:token/events in order.
+// Also badges the toolbar icon with the number of guides recorded on the page in each tab.
 /// <reference path="./lib/chrome.d.ts" />
 import type { CaptureEvent, CapturePayload, Target } from "../src/core/model.js";
-import { api, authHeaders, type RecState } from "./lib/shared.js";
+import { SAME_PAGE, type LookupRow } from "./lib/guide.js";
+import { api, authHeaders, getServerUrl, type RecState } from "./lib/shared.js";
 
 let state: RecState | null = null;
 const ready: Promise<void> = chrome.storage.session
@@ -28,8 +30,7 @@ function targetKey(t?: Target): string {
 
 async function persist() {
   await chrome.storage.session.set({ rec: state });
-  await chrome.action.setBadgeText({ text: state ? String(state.stepCount) : "" });
-  if (state) await chrome.action.setBadgeBackgroundColor({ color: "#d92d20" });
+  if (state) await showBadge(state.tabId);
 }
 
 function broadcast() {
@@ -87,6 +88,7 @@ async function stopRecording(): Promise<unknown> {
   await chain.catch(() => undefined); // flush pending posts
   state = null;
   await persist();
+  await showBadge(s.tabId);
   chrome.tabs.sendMessage(s.tabId, { type: "steplight:stop" }).catch(() => undefined);
   broadcast();
   try {
@@ -193,12 +195,97 @@ chrome.runtime.onMessage.addListener((msg: { type: string; [k: string]: unknown 
   return true; // async response
 });
 
+// ---------------------------------------------------------------- guides for the page (badge)
+
+const guideCount = new Map<number, number>();
+const lookups = new Map<string, { n: number; at: number }>();
+const timers = new Map<number, ReturnType<typeof setTimeout>>();
+let hosts: { server: string; list: string[]; at: number } | null = null;
+
+/** Hosts that have guides: other sites' URLs are never sent to the Steplight server. */
+async function guideHosts(server: string): Promise<string[]> {
+  if (hosts?.server === server && Date.now() - hosts.at < 5 * 60_000) return hosts.list;
+  const list = await api<string[]>(server, "/lookup/hosts").catch(() => [] as string[]);
+  hosts = { server, list, at: Date.now() };
+  return list;
+}
+
+async function countGuides(url: string): Promise<number> {
+  let host = "";
+  try {
+    if (/^https?:/.test(url)) host = new URL(url).host;
+  } catch {
+    /* not a URL */
+  }
+  if (!host) return 0;
+  const server = await getServerUrl();
+  if (!(await guideHosts(server)).includes(host)) return 0;
+  const hit = lookups.get(url);
+  if (hit && Date.now() - hit.at < 60_000) return hit.n;
+  const rows = await api<LookupRow[]>(server, `/lookup?url=${encodeURIComponent(url)}`).catch(() => [] as LookupRow[]);
+  const n = rows.filter((r) => r.relevance >= SAME_PAGE).length;
+  lookups.set(url, { n, at: Date.now() });
+  return n;
+}
+
+/** Recording step count (red) in the recorded tab, otherwise the number of guides (blue). */
+async function showBadge(tabId: number) {
+  const recording = !!state && state.tabId === tabId;
+  const n = guideCount.get(tabId) ?? 0;
+  const text = recording ? String(state!.stepCount) : n ? String(n) : "";
+  const title = recording ? "Steplight Recorder: recording" : n ? `Steplight: ${n} guide${n === 1 ? "" : "s"} for this page` : "Steplight Recorder";
+  try {
+    await chrome.action.setBadgeText({ tabId, text });
+    await chrome.action.setBadgeBackgroundColor({ tabId, color: recording ? "#d92d20" : "#2f6fed" });
+    await chrome.action.setTitle({ tabId, title });
+  } catch {
+    /* the tab is gone */
+  }
+}
+
+function refreshGuides(tabId: number, url = "") {
+  clearTimeout(timers.get(tabId));
+  timers.set(
+    tabId,
+    setTimeout(() => {
+      timers.delete(tabId);
+      void countGuides(url).then(async (n) => {
+        guideCount.set(tabId, n);
+        await ready;
+        await showBadge(tabId);
+      });
+    }, 300),
+  );
+}
+
+// tabs.onUpdated also reports in-page navigations (pushState), e.g. between D365 pages
+chrome.tabs.onUpdated.addListener((tabId: number, info: { url?: string; status?: string }, tab: { url?: string }) => {
+  if (info.url || info.status === "complete") refreshGuides(tabId, tab.url ?? info.url);
+});
+chrome.tabs.onActivated.addListener(({ tabId }: { tabId: number }) => {
+  void chrome.tabs.get(tabId).then((t: { url?: string }) => refreshGuides(tabId, t.url)).catch(() => undefined);
+});
+chrome.storage.onChanged.addListener((changes: Record<string, unknown>) => {
+  if (!changes.serverUrl && !changes.accessKey) return;
+  hosts = null;
+  lookups.clear();
+  refreshAll();
+});
+
+// tabs that were already open when the browser or the extension started
+const refreshAll = () => void chrome.tabs.query({}).then((tabs: { id: number; url?: string }[]) => tabs.forEach((t) => refreshGuides(t.id, t.url)));
+chrome.runtime.onStartup.addListener(refreshAll);
+chrome.runtime.onInstalled.addListener(refreshAll);
+
 // a recorded tab that is closed ends the recording
 chrome.tabs.onRemoved.addListener((tabId: number) => {
+  guideCount.delete(tabId);
+  clearTimeout(timers.get(tabId));
+  timers.delete(tabId);
   void ready.then(() => {
     if (state && state.tabId === tabId) void stopRecording();
   });
 });
 
 // exposed for automation / debugging from the service-worker console
-(self as unknown as { steplight: unknown }).steplight = { startRecording, stopRecording, getState: () => state };
+(self as unknown as { steplight: unknown }).steplight = { startRecording, stopRecording, getState: () => state, countGuides };

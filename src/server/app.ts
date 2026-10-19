@@ -6,7 +6,7 @@ import { now } from "../core/ids.js";
 import { instructionFor, SUPPORTED_LANGS } from "../core/instructions.js";
 import type { AnalyticsEvent, CapturePayload, OutputFormat, Process, Step } from "../core/model.js";
 import { resolveProcess } from "../core/resolve.js";
-import { joinUrl, normalizeBasePath, swapPrefix } from "../core/url.js";
+import { joinUrl, normalizeBasePath, pageKey, pageMatch, swapPrefix } from "../core/url.js";
 import { accessKeyMiddleware } from "./auth.js";
 import { applyCapture, activeSessions, getSession, startSession, stopSession } from "./recording.js";
 import { Store } from "./store.js";
@@ -241,40 +241,38 @@ export function createApp(config: AppConfig) {
 
   // -------------------------------------------------------------- in-app lookup (extension side panel, Assist)
   api.get("/lookup", (req, res) => {
-    const url = String(req.query.url ?? "");
-    let host = "";
-    let hashPath = "";
-    try {
-      const u = new URL(url);
-      host = u.host;
-      hashPath = (u.hash.replace(/^#/, "").split("?")[0] || u.pathname).toLowerCase();
-    } catch {
-      /* ignore */
-    }
+    const here = pageKey(String(req.query.url ?? ""));
     const results: { process: Process; projectName: string; score: number }[] = [];
-    for (const p of store.listProjects()) {
-      for (const proc of store.listProcesses(p.id)) {
-        let score = 0;
-        const urls = [proc.startUrl, ...proc.steps.map((s) => s.url)];
-        for (const u of urls) {
-          try {
-            const pu = new URL(joinUrl(config.baseUrl, u));
-            if (pu.host !== host) continue;
-            score = Math.max(score, 1);
-            const ph = (pu.hash.replace(/^#/, "").split("?")[0] || pu.pathname).toLowerCase();
-            if (hashPath && ph && (ph === hashPath)) score = Math.max(score, 3);
-            else if (hashPath && ph && (hashPath.startsWith(ph) || ph.startsWith(hashPath))) score = Math.max(score, 2);
-          } catch {
-            /* ignore */
+    if (here) {
+      for (const p of store.listProjects()) {
+        for (const proc of store.listProcesses(p.id)) {
+          let score = 0;
+          for (const u of [proc.startUrl, ...proc.steps.map((s) => s.url)]) {
+            const rec = u ? pageKey(joinUrl(config.baseUrl, u)) : null;
+            if (rec) score = Math.max(score, pageMatch(here, rec));
           }
+          if (score) results.push({ process: proc, projectName: p.name, score });
         }
-        if (score) results.push({ process: proc, projectName: p.name, score });
       }
     }
     results.sort((a, b) => b.score - a.score);
     res.json(
       results.map((r) => ({ id: r.process.id, projectId: r.process.projectId, projectName: r.projectName, title: r.process.title, chapter: r.process.chapter, steps: r.process.steps.length, relevance: r.score })),
     );
+  });
+
+  // Hosts that have guides, so the extension only looks up pages of those applications.
+  api.get("/lookup/hosts", (_req, res) => {
+    const hosts = new Set<string>();
+    for (const p of store.listProjects()) {
+      for (const proc of store.listProcesses(p.id)) {
+        for (const u of [proc.startUrl, ...proc.steps.map((s) => s.url)]) {
+          const k = u ? pageKey(joinUrl(config.baseUrl, u)) : null;
+          if (k) hosts.add(k.host);
+        }
+      }
+    }
+    res.json([...hosts]);
   });
 
   // -------------------------------------------------------------- analytics
