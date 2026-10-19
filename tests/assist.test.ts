@@ -294,6 +294,68 @@ pr.addEventListener("click", function () {
     await page.close();
   }, 30_000);
 
+  // Like D365's navigation pane: no aria-expanded, and collapsing a group re-uses its link
+  // elements for the next group's links instead of removing them.
+  const reuseHtml = `<!doctype html><html><body><h1>Procurement</h1>
+<div id="menu"><button id="pr">Purchase requisitions</button><a href="#all">All purchase requisitions</a><a href="#mine">Purchase requisitions prepared by me</a><a href="#cons">Consignment replenishment orders</a><a href="#cat">Procurement categories</a></div>
+<button id="new">New</button>
+<script>
+var open = true, labels = [["#all", "All purchase requisitions"], ["#mine", "Purchase requisitions prepared by me"], ["#cons", "Consignment replenishment orders"], ["#cat", "Procurement categories"]];
+document.getElementById("pr").addEventListener("click", function () {
+  open = !open;
+  var links = document.querySelectorAll("#menu > a"), shown = open ? labels : labels.slice(2);
+  links.forEach(function (a, i) { var l = shown[i]; a.hidden = !l; if (l) { a.setAttribute("href", l[0]); a.textContent = l[1]; } });
+});
+</script></body></html>`;
+
+  it("learns that a step is a toggle when its click hides the next element, without aria-expanded", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page, { html: reuseHtml });
+    await page.goto("http://app.test/");
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p, { startAt: 1 }), menuProc());
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#pr"))).toBe(true);
+    // the open group is collapsed; the element that showed "All purchase requisitions" now shows another link
+    await page.click("#pr");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 4");
+    expect(await page.locator("#menu > a:nth-of-type(1)").textContent()).toBe("Consignment replenishment orders");
+    const reused = await rectOf(page, "#menu > a:nth-of-type(1)");
+    for (let k = 0; k < 4; k++) {
+      const s = (await state(page))!;
+      if (s.count !== "Step 3 of 4") break;
+      expect(s.ringOn && near(s.ring, reused)).toBe(false);
+      await page.waitForTimeout(100);
+    }
+    await expect.poll(async () => (await state(page))!.count, { timeout: 3000 }).toBe("Step 2 of 4");
+    await page.click("#pr");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 4");
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "a[href='#all']"))).toBe(true);
+    await page.click("a[href='#all']");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 4 of 4");
+
+    // next run: the group is still open and the step is a known toggle, so it is skipped
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p), menuProc());
+    await expect.poll(async () => (await state(page))?.count).toBe("Step 1 of 4");
+    await page.click("h1");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 4");
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "a[href='#all']"))).toBe(true);
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
+  it("drops a highlighted element that the app relabels", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page, { html: reuseHtml });
+    await page.goto("http://app.test/");
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p, { startAt: 2 }), menuProc());
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "a[href='#all']"))).toBe(true);
+    // the app collapses the group itself (no click on a step's element)
+    await page.evaluate(() => (document.getElementById("pr") as HTMLButtonElement).click());
+    await expect.poll(async () => (await state(page))!.ringOn).toBe(false);
+    expect((await state(page))!.text).toContain("Looking for this element");
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
   it("fallback resolver handles role|name, label, text and css selectors", async () => {
     const page = await browser.newPage();
     await serve(page);
