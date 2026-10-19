@@ -79,6 +79,25 @@ function plausible(r: Resolved, t: Target): boolean {
   return (r.selector.kind !== "css" && r.selector.kind !== "xpath") || nameMatches(r.element, t);
 }
 
+const CLICKABLE = "a[href],button,input,select,textarea,summary,[role=link],[role=button],[role=menuitem],[role=treeitem],[role=tab],[role=option],[role=checkbox],[role=radio],[role=switch],[role=combobox]";
+
+/**
+ * Another clickable element is drawn where this one is: it is clipped away (e.g. inside a menu
+ * group collapsed to zero height, as in D365) or covered, although the browser calls it visible.
+ */
+function covered(e: Element): boolean {
+  const r = e.getBoundingClientRect();
+  const x = r.left + r.width / 2;
+  const y = r.top + r.height / 2;
+  if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) return false; // off screen: scrolled to later
+  const top = document.elementFromPoint(x, y);
+  if (!top || top === e || e.contains(top) || top.contains(e)) return false;
+  const label = top.closest("label");
+  if (label && (label.control === e || label.contains(e))) return false;
+  const other = top.closest(CLICKABLE);
+  return !!other && !other.contains(e) && !e.contains(other);
+}
+
 // Steps learned to be toggles (clicking them hid the next step's element), per browser.
 const KEY_TOGGLES = "steplight.assist.toggles";
 
@@ -282,7 +301,7 @@ export class AssistSession {
       return;
     }
     // Apps that re-use elements (D365's navigation pane) can relabel the highlighted one.
-    if (this.target && this.target.isConnected && isVisible(this.target) && nameMatches(this.target, st.target!)) return;
+    if (this.target && this.target.isConnected && isVisible(this.target) && nameMatches(this.target, st.target!) && !covered(this.target)) return;
     const found = this.resolve(st.target!);
     if (found && this.skipExpanded(found)) return;
     if (!found && this.backToExpander()) return;
@@ -308,10 +327,10 @@ export class AssistSession {
     } catch {
       r = null;
     }
-    if (r && !plausible(r, t)) r = null;
+    if (r && (!plausible(r, t) || covered(r.element))) r = null;
     if (!r && this.resolver !== fallbackResolve) {
       r = fallbackResolve(t, document);
-      if (r && !plausible(r, t)) r = null;
+      if (r && (!plausible(r, t) || covered(r.element))) r = null;
     }
     return r?.element ?? null;
   }
