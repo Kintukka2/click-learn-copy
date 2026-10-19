@@ -342,6 +342,49 @@ document.getElementById("pr").addEventListener("click", function () {
     await page.close();
   }, 30_000);
 
+  // Like D365 when a group is collapsed: its links stay in the page, inside a container squashed
+  // to zero height, so the browser still calls them visible while the next group's link is drawn
+  // where they are.
+  const clipHtml = `<!doctype html><html><body><h1>Procurement</h1>
+<div id="menu" style="display:flex;flex-direction:column;align-items:flex-start;width:320px"><button id="pr">Purchase requisitions</button><div id="prl" style="overflow:hidden;display:flex;flex-direction:column"><a href="#all">All purchase requisitions</a><a href="#mine">Purchase requisitions prepared by me</a></div><a href="#cons">Consignment replenishment orders</a><a href="#cat">Procurement categories</a></div>
+<button id="new">New</button>
+<script>
+var open = true, prl = document.getElementById("prl");
+document.getElementById("pr").addEventListener("click", function () { open = !open; prl.style.height = open ? "" : "0px"; });
+</script></body></html>`;
+
+  it("treats an element clipped by a collapsed container as hidden", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page, { html: clipHtml });
+    await page.goto("http://app.test/");
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p, { startAt: 1 }), menuProc());
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#pr"))).toBe(true);
+    await page.click("#pr");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 4");
+    // the hidden link now sits exactly where "Consignment replenishment orders" is drawn
+    expect(await page.evaluate(() => document.elementFromPoint(...(((r) => [r.x + r.width / 2, r.y + r.height / 2])(document.querySelector("a[href='#all']")!.getBoundingClientRect()) as [number, number]))?.textContent)).toBe("Consignment replenishment orders");
+    const cons = await rectOf(page, "a[href='#cons']");
+    for (let k = 0; k < 4; k++) {
+      const s = (await state(page))!;
+      if (s.count !== "Step 3 of 4") break;
+      expect(s.ringOn && near(s.ring, cons)).toBe(false);
+      await page.waitForTimeout(100);
+    }
+    await expect.poll(async () => (await state(page))!.count, { timeout: 3000 }).toBe("Step 2 of 4");
+    await page.click("#pr");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 4");
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "a[href='#all']"))).toBe(true);
+    await page.click("a[href='#all']");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 4 of 4");
+    // next run with the group still open: the expander step is skipped
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p), menuProc());
+    await expect.poll(async () => (await state(page))?.count).toBe("Step 1 of 4");
+    await page.click("h1");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 4");
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
   it("drops a highlighted element that the app relabels", async () => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     const errors = await serve(page, { html: reuseHtml });
