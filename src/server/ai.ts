@@ -171,13 +171,7 @@ export async function translateProcess(proc: Process, lang: Lang, opts: { replay
   }
 
   const loc: ProcessLocalization = next.localizations[lang];
-  // regenerate auto titles from localized UI names
-  for (const s of next.steps) {
-    const ls = (loc.steps[s.id] ??= {});
-    if (!s.titleEdited && !ls.titleEdited) {
-      ls.title = instructionFor({ action: s.action, target: s.target, value: ls.value ?? s.value, sensitive: s.sensitive, learnerChooses: s.learnerChooses, name: ls.label ?? ls.name }, lang);
-    }
-  }
+  for (const s of next.steps) loc.steps[s.id] ??= {};
 
   // free text to translate
   const jobs: { set: (v: string) => void; text: string }[] = [];
@@ -187,6 +181,7 @@ export async function translateProcess(proc: Process, lang: Lang, opts: { replay
     const ls = loc.steps[s.id]!;
     if (s.titleEdited && !ls.titleEdited) jobs.push({ text: s.title, set: (v) => (ls.title = v) });
     if (s.description) jobs.push({ text: s.description, set: (v) => (ls.description = v) });
+    if (s.learnerChooses && s.choiceHint) jobs.push({ text: s.choiceHint, set: (v) => (ls.choiceHint = v) });
   }
   const translated = await translateTexts(
     jobs.map((j) => j.text),
@@ -197,6 +192,13 @@ export async function translateProcess(proc: Process, lang: Lang, opts: { replay
     return undefined;
   });
   if (translated) translated.forEach((t, i) => jobs[i].set(t));
+  // regenerate auto titles from localized UI names (and translated choice hints)
+  for (const s of next.steps) {
+    const ls = loc.steps[s.id]!;
+    if (!s.titleEdited && !ls.titleEdited) {
+      ls.title = instructionFor({ action: s.action, target: s.target, value: ls.value ?? s.value, sensitive: s.sensitive, learnerChooses: s.learnerChooses, hint: ls.choiceHint ?? s.choiceHint, name: ls.label ?? ls.name }, lang);
+    }
+  }
   loc.status = "auto";
   loc.updatedAt = new Date().toISOString();
   return next;

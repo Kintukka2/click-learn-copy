@@ -132,7 +132,7 @@ function markLearnerChoice(proc: Process, click: Step) {
     if (t.sensitive || v.length < 2 || !name || !(name.includes(v) || v.includes(name))) return;
     for (const s of [t, click]) {
       s.learnerChooses = true;
-      if (!s.titleEdited) s.title = instructionFor({ action: s.action, target: s.target, value: s.value, sensitive: s.sensitive, learnerChooses: true }, proc.lang);
+      if (!s.titleEdited) s.title = instructionFor({ action: s.action, target: s.target, value: s.value, sensitive: s.sensitive, learnerChooses: true, hint: s.choiceHint }, proc.lang);
     }
     return;
   }

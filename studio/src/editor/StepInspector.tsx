@@ -1,4 +1,5 @@
 import { useEffect, useState, type KeyboardEvent, type TextareaHTMLAttributes, type InputHTMLAttributes } from "react";
+import { canLearnerChoose, choiceSuggestion } from "../../../src/core/choice";
 import { richText } from "../../../src/core/instructions";
 import type { ActionType, Process, Rect, Step, StepLocalization } from "../../../src/core/model";
 import { Icon } from "../components/Icon";
@@ -258,22 +259,7 @@ export function StepInspector({
               }
             />
           )}
-          {((s.action === "type" && !s.sensitive) || (s.action === "click" && s.target?.row)) && (
-            <Toggle
-              checked={!!s.learnerChooses}
-              onChange={(v) => onPatch({ learnerChooses: v })}
-              label={
-                <span>
-                  <strong>The learner picks this</strong>
-                  <span className="muted small block">
-                    {s.action === "type"
-                      ? "Accept any value: the recorded one is only an example."
-                      : `Accept a click on any row${s.target?.row?.column ? ` of the ${s.target.row.column} column` : ""}: the recorded record is only an example.`}
-                  </span>
-                </span>
-              }
-            />
-          )}
+          {canLearnerChoose(s) && <LearnerChoice step={s} onPatch={onPatch} />}
         </section>
       )}
 
@@ -374,6 +360,51 @@ export function StepInspector({
           )}
         </dl>
       </section>
+    </div>
+  );
+}
+
+const CHOICE_TEXT: Record<string, { accept: string; hint: string }> = {
+  type: { accept: "Accept any value: the recorded one is only an example.", hint: "e.g. the first day of last month" },
+  select: { accept: "Accept any option: the recorded one is only an example.", hint: "e.g. the format you need" },
+  check: { accept: "The learner ticks or clears it as needed; Guide me offers Next.", hint: "e.g. tick it to include closed orders" },
+  click: { accept: "Accept a click on any row: the recorded record is only an example.", hint: "e.g. your purchase requisition" },
+  day: { accept: "Accept any day in the calendar: the recorded date is only an example.", hint: "e.g. the last day of the month" },
+};
+
+/** "The learner picks this" toggle, what to enter, and a suggestion for steps that look like one. */
+function LearnerChoice({ step: s, onPatch }: { step: Step; onPatch: (p: Partial<Step>) => void }) {
+  const kind = s.action === "click" && s.target?.row?.calendar ? "day" : s.action;
+  const text = CHOICE_TEXT[kind] ?? CHOICE_TEXT.type;
+  const column = s.action === "click" && !s.target?.row?.calendar ? s.target?.row?.column : undefined;
+  const suggestion = choiceSuggestion(s);
+  return (
+    <div className="learner-choice" data-testid="learner-choice">
+      <Toggle
+        checked={!!s.learnerChooses}
+        onChange={(v) => onPatch({ learnerChooses: v })}
+        label={
+          <span>
+            <strong>The learner picks this</strong>
+            <span className="muted small block">{column ? text.accept.replace("any row", `any row of the ${column} column`) : text.accept}</span>
+          </span>
+        }
+      />
+      {s.learnerChooses && (
+        <Field label="What to enter" htmlFor="st-choice-hint" hint="Optional. Shown in the instruction instead of the recorded example.">
+          <DraftText id="st-choice-hint" multiline={false} className="input" value={s.choiceHint ?? ""} placeholder={text.hint} onCommit={(v) => onPatch({ choiceHint: v.trim() || undefined })} />
+        </Field>
+      )}
+      {suggestion && (
+        <div className="choice-suggestion" data-testid="choice-suggestion">
+          <span>
+            <strong>Suggestion:</strong> {suggestion.toLowerCase()} usually differs for each learner.
+          </span>
+          <Button size="sm" onClick={() => onPatch({ learnerChooses: true })}>
+            Learner picks this
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

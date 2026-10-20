@@ -3,9 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { instructionFor, plainText, richText, textRuns, ui } from "../src/core/instructions.js";
-import type { CaptureEvent, Process, Target } from "../src/core/model.js";
+import type { CaptureEvent, Process, Step, Target } from "../src/core/model.js";
 import { resolveProcess } from "../src/core/resolve.js";
 import { SearchIndex } from "../src/core/search.js";
+import { canLearnerChoose, choiceSuggestion } from "../src/core/choice.js";
 import { applyCapture } from "../src/server/recording.js";
 import { Store } from "../src/server/store.js";
 
@@ -34,6 +35,39 @@ describe("instructions", () => {
     expect(instructionFor({ action: "click", target: link, learnerChooses: true }, "de")).toBe("Klicken Sie in der Spalte **Purchase requisition** auf den gewünschten Datensatz.");
     // without a row, a click step keeps its normal wording
     expect(instructionFor({ action: "click", target: button("Save"), learnerChooses: true })).toBe("Click **Save**.");
+  });
+
+  it("words every kind of learner's choice, with the author's description when there is one", () => {
+    const sel = { ...field("Format"), tag: "select", role: "combobox" };
+    const box = { ...field("Include closed orders"), inputType: "checkbox", role: "checkbox" };
+    const day: Target = { ...button("14"), row: { grid: "#cal", inRow: "td:nth-of-type(3) > button", calendar: true, inCell: "button" } };
+    const row: Target = { ...button("000992"), tag: "a", role: "link", row: { grid: "#g", inRow: "td > a", column: "Purchase requisition" } };
+    const c = { learnerChooses: true };
+    expect(instructionFor({ action: "select", target: sel, value: "PDF", ...c })).toBe("In **Format**, select the option you need.");
+    expect(instructionFor({ action: "check", target: box, value: "true", ...c })).toBe("Select or clear the **Include closed orders** check box as needed.");
+    expect(instructionFor({ action: "click", target: day, ...c })).toBe("In the calendar, click the date you need.");
+    expect(instructionFor({ action: "type", target: field("From date"), value: "1/9/2026", ...c, hint: "the first day of last month" })).toBe("In the **From date** field, enter **the first day of last month**.");
+    expect(instructionFor({ action: "select", target: sel, value: "PDF", ...c, hint: "PDF or Excel" })).toBe("In **Format**, select **PDF or Excel**.");
+    expect(instructionFor({ action: "check", target: box, ...c, hint: "tick it to include closed orders" })).toBe("**Include closed orders**: tick it to include closed orders.");
+    expect(instructionFor({ action: "click", target: row, ...c, hint: "your requisition" })).toBe("In the **Purchase requisition** column, click **your requisition**.");
+    expect(instructionFor({ action: "click", target: day, ...c, hint: "the last day of the month" }, "da")).toBe("Klik på **the last day of the month** i kalenderen.");
+    // a hint without the flag changes nothing
+    expect(instructionFor({ action: "select", target: sel, value: "PDF", hint: "anything" })).toBe("In **Format**, select **PDF**.");
+  });
+
+  it("knows which steps can be the learner's choice and suggests likely ones", () => {
+    const st = (p: Partial<Step>): Step => ({ id: "x", action: "type", url: "", title: "", ...p }) as Step;
+    expect(canLearnerChoose(st({ action: "type" }))).toBe(true);
+    expect(canLearnerChoose(st({ action: "type", sensitive: true }))).toBe(false);
+    expect(canLearnerChoose(st({ action: "click", target: button("Save") }))).toBe(false);
+    expect(canLearnerChoose(st({ action: "check" }))).toBe(true);
+    expect(choiceSuggestion(st({ target: field("From date") }))).toBe("A date or period");
+    expect(choiceSuggestion(st({ target: { ...field("Anything"), inputType: "date" } }))).toBe("A date or period");
+    expect(choiceSuggestion(st({ target: field("Quick filter") }))).toBe("A search or filter value");
+    expect(choiceSuggestion(st({ action: "select", target: { ...field("Warehouse"), context: "Report parameters" } }))).toBe("A report or filter parameter");
+    expect(choiceSuggestion(st({ action: "click", target: { ...button("000992"), row: { grid: "#g", inRow: "td > a" } } }))).toBe("A record picked from a list");
+    expect(choiceSuggestion(st({ target: field("Customer name") }))).toBeUndefined();
+    expect(choiceSuggestion(st({ target: field("From date"), learnerChooses: true }))).toBeUndefined();
   });
 
   it("masks sensitive values", () => {
@@ -162,6 +196,13 @@ describe("recording noise reduction", () => {
     add({ action: "click", target: link("000815") });
     expect(proc.steps.slice(-2).map((s) => !!s.learnerChooses)).toEqual([false, false]);
     expect(resolveProcess(proc, "en").steps[2].learnerChooses).toBe(true);
+    // the author's description shows in other languages, translated when a translation exists
+    proc.steps[0].choiceHint = "the requisition number";
+    proc.localizations.da = { steps: { [proc.steps[2].id]: { choiceHint: "dit rekvisitionsnummer" } } };
+    proc.steps[2].choiceHint = "your requisition";
+    const da = resolveProcess(proc, "da");
+    expect(da.steps[0].title).toBe("Indtast **the requisition number** i feltet **Filter**.");
+    expect(da.steps[2].title).toBe("Klik på **dit rekvisitionsnummer** i kolonnen **Purchase requisition**.");
     fs.rmSync(dir, { recursive: true, force: true });
   });
 });

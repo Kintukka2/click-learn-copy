@@ -20,7 +20,7 @@ export function resolveProcess(proc: Process, lang: Lang = proc.lang, opts: Reso
       else if (s.action === "note" || s.titleEdited) title = s.title; // author text: keep until translated
       else
         title = instructionFor(
-          { action: s.action, target: s.target, value: l?.value ?? s.value, sensitive: s.sensitive, learnerChooses: s.learnerChooses, name: l?.label ?? l?.name },
+          { action: s.action, target: s.target, value: l?.value ?? s.value, sensitive: s.sensitive, learnerChooses: s.learnerChooses, hint: l?.choiceHint ?? s.choiceHint, name: l?.label ?? l?.name },
           lang,
         );
     }

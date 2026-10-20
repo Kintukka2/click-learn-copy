@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { canLearnerChoose, choiceSuggestion } from "../../../src/core/choice";
 import { richText } from "../../../src/core/instructions";
 import type { Rect, Step } from "../../../src/core/model";
 import { Icon } from "../components/Icon";
@@ -23,6 +24,8 @@ export function StepList({
   onInsertNote,
   onRecord,
   readOnlyOrder,
+  picking,
+  onTogglePick,
 }: {
   items: StepView[];
   selectedId: string | null;
@@ -32,6 +35,9 @@ export function StepList({
   onInsertNote: (afterId?: string) => void;
   onRecord: () => void;
   readOnlyOrder?: boolean;
+  /** "Learner picks…" mode: the steps ticked so far (only steps that can be the learner's choice). */
+  picking?: Set<string>;
+  onTogglePick?: (id: string) => void;
 }) {
   const [drag, setDrag] = useState<number | null>(null);
   const [over, setOver] = useState<{ i: number; after: boolean } | null>(null);
@@ -81,7 +87,7 @@ export function StepList({
               aria-selected={selected}
               tabIndex={selected ? 0 : -1}
               className={cx("step-item", selected && "is-selected", drag === i && "is-dragging", s.action === "note" && "is-note")}
-              onClick={() => onSelect(s.id)}
+              onClick={() => (picking && canLearnerChoose(s) ? onTogglePick?.(s.id) : onSelect(s.id))}
               onFocus={() => !selected && onSelect(s.id)}
               draggable={!readOnlyOrder}
               onDragStart={(e) => {
@@ -110,6 +116,18 @@ export function StepList({
               }}
               data-testid="step-item"
             >
+              {picking && (
+                <input
+                  type="checkbox"
+                  className="step-pick"
+                  aria-label={`Learner picks step ${i + 1}`}
+                  checked={picking.has(s.id)}
+                  disabled={!canLearnerChoose(s)}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={() => onTogglePick?.(s.id)}
+                  data-testid="step-pick"
+                />
+              )}
               <div className="step-num">{i + 1}</div>
               <div className="step-thumb">
                 {v.screenshot ? (
@@ -138,10 +156,16 @@ export function StepList({
                       <Icon name="lock" size={11} />
                     </span>
                   )}
-                  {s.learnerChooses && (
-                    <span className="step-flag" title="The learner picks their own value or row">
+                  {s.learnerChooses ? (
+                    <span className="step-flag violet" title="The learner picks their own value or record">
                       <Icon name="users" size={11} />
                     </span>
+                  ) : (
+                    choiceSuggestion(s) && (
+                      <span className="step-flag suggest" title={`Suggestion: ${choiceSuggestion(s)!.toLowerCase()} usually differs for each learner`} data-testid="step-suggest">
+                        <Icon name="users" size={11} />?
+                      </span>
+                    )
                   )}
                   {s.titleEdited && s.action !== "note" && <span className="step-flag">edited</span>}
                   {v.localizedShot && <span className="step-flag teal">localized</span>}

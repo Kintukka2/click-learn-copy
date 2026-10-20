@@ -1,6 +1,7 @@
 // Rows of tables and grids: where a clicked element sits (its column), and the same element in every
 // other row. Used for steps where the learner picks their own record (Step.learnerChooses), e.g. the
-// purchase requisition link in a D365 list page: Assist accepts the same column in any row.
+// purchase requisition link in a D365 list page: Assist accepts the same column in any row. In a
+// calendar (a date picker month), any day counts.
 import type { Rect, RowPlace } from "../core/model.js";
 import { accessibleName, isVisible, norm, visibleText } from "./dom.js";
 
@@ -8,7 +9,7 @@ const ROW = "tr, [role=row]";
 const GRID = "table, [role=grid], [role=treegrid], [role=table]";
 const CELL = "td, th, [role=gridcell], [role=cell], [role=rowheader], [role=columnheader]";
 
-/** Path from the row to the element, made of tag:nth-of-type steps ("" when the element is the row). */
+/** Path from an ancestor (row or cell) to the element, made of tag:nth-of-type steps ("" = the ancestor). */
 function pathFromRow(el: Element, row: Element): string | null {
   const parts: string[] = [];
   for (let n: Element = el; n !== row; ) {
@@ -56,6 +57,35 @@ function union(rects: DOMRect[], view: Rect): Rect | undefined {
   return { x: Math.round(x), y: Math.round(y), width: Math.round(right - x), height: Math.round(bottom - y) };
 }
 
+const DAY = /^\d{1,2}$/;
+
+/** Cells that show a day of the month ("1" … "31"). */
+function dayCells(grid: Element): Element[] {
+  return Array.from(grid.querySelectorAll(CELL)).filter((c) => c.closest(GRID) === grid && DAY.test(norm(visibleText(c))));
+}
+
+/** A month of a date picker: a grid with at least 28 day cells. */
+function isCalendar(grid: Element, cell: Element | null): boolean {
+  return !!cell && DAY.test(norm(visibleText(cell))) && dayCells(grid).length >= 28;
+}
+
+/** The element at inCell in every day cell of a calendar. */
+function sameInDays(grid: Element, inCell: string): Element[] {
+  const out: Element[] = [];
+  for (const c of dayCells(grid)) {
+    let e: Element | null = c;
+    if (inCell) {
+      try {
+        e = c.querySelector(`:scope > ${inCell}`);
+      } catch {
+        return [];
+      }
+    }
+    if (e) out.push(e);
+  }
+  return out;
+}
+
 /** Where an element sits in a table/grid row, or undefined when it is not in one. */
 export function rowPlaceOf(el: Element, gridPath: (grid: Element) => string): RowPlace | undefined {
   const row = el.closest(ROW);
@@ -64,9 +94,20 @@ export function rowPlaceOf(el: Element, gridPath: (grid: Element) => string): Ro
   const inRow = pathFromRow(el, row);
   if (inRow === null) return undefined;
   const place: RowPlace = { grid: gridPath(grid), inRow };
-  const column = columnHeader(grid, row, el.closest(CELL));
-  if (column) place.column = column;
+  const cell = el.closest(CELL);
   const view = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
+  if (cell && isCalendar(grid, cell)) {
+    const inCell = pathFromRow(el, cell);
+    if (inCell !== null) {
+      place.calendar = true;
+      place.inCell = inCell;
+      const box = union(sameInDays(grid, inCell).map((e) => e.getBoundingClientRect()), view);
+      if (box) place.columnBox = box;
+      return place;
+    }
+  }
+  const column = columnHeader(grid, row, cell);
+  if (column) place.column = column;
   const box = union(sameInRows(grid, inRow).map((e) => e.getBoundingClientRect()), view);
   if (box) place.columnBox = box;
   return place;
@@ -110,9 +151,12 @@ function gridsFor(place: RowPlace, doc: Document): Element[] {
   return [...grids];
 }
 
-/** Visible elements at the recorded place in every row, top to bottom (the header row has none). */
+/** Visible elements at the recorded place in every row (or every day of a calendar), in page order. */
 export function rowCandidates(place: RowPlace, doc: Document = document): Element[] {
   const out: Element[] = [];
-  for (const g of gridsFor(place, doc)) for (const e of sameInRows(g, place.inRow)) if (isVisible(e) && !e.closest("thead, [role=columnheader]")) out.push(e);
+  for (const g of gridsFor(place, doc)) {
+    const same = place.calendar ? sameInDays(g, place.inCell ?? "") : sameInRows(g, place.inRow);
+    for (const e of same) if (isVisible(e) && !e.closest("thead, [role=columnheader]")) out.push(e);
+  }
   return out;
 }

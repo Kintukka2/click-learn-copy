@@ -11,6 +11,7 @@ import { NoteDialog, RecordDialog, ReportPanel, TranslateDialog } from "./dialog
 import { PreviewModal } from "./PreviewModal";
 import { DraftText, StepInspector } from "./StepInspector";
 import { StepList, type StepView } from "./StepList";
+import { canLearnerChoose, choiceSuggestion } from "../../../src/core/choice";
 import { ROOT } from "../lib/base";
 
 type Job = { kind: "replay" | "test" | "translate" | "record"; label: string };
@@ -170,6 +171,16 @@ export function ProcessEditor({ id }: { id: string }) {
       setProc((p) => (p ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? step : s)) } : p));
       return step;
     });
+
+  /** "Learner picks…": set learnerChooses on exactly the ticked steps (only the ones that change). */
+  const [picking, setPicking] = useState<Set<string> | null>(null);
+  const applyPicks = async (ids: Set<string>) => {
+    setPicking(null);
+    for (const st of proc?.steps ?? []) {
+      if (!canLearnerChoose(st) || ids.has(st.id) === !!st.learnerChooses) continue;
+      await patchStep(st.id, { learnerChooses: ids.has(st.id) });
+    }
+  };
 
   const resetTitle = (stepId: string) =>
     track(async () => {
@@ -570,6 +581,11 @@ export function ProcessEditor({ id }: { id: string }) {
             <span>
               Steps <span className="muted">{proc.steps.length}</span>
             </span>
+            {isSource && proc.steps.some(canLearnerChoose) && !picking && (
+              <Button size="sm" variant="ghost" icon="users" onClick={() => setPicking(new Set(proc.steps.filter((st) => st.learnerChooses).map((st) => st.id)))} data-testid="pick-start">
+                Learner picks…
+              </Button>
+            )}
             {proc.steps.length > 0 && (
               <Button
                 size="sm"
@@ -595,7 +611,32 @@ export function ProcessEditor({ id }: { id: string }) {
               setDialog("note");
             }}
             onRecord={() => setDialog("record")}
+            picking={picking ?? undefined}
+            onTogglePick={(sid) =>
+              setPicking((cur) => {
+                const next = new Set(cur);
+                if (next.has(sid)) next.delete(sid);
+                else next.add(sid);
+                return next;
+              })
+            }
           />
+          {picking && (
+            <div className="pick-bar" data-testid="pick-bar">
+              <span className="muted small">Tick the steps where each learner enters or picks their own value or record.</span>
+              <div className="pick-actions">
+                <Button size="sm" variant="ghost" onClick={() => setPicking(new Set([...picking, ...proc.steps.filter((st) => choiceSuggestion(st)).map((st) => st.id)]))} data-testid="pick-suggested">
+                  Add suggested
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setPicking(null)}>
+                  Cancel
+                </Button>
+                <Button size="sm" variant="primary" onClick={() => void applyPicks(picking)} data-testid="pick-apply">
+                  Apply
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
         <div className="pane-inspector">
           {selView ? (
