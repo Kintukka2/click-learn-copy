@@ -51,6 +51,11 @@ function sameTarget(a?: Target, b?: Target): boolean {
   return !!a.name && a.name === b.name && a.tag === b.tag && a.label === b.label;
 }
 
+function sameField(name: string, t?: Target): boolean {
+  const n = (s?: string) => (s ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+  return !!t && !!n(name) && (n(name) === n(t.label) || n(name) === n(t.name));
+}
+
 function isTextField(t?: Target) {
   if (!t) return false;
   if (t.tag === "textarea") return true;
@@ -79,6 +84,8 @@ export function applyCapture(store: Store, proc: Process, payload: CapturePayloa
     last.action === "click" &&
     sameTarget(last.target, ev.target) &&
     ((ev.action === "type" && isTextField(last.target)) || ev.action === "select" || ev.action === "check");
+  // opening a field's calendar, then picking a day, is one step: the date that went into the field
+  const pickedDate = last?.action === "click" && last.target?.field?.kind === "calendar" && ev.action === "type" && isTextField(ev.target) && sameField(last.target.field.name, ev.target);
 
   // Don't record pressing Enter right after typing as a separate step if the author didn't want it?
   // We keep it: "Press Enter" is a real instruction in many ERPs.
@@ -101,7 +108,11 @@ export function applyCapture(store: Store, proc: Process, payload: CapturePayloa
     capturedAt: now(),
   };
 
-  if (absorbs) {
+  if (pickedDate) {
+    // the calendar button's screenshot shows the field before the date was picked
+    step.screenshot = last.screenshot ?? step.screenshot;
+    steps[steps.length - 1] = step;
+  } else if (absorbs) {
     // keep the click's screenshot (taken before the field had focus) if the new event has none
     step.screenshot = step.screenshot ?? last.screenshot;
     steps[steps.length - 1] = step;

@@ -80,6 +80,9 @@ function plausible(r: Resolved, t: Target): boolean {
   return (r.selector.kind !== "css" && r.selector.kind !== "xpath") || nameMatches(r.element, t);
 }
 
+/** Pop-ups an app opens next to a field: the Assist card must not cover them. */
+const POPUPS = "[role=dialog], [role=listbox], [role=menu], [role=tree], .ui-datepicker, .ui-autocomplete";
+
 const CLICKABLE = "a[href],button,input,select,textarea,summary,[role=link],[role=button],[role=menuitem],[role=treeitem],[role=tab],[role=option],[role=checkbox],[role=radio],[role=switch],[role=combobox]";
 
 /**
@@ -163,6 +166,12 @@ export class AssistSession {
   private resolver: ResolveFn;
   private onDocClick = (e: Event) => this.handleClick(e);
   private onDocChange = (e: Event) => this.handleChange(e);
+  private onDocInput = (e: Event) => {
+    if (this.isTarget(e.target)) this.typed = true;
+  };
+  /** Type step: the field's value when it was found, and whether the user typed in it since. */
+  private valueAtStart: string | null = null;
+  private typed = false;
   private onDocKey = (e: KeyboardEvent) => this.handleKey(e);
   private onNav = () => this.handleNav();
   private onResize = () => this.place(true);
@@ -195,6 +204,7 @@ export class AssistSession {
     (document.body ?? document.documentElement).append(this.host);
     document.addEventListener("click", this.onDocClick, true);
     document.addEventListener("change", this.onDocChange, true);
+    document.addEventListener("input", this.onDocInput, true);
     document.addEventListener("keydown", this.onDocKey, true);
     window.addEventListener("hashchange", this.onNav);
     window.addEventListener("popstate", this.onNav);
@@ -217,6 +227,7 @@ export class AssistSession {
     window.clearInterval(this.poll);
     document.removeEventListener("click", this.onDocClick, true);
     document.removeEventListener("change", this.onDocChange, true);
+    document.removeEventListener("input", this.onDocInput, true);
     document.removeEventListener("keydown", this.onDocKey, true);
     window.removeEventListener("hashchange", this.onNav);
     window.removeEventListener("popstate", this.onNav);
@@ -272,6 +283,8 @@ export class AssistSession {
     this.advancing = false;
     this.target = null;
     this.choices = [];
+    this.valueAtStart = null;
+    this.typed = false;
     this.lastRect = null;
     this.scrolled = false;
     this.searchStarted = Date.now();
@@ -295,6 +308,7 @@ export class AssistSession {
   private find() {
     const st = this.step;
     if (!st || this.stopped || this.done) return;
+    this.checkPopups();
     if (st.action === "navigate" && st.value && this.urlMatches(st.value)) {
       this.next();
       return;
@@ -304,6 +318,7 @@ export class AssistSession {
       this.updateStatus();
       return;
     }
+    if (this.filledWithoutTyping(st)) return;
     const row = st.learnerChooses ? st.target!.row : undefined;
     this.choices = row ? rowCandidates(row).filter((e) => !covered(e)) : [];
     if (this.choices.length) {
@@ -324,6 +339,7 @@ export class AssistSession {
     if (!found && this.backToExpander()) return;
     if (found !== this.target) {
       this.target = found;
+      if (found instanceof HTMLInputElement || found instanceof HTMLTextAreaElement) this.valueAtStart ??= found.value;
       this.lastRect = null;
       if (found && !this.scrolled) {
         this.scrolled = true;
@@ -335,6 +351,22 @@ export class AssistSession {
       this.updateStatus();
       this.place(true);
     } else if (!found) this.updateStatus();
+  }
+
+  /**
+   * A date picker (D365's calendar) writes the field's value without input or change events: a type
+   * step is done once the value changes while the user has not typed in it.
+   */
+  private filledWithoutTyping(st: ResolvedStep): boolean {
+    const t = this.target;
+    if (st.action !== "type" || !(t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement)) return false;
+    if (this.valueAtStart === null) {
+      this.valueAtStart = t.value;
+      return false;
+    }
+    if (this.typed || this.advancing || t.value === this.valueAtStart || !t.value.trim()) return false;
+    this.advanceSoon(60);
+    return true;
   }
 
   private resolve(t: Target): Element | null {
@@ -491,6 +523,30 @@ export class AssistSession {
   }
 
   /** Position ring and card; `force` re-positions even if the target did not move. */
+  /** Open pop-ups next to the element (a date picker, lookup, menu): the card keeps clear of them. */
+  private popups: DOMRect[] = [];
+  private popupKey = "";
+  private checkPopups() {
+    const t = this.target;
+    const found: DOMRect[] = [];
+    if (t) {
+      const tr = t.getBoundingClientRect();
+      const max = window.innerWidth * window.innerHeight * 0.6;
+      for (const p of Array.from(document.querySelectorAll(POPUPS))) {
+        if (this.host.contains(p) || p.contains(t) || !isVisible(p)) continue;
+        const r = p.getBoundingClientRect();
+        if (r.width < 20 || r.height < 20 || r.width * r.height > max) continue;
+        const gap = Math.max(r.left - tr.right, tr.left - r.right, r.top - tr.bottom, tr.top - r.bottom);
+        if (gap < 200) found.push(r);
+      }
+    }
+    const key = found.map((r) => `${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)}`).join("|");
+    if (key === this.popupKey) return;
+    this.popupKey = key;
+    this.popups = found;
+    this.place(true);
+  }
+
   private place(force: boolean) {
     if (this.stopped) return;
     const t = this.target;
@@ -537,7 +593,13 @@ export class AssistSession {
       return;
     }
     this.card.classList.remove("dock-top");
-    positionCard(this.card, { x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2 }, W, H, 14, 12);
+    let box = { x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2 };
+    for (const p of this.popups) {
+      const x = Math.min(box.x, p.left);
+      const y = Math.min(box.y, p.top);
+      box = { x, y, width: Math.max(box.x + box.width, p.right) - x, height: Math.max(box.y + box.height, p.bottom) - y };
+    }
+    positionCard(this.card, box, W, H, 14, 12);
   }
 
   // ------------------------------------------------------------------ action detection

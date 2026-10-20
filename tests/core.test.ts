@@ -205,4 +205,29 @@ describe("recording noise reduction", () => {
     expect(da.steps[2].title).toBe("Klik på **dit rekvisitionsnummer** i kolonnen **Purchase requisition**.");
     fs.rmSync(dir, { recursive: true, force: true });
   });
+
+  it("turns opening a field's calendar and picking a day into one date step", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sl-store-"));
+    const store = new Store(dir);
+    const project = store.createProject({ name: "T" });
+    let proc = store.createProcess(project.id, { title: "P" })!;
+    const calendar: Target = { selectors: [{ kind: "css", value: "#x_StartDate > div > div > div" }], tag: "div", bbox: { x: 200, y: 50, width: 20, height: 20 }, field: { kind: "calendar", name: "From date" } };
+    expect(instructionFor({ action: "click", target: calendar })).toBe("Open the calendar of the **From date** field.");
+    expect(instructionFor({ action: "click", target: { ...calendar, field: { kind: "lookup", name: "Vendor account" } } }, "de")).toBe("Öffnen Sie die Liste des Felds **Vendor account**.");
+    const shot = "data:image/png;base64,iVBORw0KGgo=";
+    applyCapture(store, proc, { event: ev({ action: "click", target: calendar }), screenshotDataUrl: shot });
+    proc = store.getProcess(proc.id)!;
+    const before = proc.steps[0].screenshot;
+    applyCapture(store, proc, { event: ev({ action: "type", target: field("From date"), value: "7/14/2026" }), screenshotDataUrl: shot });
+    proc = store.getProcess(proc.id)!;
+    expect(proc.steps.map((s) => s.action)).toEqual(["type"]);
+    expect(proc.steps[0].title).toBe("In the **From date** field, enter **7/14/2026**.");
+    expect(proc.steps[0].screenshot).toBe(before); // the field before the date was picked
+    // another field's value after a calendar click is a separate step
+    applyCapture(store, proc, { event: ev({ action: "click", target: calendar }) });
+    proc = store.getProcess(proc.id)!;
+    applyCapture(store, proc, { event: ev({ action: "type", target: field("Quantity"), value: "3" }) });
+    expect(store.getProcess(proc.id)!.steps.map((s) => s.action)).toEqual(["type", "click", "type"]);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
 });

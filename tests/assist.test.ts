@@ -7,6 +7,7 @@ import { build } from "esbuild";
 import { chromium, type Browser, type Page } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { resolveProcess } from "../src/core/resolve.js";
+import { d365DateHtml } from "./d365-date-fixture.js";
 import type { Process, ResolvedProcess, ResolvedStep, Target } from "../src/core/model.js";
 
 const ROOT = path.resolve(__dirname, "..");
@@ -500,6 +501,30 @@ ${Array.from({ length: 5 }, (_, w) => `<tr>${calDays.slice(w * 7, w * 7 + 7).map
     await expect.poll(async () => (await state(page))!.count).toBe("Step 4 of 5");
     await page.click("#cal button >> text=/^3$/"); // any day, not the recorded 14
     await expect.poll(async () => (await state(page))!.count).toBe("Step 5 of 5");
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
+  it("completes a date step when the date is picked in D365's calendar instead of typed", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page, { html: d365DateHtml });
+    await page.goto("http://app.test/");
+    const dateProc: ResolvedProcess = {
+      ...proc,
+      id: "date",
+      title: "Trial balance",
+      steps: [
+        { id: "d1", index: 1, url: "http://app.test/", action: "type", value: "7/14/2026", title: "In the **From date** field, enter **7/14/2026**.", target: { selectors: [{ kind: "label", value: "From date" }], tag: "input", role: "textbox", name: "From date", label: "From date", bbox } },
+        { id: "d2", index: 2, url: "http://app.test/", action: "click", title: "Click **Calculate balances**.", target: tgt("button", "Calculate balances", "#calc") },
+      ],
+    };
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p), dateProc);
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#sd"))).toBe(true);
+    await page.click("#ledgertrialbalancelistpage_2_StartDate .lookupButton");
+    // the card moves out of the calendar's way, so the day can be clicked
+    await page.click("#idDay-20", { timeout: 5000 });
+    console.log("D day"); // writes 7/20/2026 without input/change events
+    await expect.poll(async () => (await state(page))!.count, { timeout: 3000 }).toBe("Step 2 of 2");
     expect(errors).toEqual([]);
     await page.close();
   }, 30_000);

@@ -47,6 +47,15 @@ export interface Target {
   context?: string;
   /** Set when the element is inside a row of a table or grid, so a step can accept the same cell of any row. */
   row?: RowPlace;
+  /** A nameless button that belongs to a field, e.g. D365's calendar or lookup button next to "From date". */
+  field?: FieldButton;
+}
+
+/** The field a nameless button belongs to (the button itself has no name to show or match). */
+export interface FieldButton {
+  kind: "calendar" | "lookup" | "button";
+  /** Name of the field, e.g. "From date". */
+  name: string;
 }
 
 /** Where an element sits in a table or grid (e.g. the record link in a list page). */

@@ -9,6 +9,7 @@
 // that only forwards to its control. Anything inside [data-steplight-ignore] is ignored.
 import type { CaptureEvent, Target } from "../core/model.js";
 import { actionableElement, isFormControl, isIgnored, isTextField, norm } from "./dom.js";
+import { dateFieldForDay, forgetPickerField, noteFieldButton } from "./fields.js";
 import { describeElement } from "./selectors.js";
 
 export type Emit = (ev: CaptureEvent) => void | Promise<void>;
@@ -87,8 +88,31 @@ function onPointerDown(e: Event) {
   if (el.getAttribute("contenteditable") !== null && el.getAttribute("contenteditable") !== "false") return;
   if (isDisabled(el)) return;
   if (el === document.body || el === document.documentElement) return;
+  const dateField = dateFieldForDay(el);
+  if (dateField) return pickDate(dateField, el);
   flushFocusedField(el);
+  noteFieldButton(el);
   send(baseEvent("click", describeElement(el)));
+}
+
+/**
+ * A click on a day of a date picker is recorded as what it does: the date it writes into the field
+ * ("In the From date field, enter 7/31/2026"), so Guide me accepts typing the date or picking it. The
+ * picker writes the value without input/change events (D365's jQuery UI picker), so wait for it.
+ */
+function pickDate(field: HTMLInputElement, day: Element) {
+  const before = field.value;
+  const started = Date.now();
+  const dayTarget = describeElement(day); // the picker closes once the day is clicked
+  const check = () => {
+    if (!state) return;
+    if (field.value !== before && field.value.trim()) {
+      forgetPickerField();
+      emitType(field);
+    } else if (Date.now() - started < 1500) window.setTimeout(check, 50);
+    else send(baseEvent("click", dayTarget)); // the day did not fill the field after all
+  };
+  window.setTimeout(check, 0);
 }
 
 /**
