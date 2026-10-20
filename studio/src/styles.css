@@ -165,7 +165,11 @@ img {
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   height: 100vh;
-  overflow: hidden;
+  /* clip, not hidden: a hidden box can still be scrolled by focus() and leave a blank band */
+  overflow: clip;
+}
+.app.is-collapsed {
+  --sidebar-w: 64px;
 }
 .main {
   overflow: auto;
@@ -173,7 +177,7 @@ img {
   height: 100vh;
 }
 .app-editor .main {
-  overflow: hidden;
+  overflow: clip;
 }
 
 /* ------------------------------------------------------------------ sidebar */
@@ -895,6 +899,7 @@ select.input {
   font-size: 13px;
 }
 .toggle {
+  position: relative; /* keeps the visually hidden input inside the scrolling panel */
   display: inline-flex;
   align-items: flex-start;
   gap: 10px;
@@ -903,6 +908,8 @@ select.input {
 }
 .toggle input {
   position: absolute;
+  top: 0;
+  left: 0;
   opacity: 0;
   width: 1px;
   height: 1px;
@@ -4048,3 +4055,35 @@ div.scenario {
 .step-pick { flex: none; width: 16px; height: 16px; margin: 0 2px 0 0; accent-color: var(--violet); align-self: center; }
 .pick-bar { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); background: var(--violet-soft); }
 .pick-actions { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+
+/* ---- collapsed menu (sidebar toggle): the same compact rail as on narrow screens ---- */
+.app.is-collapsed .sidebar {
+  padding: 14px 8px;
+  align-items: center;
+}
+.app.is-collapsed .brand {
+  padding: 4px 0 14px;
+}
+.app.is-collapsed :is(.brand-text, .side-label, .side-count, .side-section-title, .side-ext, .side-empty) {
+  display: none;
+}
+.app.is-collapsed .side-link {
+  justify-content: center;
+  padding: 9px;
+  width: 40px;
+}
+.app.is-collapsed .side-sub {
+  margin: 2px 0 6px;
+  padding-left: 0;
+  border-left: 0;
+  border-top: 1px solid var(--border);
+  padding-top: 2px;
+}
+.app.is-collapsed .side-ai {
+  padding: 8px 0;
+  justify-content: center;
+}
+.app.is-collapsed .side-foot {
+  width: 100%;
+  align-items: center;
+}
