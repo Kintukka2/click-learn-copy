@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { OutputFormat, Process, ProcessLocalization, Project, Rect, ReplayReport, ResolvedProcess, Step, StepLocalization } from "../../../src/core/model";
 import { Icon } from "../components/Icon";
-import { Button, Chip, confirmDialog, EmptyState, Menu, Skeleton, Spinner, toast, useElapsed, type MenuItem } from "../components/ui";
+import { Button, Chip, confirmDialog, EmptyState, IconButton, Menu, Skeleton, Spinner, toast, useElapsed, type MenuItem } from "../components/ui";
 import { api, download, mediaUrl, type RecordingSession } from "../lib/api";
 import { Link, navigate, useLocation } from "../lib/router";
 import { useStudio } from "../lib/store";
@@ -156,7 +156,50 @@ export function ProcessEditor({ id }: { id: string }) {
     }
   };
 
-  const patchProcess = (patch: Partial<Process>) =>
+  // ---------------------------------------------------------------- undo / redo
+  // Each edit made here remembers the process as it was; undo saves that version back in one PATCH.
+  // Changes made by the server (recording, replay, translation) clear the history.
+  type Snap = { label: string; data: Pick<Process, "title" | "description" | "chapter" | "startUrl" | "steps" | "localizations"> };
+  const procRef = useRef<Process | null>(null);
+  procRef.current = proc;
+  const [undoStack, setUndoStack] = useState<Snap[]>([]);
+  const [redoStack, setRedoStack] = useState<Snap[]>([]);
+  const snapOf = (p: Process, label: string): Snap => ({
+    label,
+    // "" rather than undefined, so restoring clears a field that was empty before
+    data: structuredClone({ title: p.title, description: p.description ?? "", chapter: p.chapter ?? "", startUrl: p.startUrl ?? "", steps: p.steps, localizations: p.localizations }),
+  });
+  const remember = (label: string) => {
+    if (procRef.current) setUndoStack((u) => [...u.slice(-49), snapOf(procRef.current!, label)]);
+    setRedoStack([]);
+  };
+  const clearHistory = () => {
+    setUndoStack([]);
+    setRedoStack([]);
+  };
+  const restore = (from: Snap[], setFrom: (v: Snap[]) => void, setTo: (f: (v: Snap[]) => Snap[]) => void, verb: string) => {
+    const cur = procRef.current;
+    const snap = from[from.length - 1];
+    if (!cur || !snap || saving) return;
+    setFrom(from.slice(0, -1));
+    setTo((t) => [...t, snapOf(cur, snap.label)]);
+    const back = snap.data.steps.find((st) => !cur.steps.some((c) => c.id === st.id));
+    void track(async () => {
+      setProc((p) => (p ? { ...p, ...snap.data } : p));
+      if (back) setSelId(back.id);
+      else if (selId && !snap.data.steps.some((st) => st.id === selId)) setSelId(snap.data.steps[0]?.id ?? null);
+      setProc(await api.updateProcess(id, snap.data));
+      toast.info(`${verb}: ${snap.label}`);
+    });
+  };
+  const undo = () => restore(undoStack, setUndoStack, setRedoStack, "Undone");
+  const redo = () => restore(redoStack, setRedoStack, setUndoStack, "Redone");
+
+  const patchProcess = (patch: Partial<Process>, label = "edit") => {
+    remember(label);
+    return patchProcessNow(patch);
+  };
+  const patchProcessNow = (patch: Partial<Process>) =>
     track(async () => {
       setProc((p) => (p ? { ...p, ...patch } : p));
       const next = await api.updateProcess(id, patch);
@@ -164,7 +207,11 @@ export function ProcessEditor({ id }: { id: string }) {
       return next;
     });
 
-  const patchStep = (stepId: string, patch: Partial<Step>) =>
+  const patchStep = (stepId: string, patch: Partial<Step>, label = stepEditLabel(patch)) => {
+    remember(label);
+    return patchStepNow(stepId, patch);
+  };
+  const patchStepNow = (stepId: string, patch: Partial<Step>) =>
     track(async () => {
       setProc((p) => (p ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? { ...s, ...patch, ...(patch.title !== undefined ? { titleEdited: true } : {}) } : s)) } : p));
       const step = await api.updateStep(id, stepId, patch);
@@ -176,13 +223,16 @@ export function ProcessEditor({ id }: { id: string }) {
   const [picking, setPicking] = useState<Set<string> | null>(null);
   const applyPicks = async (ids: Set<string>) => {
     setPicking(null);
-    for (const st of proc?.steps ?? []) {
-      if (!canLearnerChoose(st) || ids.has(st.id) === !!st.learnerChooses) continue;
-      await patchStep(st.id, { learnerChooses: ids.has(st.id) });
-    }
+    const changes = (proc?.steps ?? []).filter((st) => canLearnerChoose(st) && ids.has(st.id) !== !!st.learnerChooses);
+    if (changes.length) remember("learner picks");
+    for (const st of changes) await patchStepNow(st.id, { learnerChooses: ids.has(st.id) });
   };
 
-  const resetTitle = (stepId: string) =>
+  const resetTitle = (stepId: string) => {
+    remember("instruction reset");
+    return resetTitleNow(stepId);
+  };
+  const resetTitleNow = (stepId: string) =>
     track(async () => {
       const step = await api.resetTitle(id, stepId);
       setProc((p) => (p ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? step : s)) } : p));
@@ -194,6 +244,7 @@ export function ProcessEditor({ id }: { id: string }) {
     const steps = [...proc.steps];
     const [m] = steps.splice(from, 1);
     steps.splice(to, 0, m);
+    remember("move step");
     void track(async () => {
       setProc({ ...proc, steps });
       setProc(await api.putSteps(id, steps));
@@ -204,16 +255,18 @@ export function ProcessEditor({ id }: { id: string }) {
     if (!proc) return;
     const i = proc.steps.findIndex((s) => s.id === stepId);
     const s = proc.steps[i];
-    if (!(await confirmDialog({ title: `Delete step ${i + 1}?`, message: <span dangerouslySetInnerHTML={{ __html: `“${s.title.replace(/\*\*/g, "").replace(/</g, "&lt;")}” and its translations will be removed.` }} />, confirmLabel: "Delete step", danger: true }))) return;
+    if (!(await confirmDialog({ title: `Delete step ${i + 1}?`, message: <span dangerouslySetInnerHTML={{ __html: `“${s.title.replace(/\*\*/g, "").replace(/</g, "&lt;")}” and its translations will be removed. You can undo this.` }} />, confirmLabel: "Delete step", danger: true }))) return;
+    remember("delete step");
     await track(async () => {
       const next = await api.deleteStep(id, stepId);
       setProc(next);
       setSelId(next.steps[Math.min(i, next.steps.length - 1)]?.id ?? null);
-      toast.success("Step deleted");
+      toast.success("Step deleted", "Undo with Ctrl+Z.");
     });
   };
 
   const insertNote = async (title: string, description: string) => {
+    remember("insert note");
     await track(async () => {
       const step = await api.insertNote(id, { afterStepId: noteAfter, title, description: description || undefined });
       setProc(await api.process(id));
@@ -226,7 +279,7 @@ export function ProcessEditor({ id }: { id: string }) {
     if (!proc) return;
     const cur = proc.localizations[lang] ?? { steps: {}, status: "reviewed" as const };
     const next = { ...mut({ ...cur, steps: { ...cur.steps } }), updatedAt: new Date().toISOString() };
-    return patchProcess({ localizations: { ...proc.localizations, [lang]: next } });
+    return patchProcess({ localizations: { ...proc.localizations, [lang]: next } }, "translation edit");
   };
   const saveStepLoc = (stepId: string, fields: Partial<StepLocalization>) =>
     saveLocalization((loc) => {
@@ -263,6 +316,7 @@ export function ProcessEditor({ id }: { id: string }) {
       { kind: mode === "test" ? "test" : "replay", label: mode === "test" ? "Process test" : "Replay" },
       () => api.replay(id, mode, lang),
       (r) => {
+        clearHistory();
         setProc(r.process);
         setReport(r.report);
         const failed = r.report.results.filter((x) => x.status === "failed").length;
@@ -278,6 +332,7 @@ export function ProcessEditor({ id }: { id: string }) {
       { kind: "translate", label: `Translation to ${langName(target)}` },
       () => api.translate(id, target, replayUi),
       (p) => {
+        clearHistory();
         setProc(p);
         setLang(target);
         toast.success(`Translated to ${langName(target)}`, replayUi ? "Localized screenshots captured" : undefined);
@@ -291,6 +346,7 @@ export function ProcessEditor({ id }: { id: string }) {
       { kind: "record", label: `Recording “${title}”` },
       () => api.demoRecord(id, scenarioId),
       (p) => {
+        clearHistory();
         setProc(p);
         setSelId(p.steps[0]?.id ?? null);
         void refreshProjects();
@@ -302,6 +358,7 @@ export function ProcessEditor({ id }: { id: string }) {
   const startSession = async (replace: boolean) => {
     try {
       const s = await api.startRecording(id, replace);
+      clearHistory();
       setSession(s);
       if (replace) {
         setProc((p) => (p ? { ...p, steps: [], localizations: {} } : p));
@@ -353,6 +410,13 @@ export function ProcessEditor({ id }: { id: string }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (dialog || isTyping(e) || document.querySelector(".overlay, .menu")) return;
+      const k = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && (k === "z" || k === "y")) {
+        e.preventDefault();
+        if (k === "y" || e.shiftKey) redo();
+        else undo();
+        return;
+      }
       const { selIndex: i, views: vs } = selRef.current;
       if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "j" || e.key === "k") {
         const dir = e.key === "ArrowDown" || e.key === "j" ? 1 : -1;
@@ -440,7 +504,7 @@ export function ProcessEditor({ id }: { id: string }) {
               placeholder={isSource ? "Untitled process" : proc.title}
               onCommit={(v) => {
                 if (isSource) {
-                  if (v.trim()) void patchProcess({ title: v.trim() });
+                  if (v.trim()) void patchProcess({ title: v.trim() }, "title change");
                 } else void saveLocalization((l) => ({ ...l, title: v.trim() || undefined }));
               }}
               data-testid="process-title"
@@ -451,7 +515,7 @@ export function ProcessEditor({ id }: { id: string }) {
               aria-label="Process description"
               value={isSource ? (proc.description ?? "") : (loc?.description ?? "")}
               placeholder={isSource ? "Add a short description of what this process achieves…" : proc.description || "Description in this language"}
-              onCommit={(v) => (isSource ? void patchProcess({ description: v }) : void saveLocalization((l) => ({ ...l, description: v.trim() || undefined })))}
+              onCommit={(v) => (isSource ? void patchProcess({ description: v }, "description change") : void saveLocalization((l) => ({ ...l, description: v.trim() || undefined })))}
             />
           </div>
           <Menu
@@ -473,11 +537,11 @@ export function ProcessEditor({ id }: { id: string }) {
         <div className="editor-meta">
           <label className="meta-field" title="Chapter in the portal table of contents">
             <Icon name="book" size={13} />
-            <DraftText multiline={false} className="meta-input" value={proc.chapter ?? ""} placeholder="Chapter" onCommit={(v) => void patchProcess({ chapter: v.trim() })} aria-label="Chapter" />
+            <DraftText multiline={false} className="meta-input" value={proc.chapter ?? ""} placeholder="Chapter" onCommit={(v) => void patchProcess({ chapter: v.trim() }, "chapter change")} aria-label="Chapter" />
           </label>
           <label className="meta-field meta-url" title="Start URL used by Replay and Guide me">
             <Icon name="link" size={13} />
-            <DraftText multiline={false} className="meta-input mono" value={proc.startUrl ?? ""} placeholder="Start URL" onCommit={(v) => void patchProcess({ startUrl: v.trim() })} aria-label="Start URL" />
+            <DraftText multiline={false} className="meta-input mono" value={proc.startUrl ?? ""} placeholder="Start URL" onCommit={(v) => void patchProcess({ startUrl: v.trim() }, "start URL change")} aria-label="Start URL" />
           </label>
           {proc.appName && (
             <span className="meta-field static">
@@ -550,6 +614,8 @@ export function ProcessEditor({ id }: { id: string }) {
             </div>
           )}
           <div className="tb-group tb-right">
+            <IconButton icon="undo" label={undoStack.length ? `Undo ${undoStack[undoStack.length - 1].label} (Ctrl+Z)` : "Nothing to undo"} disabled={!undoStack.length || !!job || !!session} onClick={undo} data-testid="undo" />
+            <IconButton icon="redo" label={redoStack.length ? `Redo ${redoStack[redoStack.length - 1].label} (Ctrl+Shift+Z)` : "Nothing to redo"} disabled={!redoStack.length || !!job || !!session} onClick={redo} data-testid="redo" />
             <Button icon="eye" onClick={() => setDialog("preview")} disabled={!proc.steps.length} data-testid="preview">
               Preview
             </Button>
@@ -712,4 +778,16 @@ function EditorSkeleton() {
       </div>
     </div>
   );
+}
+
+/** Undo label for a step edit, from the fields it changes. */
+function stepEditLabel(patch: Partial<Step>): string {
+  if (patch.title !== undefined) return "instruction edit";
+  if (patch.description !== undefined) return "description edit";
+  if (patch.learnerChooses !== undefined || patch.choiceHint !== undefined) return "learner picks";
+  if (patch.target) return "highlight change";
+  if (patch.sensitive !== undefined) return "sensitive value";
+  if (patch.action) return "action type";
+  if (patch.value !== undefined) return "value edit";
+  return "step edit";
 }

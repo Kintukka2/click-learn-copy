@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ExtensionHelp } from "./components/ExtensionHelp";
 import { Icon, Logo } from "./components/Icon";
 import { ConfirmHost, Toaster } from "./components/ui";
@@ -45,16 +45,35 @@ function Shell() {
   }, [path, setActiveProjectId]);
 
   const isEditor = path.startsWith("/processes/");
+  const [collapsed, setCollapsed] = useState(() => readCollapsed());
+  const toggleSidebar = () =>
+    setCollapsed((c) => {
+      try {
+        localStorage.setItem(COLLAPSED_KEY, c ? "0" : "1");
+      } catch {
+        /* storage blocked: only for this visit */
+      }
+      return !c;
+    });
   return (
-    <div className={cx("app", isEditor && "app-editor")}>
-      <Sidebar path={path} />
+    <div className={cx("app", isEditor && "app-editor", collapsed && "is-collapsed")}>
+      <Sidebar path={path} collapsed={collapsed} onToggle={toggleSidebar} />
       <main className="main">{page}</main>
       <ExtensionHelp />
     </div>
   );
 }
 
-function Sidebar({ path }: { path: string }) {
+const COLLAPSED_KEY = "steplight.sidebarCollapsed";
+function readCollapsed(): boolean {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function Sidebar({ path, collapsed, onToggle }: { path: string; collapsed: boolean; onToggle: () => void }) {
   const { projects, activeProjectId, ai, setHelpOpen } = useStudio();
   const recent = (projects ?? []).slice(0, 8);
   const active = projects?.find((p) => p.id === activeProjectId);
@@ -72,7 +91,7 @@ function Sidebar({ path }: { path: string }) {
       </Link>
 
       <nav className="side-nav" aria-label="Main">
-        <Link to="/" className={cx("side-link", path === "/" && "is-active")}>
+        <Link to="/" className={cx("side-link", path === "/" && "is-active")} title="All projects">
           <Icon name="grid" size={16} />
           <span className="side-label">All projects</span>
           {projects && <span className="side-count">{projects.length}</span>}
@@ -101,7 +120,7 @@ function Sidebar({ path }: { path: string }) {
               {isActive && (
                 <div className="side-sub">
                   {PROJECT_TABS.map((t) => (
-                    <Link key={t.id} to={`/projects/${p.id}${t.id === "processes" ? "" : `/${t.id}`}`} className={cx("side-link side-link-sub", currentTab === t.id && "is-active")}>
+                    <Link key={t.id} to={`/projects/${p.id}${t.id === "processes" ? "" : `/${t.id}`}`} className={cx("side-link side-link-sub", currentTab === t.id && "is-active")} title={t.label}>
                       <Icon name={t.icon} size={15} />
                       <span className="side-label">{t.label}</span>
                     </Link>
@@ -114,11 +133,15 @@ function Sidebar({ path }: { path: string }) {
       </div>
 
       <div className="side-foot">
-        <button className="side-link" onClick={() => setHelpOpen(true)}>
+        <button className="side-link" onClick={onToggle} title={collapsed ? "Expand the menu" : "Collapse the menu"} aria-label={collapsed ? "Expand the menu" : "Collapse the menu"} aria-expanded={!collapsed} data-testid="sidebar-toggle">
+          <Icon name={collapsed ? "sidebarOpen" : "sidebarClose"} size={16} />
+          <span className="side-label">Collapse menu</span>
+        </button>
+        <button className="side-link" onClick={() => setHelpOpen(true)} title="Browser extension">
           <Icon name="puzzle" size={16} />
           <span className="side-label">Browser extension</span>
         </button>
-        <a className="side-link" href={withRoot("/demo-erp/")} target="_blank" rel="noreferrer">
+        <a className="side-link" href={withRoot("/demo-erp/")} target="_blank" rel="noreferrer" title="Demo app">
           <Icon name="monitor" size={16} />
           <span className="side-label">Demo app</span>
           <Icon name="external" size={13} className="side-ext" />
