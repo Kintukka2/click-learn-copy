@@ -258,6 +258,22 @@ export function StepInspector({
               }
             />
           )}
+          {((s.action === "type" && !s.sensitive) || (s.action === "click" && s.target?.row)) && (
+            <Toggle
+              checked={!!s.learnerChooses}
+              onChange={(v) => onPatch({ learnerChooses: v })}
+              label={
+                <span>
+                  <strong>The learner picks this</strong>
+                  <span className="muted small block">
+                    {s.action === "type"
+                      ? "Accept any value: the recorded one is only an example."
+                      : `Accept a click on any row${s.target?.row?.column ? ` of the ${s.target.row.column} column` : ""}: the recorded record is only an example.`}
+                  </span>
+                </span>
+              }
+            />
+          )}
         </section>
       )}
 

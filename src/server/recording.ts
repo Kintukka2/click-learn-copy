@@ -108,7 +108,32 @@ export function applyCapture(store: Store, proc: Process, payload: CapturePayloa
   } else {
     steps.push(step);
   }
+  markLearnerChoice(proc, step);
   if (!proc.startUrl) proc.startUrl = ev.url;
   store.saveProcess(proc);
   return step;
+}
+
+const lower = (s?: string) => (s ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+
+/**
+ * Typing a value into a search/filter field and then clicking the row link that shows it (e.g. "000992"
+ * in Filter, then the requisition 000992) is an example, not the one record every learner needs: both
+ * steps become "learner chooses", so Assist accepts any value and any row.
+ */
+function markLearnerChoice(proc: Process, click: Step) {
+  if (click.action !== "click" || !click.target?.row) return;
+  const name = lower(click.target.name);
+  const i = proc.steps.indexOf(click);
+  for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
+    const t = proc.steps[j];
+    if (t.action !== "type") continue;
+    const v = lower(t.value);
+    if (t.sensitive || v.length < 2 || !name || !(name.includes(v) || v.includes(name))) return;
+    for (const s of [t, click]) {
+      s.learnerChooses = true;
+      if (!s.titleEdited) s.title = instructionFor({ action: s.action, target: s.target, value: s.value, sensitive: s.sensitive, learnerChooses: true }, proc.lang);
+    }
+    return;
+  }
 }

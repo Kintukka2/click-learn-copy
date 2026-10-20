@@ -170,8 +170,8 @@ export function createApp(config: AppConfig) {
     if (typeof patch.title === "string" && patch.title !== step.title) patch.titleEdited = true;
     Object.assign(step, patch, { id: step.id });
     // keep auto titles in sync with value / target edits
-    if (!step.titleEdited && (patch.value !== undefined || patch.target || patch.action || patch.sensitive !== undefined)) {
-      step.title = instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive }, proc.lang);
+    if (!step.titleEdited && (patch.value !== undefined || patch.target || patch.action || patch.sensitive !== undefined || patch.learnerChooses !== undefined)) {
+      step.title = instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive, learnerChooses: step.learnerChooses }, proc.lang);
     }
     store.saveProcess(proc);
     res.json(step);
@@ -182,7 +182,7 @@ export function createApp(config: AppConfig) {
     const step = proc?.steps.find((s) => s.id === req.params.stepId);
     if (!proc || !step) return res.status(404).json({ error: "not found" });
     step.titleEdited = false;
-    step.title = instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive }, proc.lang);
+    step.title = instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive, learnerChooses: step.learnerChooses }, proc.lang);
     store.saveProcess(proc);
     res.json(step);
   });

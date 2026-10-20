@@ -175,7 +175,7 @@ export async function translateProcess(proc: Process, lang: Lang, opts: { replay
   for (const s of next.steps) {
     const ls = (loc.steps[s.id] ??= {});
     if (!s.titleEdited && !ls.titleEdited) {
-      ls.title = instructionFor({ action: s.action, target: s.target, value: ls.value ?? s.value, sensitive: s.sensitive, name: ls.label ?? ls.name }, lang);
+      ls.title = instructionFor({ action: s.action, target: s.target, value: ls.value ?? s.value, sensitive: s.sensitive, learnerChooses: s.learnerChooses, name: ls.label ?? ls.name }, lang);
     }
   }
 

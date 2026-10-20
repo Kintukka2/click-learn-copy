@@ -138,6 +138,11 @@ export function StepList({
                       <Icon name="lock" size={11} />
                     </span>
                   )}
+                  {s.learnerChooses && (
+                    <span className="step-flag" title="The learner picks their own value or row">
+                      <Icon name="users" size={11} />
+                    </span>
+                  )}
                   {s.titleEdited && s.action !== "note" && <span className="step-flag">edited</span>}
                   {v.localizedShot && <span className="step-flag teal">localized</span>}
                 </div>
