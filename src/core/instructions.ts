@@ -21,17 +21,25 @@ type Kind =
   | "clickGeneric"
   | "clickRow"
   | "clickRowAny"
+  | "clickRowHint"
+  | "clickRowAnyHint"
+  | "clickDay"
+  | "clickDayHint"
   | "type"
   | "typeSecret"
   | "typeOwn"
   | "select"
+  | "selectOwn"
   | "check"
   | "uncheck"
+  | "checkOwn"
+  | "checkOwnHint"
   | "press"
   | "navigate"
   | "note";
 
-// {n} = element name, {v} = value, {c} = column header (a step where the learner picks a row)
+// {n} = element name, {v} = value, {c} = column header, {h} = the author's description of what the
+// learner picks (Step.choiceHint); a hint on a type/select step is shown as its value
 const T: Record<Lang, Record<Kind, string>> = {
   en: {
     clickButton: "Click **{n}**.",
@@ -51,6 +59,13 @@ const T: Record<Lang, Record<Kind, string>> = {
     press: "Press **{v}**.",
     navigate: "Open **{v}**.",
     note: "{v}",
+    clickRowHint: "In the **{c}** column, click **{h}**.",
+    clickRowAnyHint: "In the list, click **{h}**.",
+    clickDay: "In the calendar, click the date you need.",
+    clickDayHint: "In the calendar, click **{h}**.",
+    selectOwn: "In **{n}**, select the option you need.",
+    checkOwn: "Select or clear the **{n}** check box as needed.",
+    checkOwnHint: "**{n}**: {h}.",
   },
   da: {
     clickButton: "Klik på **{n}**.",
@@ -70,6 +85,13 @@ const T: Record<Lang, Record<Kind, string>> = {
     press: "Tryk på **{v}**.",
     navigate: "Åbn **{v}**.",
     note: "{v}",
+    clickRowHint: "Klik på **{h}** i kolonnen **{c}**.",
+    clickRowAnyHint: "Klik på **{h}** på listen.",
+    clickDay: "Klik på den dato, du skal bruge, i kalenderen.",
+    clickDayHint: "Klik på **{h}** i kalenderen.",
+    selectOwn: "Vælg den mulighed, du skal bruge, i **{n}**.",
+    checkOwn: "Markér eller fjern markeringen i afkrydsningsfeltet **{n}** efter behov.",
+    checkOwnHint: "**{n}**: {h}.",
   },
   de: {
     clickButton: "Klicken Sie auf **{n}**.",
@@ -89,6 +111,13 @@ const T: Record<Lang, Record<Kind, string>> = {
     press: "Drücken Sie **{v}**.",
     navigate: "Öffnen Sie **{v}**.",
     note: "{v}",
+    clickRowHint: "Klicken Sie in der Spalte **{c}** auf **{h}**.",
+    clickRowAnyHint: "Klicken Sie in der Liste auf **{h}**.",
+    clickDay: "Klicken Sie im Kalender auf das benötigte Datum.",
+    clickDayHint: "Klicken Sie im Kalender auf **{h}**.",
+    selectOwn: "Wählen Sie in **{n}** die benötigte Option aus.",
+    checkOwn: "Aktivieren oder deaktivieren Sie das Kontrollkästchen **{n}** nach Bedarf.",
+    checkOwnHint: "**{n}**: {h}.",
   },
   fr: {
     clickButton: "Cliquez sur **{n}**.",
@@ -108,6 +137,13 @@ const T: Record<Lang, Record<Kind, string>> = {
     press: "Appuyez sur **{v}**.",
     navigate: "Ouvrez **{v}**.",
     note: "{v}",
+    clickRowHint: "Dans la colonne **{c}**, cliquez sur **{h}**.",
+    clickRowAnyHint: "Dans la liste, cliquez sur **{h}**.",
+    clickDay: "Dans le calendrier, cliquez sur la date dont vous avez besoin.",
+    clickDayHint: "Dans le calendrier, cliquez sur **{h}**.",
+    selectOwn: "Dans **{n}**, sélectionnez l’option dont vous avez besoin.",
+    checkOwn: "Cochez ou décochez la case **{n}** selon vos besoins.",
+    checkOwnHint: "**{n}**: {h}.",
   },
   es: {
     clickButton: "Haga clic en **{n}**.",
@@ -127,6 +163,13 @@ const T: Record<Lang, Record<Kind, string>> = {
     press: "Pulse **{v}**.",
     navigate: "Abra **{v}**.",
     note: "{v}",
+    clickRowHint: "En la columna **{c}**, haga clic en **{h}**.",
+    clickRowAnyHint: "En la lista, haga clic en **{h}**.",
+    clickDay: "En el calendario, haga clic en la fecha que necesite.",
+    clickDayHint: "En el calendario, haga clic en **{h}**.",
+    selectOwn: "En **{n}**, seleccione la opción que necesite.",
+    checkOwn: "Active o desactive la casilla **{n}** según sea necesario.",
+    checkOwnHint: "**{n}**: {h}.",
   },
   nl: {
     clickButton: "Klik op **{n}**.",
@@ -146,6 +189,13 @@ const T: Record<Lang, Record<Kind, string>> = {
     press: "Druk op **{v}**.",
     navigate: "Open **{v}**.",
     note: "{v}",
+    clickRowHint: "Klik in de kolom **{c}** op **{h}**.",
+    clickRowAnyHint: "Klik in de lijst op **{h}**.",
+    clickDay: "Klik in de kalender op de datum die u nodig hebt.",
+    clickDayHint: "Klik in de kalender op **{h}**.",
+    selectOwn: "Selecteer in **{n}** de optie die u nodig hebt.",
+    checkOwn: "Schakel het selectievakje **{n}** naar behoefte in of uit.",
+    checkOwnHint: "**{n}**: {h}.",
   },
   sv: {
     clickButton: "Klicka på **{n}**.",
@@ -165,6 +215,13 @@ const T: Record<Lang, Record<Kind, string>> = {
     press: "Tryck på **{v}**.",
     navigate: "Öppna **{v}**.",
     note: "{v}",
+    clickRowHint: "Klicka på **{h}** i kolumnen **{c}**.",
+    clickRowAnyHint: "Klicka på **{h}** i listan.",
+    clickDay: "Klicka på det datum du behöver i kalendern.",
+    clickDayHint: "Klicka på **{h}** i kalendern.",
+    selectOwn: "Välj det alternativ du behöver i **{n}**.",
+    checkOwn: "Markera eller avmarkera kryssrutan **{n}** efter behov.",
+    checkOwnHint: "**{n}**: {h}.",
   },
 };
 
@@ -187,13 +244,17 @@ export function uiStrings(lang: Lang): Record<string, string> {
   return { ...UI.en, ...(UI[lang] ?? {}) };
 }
 
-function kindFor(action: ActionType, target: Target | undefined, value: string | undefined, sensitive?: boolean, chooses?: boolean): Kind {
+function kindFor(input: InstructionInput): Kind {
+  const { action, target, value, sensitive } = input;
+  const chooses = !!input.learnerChooses && !sensitive;
+  const hint = !!clean(input.hint);
   switch (action) {
     case "type":
-      return sensitive ? "typeSecret" : chooses ? "typeOwn" : "type";
+      return sensitive ? "typeSecret" : chooses && !hint ? "typeOwn" : "type";
     case "select":
-      return "select";
+      return chooses && !hint ? "selectOwn" : "select";
     case "check":
+      if (chooses) return hint ? "checkOwnHint" : "checkOwn";
       return value === "false" ? "uncheck" : "check";
     case "press":
       return "press";
@@ -202,7 +263,10 @@ function kindFor(action: ActionType, target: Target | undefined, value: string |
     case "note":
       return "note";
     case "click": {
-      if (chooses && target?.row) return clean(target.row.column) ? "clickRow" : "clickRowAny";
+      const row = chooses ? target?.row : undefined;
+      if (row?.calendar) return hint ? "clickDayHint" : "clickDay";
+      if (row && clean(row.column)) return hint ? "clickRowHint" : "clickRow";
+      if (row) return hint ? "clickRowAnyHint" : "clickRowAny";
       const role = target?.role ?? "";
       const tag = target?.tag ?? "";
       if (role === "tab") return "clickTab";
@@ -226,6 +290,8 @@ export interface InstructionInput {
   sensitive?: boolean;
   /** The learner picks the value or row (Step.learnerChooses). */
   learnerChooses?: boolean;
+  /** What the learner picks, in the author's words (Step.choiceHint); used with learnerChooses. */
+  hint?: string;
   /** Override names (e.g. localized label from a localized replay). */
   name?: string;
 }
@@ -233,10 +299,11 @@ export interface InstructionInput {
 /** Generate the instruction text for a step in a language. */
 export function instructionFor(input: InstructionInput, lang: Lang = "en"): string {
   const table = T[lang] ?? T.en;
-  const kind = kindFor(input.action, input.target, input.value, input.sensitive, input.learnerChooses);
+  const kind = kindFor(input);
   let n = clean(input.name ?? input.target?.label ?? input.target?.name);
   if (!n) n = kindFallbackName(input, lang);
-  let v = clean(input.value);
+  const h = input.learnerChooses ? clean(input.hint) : "";
+  let v = h && (kind === "type" || kind === "select") ? h : clean(input.value);
   if (input.action === "press" && !v) v = "Enter";
   if (input.sensitive) v = "••••••";
   const tpl = table[kind];
@@ -246,6 +313,7 @@ export function instructionFor(input: InstructionInput, lang: Lang = "en"): stri
     .replace("{n}", kind === "typeSecret" ? n.toLowerCase() : n)
     .replace("{v}", v)
     .replace("{c}", clean(input.target?.row?.column))
+    .replace("{h}", h)
     .replace(/([.!?])(\*\*)?\.$/, "$1$2"); // "Ext. Doc. No.**." → no double full stop
 }
 
@@ -256,7 +324,7 @@ function kindFallbackName(input: InstructionInput, lang: Lang): string {
 
 /** Instruction for an existing step in its source language. */
 export function instructionForStep(step: Step, lang: Lang = "en"): string {
-  return instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive, learnerChooses: step.learnerChooses }, lang);
+  return instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive, learnerChooses: step.learnerChooses, hint: step.choiceHint }, lang);
 }
 
 /** Minimal, safe **bold** → <strong> conversion with HTML escaping. Newlines become <br>. */

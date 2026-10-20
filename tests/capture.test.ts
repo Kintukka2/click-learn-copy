@@ -270,4 +270,13 @@ describe("event capture semantics", () => {
     expect((await describeEl("a[href='#v1']")).row).toMatchObject({ grid: "#g", inRow: "div:nth-of-type(1) > span > a", column: "Vendor account" });
     expect((await describeEl("#save")).row).toBeUndefined();
   });
+
+  it("records a day in a date picker as a calendar choice", async () => {
+    const days = Array.from({ length: 35 }, (_, i) => (i < 2 ? "" : String(i - 1)));
+    const weeks = Array.from({ length: 5 }, (_, w) => `<tr>${days.slice(w * 7, w * 7 + 7).map((d) => `<td>${d ? `<button type="button">${d}</button>` : ""}</td>`).join("")}</tr>`).join("");
+    await load(`<!doctype html><html><body><table id="cal" role="grid"><thead><tr>${"MTWTFSS".split("").map((d) => `<th>${d}</th>`).join("")}</tr></thead><tbody>${weeks}</tbody></table></body></html>`);
+    const t = await page.locator("#cal button", { hasText: /^14$/ }).evaluate((el) => (window as any).SteplightCapture.describe(el));
+    expect(t.row).toMatchObject({ grid: "#cal", calendar: true, inCell: "button" });
+    expect(t.row.column).toBeUndefined();
+  });
 });

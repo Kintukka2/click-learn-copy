@@ -457,6 +457,53 @@ document.getElementById("filter").addEventListener("keydown", function (e) {
     await page.close();
   }, 30_000);
 
+  // A report dialog: every parameter is the learner's own choice.
+  const calDays = Array.from({ length: 35 }, (_, i) => (i < 2 || i > 32 ? "" : String(i - 1)));
+  const reportHtml = `<!doctype html><html><body><h1>Purchase requisitions report</h1>
+<section aria-label="Report parameters">
+<label for="from">From date</label><input id="from">
+<label for="fmt">Format</label><select id="fmt"><option>PDF</option><option>Excel</option><option>CSV</option></select>
+<label><input type="checkbox" id="closed"> Include closed orders</label>
+<table id="cal" role="grid"><thead><tr>${"MTWTFSS".split("").map((d) => `<th>${d}</th>`).join("")}</tr></thead><tbody>
+${Array.from({ length: 5 }, (_, w) => `<tr>${calDays.slice(w * 7, w * 7 + 7).map((d) => `<td>${d ? `<button type="button">${d}</button>` : ""}</td>`).join("")}</tr>`).join("")}
+</tbody></table>
+<button id="run">Run report</button></section></body></html>`;
+  const reportProc = (): ResolvedProcess => ({
+    ...proc,
+    id: "report",
+    title: "Run the report",
+    steps: (
+      [
+        { id: "r1", action: "type", value: "1/9/2026", target: { selectors: [{ kind: "label", value: "From date" }], tag: "input", role: "textbox", name: "From date", label: "From date", bbox } },
+        { id: "r2", action: "select", value: "PDF", target: { selectors: [{ kind: "label", value: "Format" }], tag: "select", role: "combobox", name: "Format", label: "Format", bbox } },
+        { id: "r3", action: "check", value: "true", target: { selectors: [{ kind: "role", value: "checkbox|Include closed orders" }], tag: "input", inputType: "checkbox", role: "checkbox", name: "Include closed orders", bbox } },
+        { id: "r4", action: "click", target: { ...tgt("button", "14", "#cal > tbody > tr:nth-of-type(3) > td:nth-of-type(3) > button"), row: { grid: "#cal", inRow: "td:nth-of-type(3) > button", calendar: true, inCell: "button" } } },
+        { id: "r5", action: "click", learnerChooses: false, target: tgt("button", "Run report", "#run") },
+      ] as Omit<ResolvedStep, "index" | "url" | "title">[]
+    ).map((st, i) => ({ learnerChooses: true, ...st, title: st.id, index: i + 1, url: "http://app.test/" })),
+  });
+
+  it("accepts the learner's own date, option, check box state and calendar day", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const errors = await serve(page, { html: reportHtml });
+    await page.goto("http://app.test/");
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p), reportProc());
+    await expect.poll(async () => (await state(page))?.count).toBe("Step 1 of 5");
+    await page.fill("#from", "5/10/2026");
+    await page.press("#from", "Enter");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 2 of 5");
+    await page.selectOption("#fmt", "CSV"); // not the recorded PDF
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 5");
+    // a check box set "as needed" can be left as it is: the card offers Next instead of Skip
+    expect(await page.evaluate(() => document.querySelector("[data-steplight-assist]")!.shadowRoot!.querySelector(".actions .fwd")!.className)).toContain("primary");
+    await page.evaluate(() => document.querySelector("[data-steplight-assist]")!.shadowRoot!.querySelector<HTMLElement>(".actions .fwd")!.click());
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 4 of 5");
+    await page.click("#cal button >> text=/^3$/"); // any day, not the recorded 14
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 5 of 5");
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
   it("fallback resolver handles role|name, label, text and css selectors", async () => {
     const page = await browser.newPage();
     await serve(page);

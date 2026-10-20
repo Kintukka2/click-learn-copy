@@ -4039,3 +4039,12 @@ div.scenario {
     font-size: 30px;
   }
 }
+
+/* ---- steps where the learner picks the value or record ---- */
+.learner-choice { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.choice-suggestion { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px dashed var(--violet); border-radius: var(--r); background: var(--violet-soft); font-size: 12.5px; }
+.step-flag.violet { background: var(--violet-soft); color: var(--violet); }
+.step-flag.suggest { background: transparent; color: var(--violet); border: 1px dashed var(--violet); line-height: 14px; }
+.step-pick { flex: none; width: 16px; height: 16px; margin: 0 2px 0 0; accent-color: var(--violet); align-self: center; }
+.pick-bar { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); background: var(--violet-soft); }
+.pick-actions { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }

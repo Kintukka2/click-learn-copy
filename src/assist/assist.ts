@@ -437,7 +437,9 @@ export class AssistSession {
     const exit = this.button(s.exit, "ghost", () => this.stop("exit"));
     const back = this.button(s.back, "", () => this.go(this.i - 1));
     back.disabled = this.i === 0;
-    const needsAction = this.needsTarget(st) || st.action === "press";
+    // a check box the learner sets as needed may be left as it is
+    const optional = st.learnerChooses && st.action === "check";
+    const needsAction = (this.needsTarget(st) || st.action === "press") && !optional;
     const fwd = needsAction ? this.button(s.skip, "", () => this.next()) : this.button(s.next, "primary", () => this.next());
     fwd.classList.add("fwd");
     const right = el("div", "right");

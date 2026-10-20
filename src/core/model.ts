@@ -57,8 +57,15 @@ export interface RowPlace {
   inRow: string;
   /** Header of the element's column, e.g. "Purchase requisition". */
   column?: string;
-  /** Area of that column on screen at capture time (viewport CSS pixels), for screenshot-based practice. */
+  /**
+   * Where the learner's choice can be on screen at capture time (viewport CSS pixels), for
+   * screenshot-based practice: the column, or the whole calendar.
+   */
   columnBox?: Rect;
+  /** A day in a calendar (date picker): any day counts, not just the same column. */
+  calendar?: boolean;
+  /** For a calendar: CSS path of the element from its cell ("" = the cell). */
+  inCell?: string;
 }
 
 export type ActionType =
@@ -86,6 +93,8 @@ export interface Step {
    * element are just the example.
    */
   learnerChooses?: boolean;
+  /** For learnerChooses: what to enter or pick, in the author's words ("the first day of last month"). */
+  choiceHint?: string;
   /** Page URL when the step was captured. */
   url: string;
   /** Page title when the step was captured. */
@@ -118,6 +127,8 @@ export interface StepLocalization {
   label?: string;
   /** Localized value (e.g. an option label shown in another language). */
   value?: string;
+  /** Translated Step.choiceHint. */
+  choiceHint?: string;
 }
 
 export interface ProcessLocalization {

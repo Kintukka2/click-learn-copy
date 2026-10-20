@@ -384,7 +384,7 @@ export class PracticeController implements Controller {
   private choose(st: ResolvedStep, b: Rect, v: string) {
     if (this.locked) return;
     this.closeList();
-    if (norm(v) === norm(st.value)) {
+    if (st.learnerChooses || norm(v) === norm(st.value)) {
       this.showFieldValue(b, v);
       this.success(st, v);
     } else this.miss(st, "value", v);
@@ -416,7 +416,7 @@ export class PracticeController implements Controller {
     this.spot.show(st.bbox, { pulse: true });
     this.ctx.stage.zoomTo(this.ctx.compact() ? st.bbox : null);
     if (st.action === "type" && st.value && !st.sensitive && !st.learnerChooses) this.feedback(fill(this.ctx.s.expected, { v: st.value }), "info");
-    else if (st.action === "select" && st.value) this.feedback(fill(this.ctx.s.expectedOption, { v: st.value }), "info");
+    else if (st.action === "select" && st.value && !st.learnerChooses) this.feedback(fill(this.ctx.s.expectedOption, { v: st.value }), "info");
   }
 
   private shake() {
@@ -445,7 +445,7 @@ export class PracticeController implements Controller {
     if (this.misses >= 2 && st.bbox) {
       this.spot.show(st.bbox, { pulse: true });
       if (st.action === "type" && st.value && !st.sensitive && !st.learnerChooses) msg = fill(s.expected, { v: st.value });
-      if (st.action === "select" && st.value) msg = fill(s.expectedOption, { v: st.value });
+      if (st.action === "select" && st.value && !st.learnerChooses) msg = fill(s.expectedOption, { v: st.value });
     }
     this.feedback(msg, "bad");
     if (kind === "value" && this.input) {
