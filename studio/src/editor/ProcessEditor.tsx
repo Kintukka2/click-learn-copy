@@ -162,38 +162,54 @@ export function ProcessEditor({ id }: { id: string }) {
   type Snap = { label: string; data: Pick<Process, "title" | "description" | "chapter" | "startUrl" | "steps" | "localizations"> };
   const procRef = useRef<Process | null>(null);
   procRef.current = proc;
-  const [undoStack, setUndoStack] = useState<Snap[]>([]);
-  const [redoStack, setRedoStack] = useState<Snap[]>([]);
+  // stacks live in refs so quick repeated presses see each other; the state only re-renders the buttons
+  const undoRef = useRef<Snap[]>([]);
+  const redoRef = useRef<Snap[]>([]);
+  const [, setHistory] = useState(0);
+  const historyChanged = () => setHistory((n) => n + 1);
+  const undoStack = undoRef.current;
+  const redoStack = redoRef.current;
   const snapOf = (p: Process, label: string): Snap => ({
     label,
     // "" rather than undefined, so restoring clears a field that was empty before
     data: structuredClone({ title: p.title, description: p.description ?? "", chapter: p.chapter ?? "", startUrl: p.startUrl ?? "", steps: p.steps, localizations: p.localizations }),
   });
   const remember = (label: string) => {
-    if (procRef.current) setUndoStack((u) => [...u.slice(-49), snapOf(procRef.current!, label)]);
-    setRedoStack([]);
+    if (procRef.current) undoRef.current = [...undoRef.current.slice(-49), snapOf(procRef.current, label)];
+    redoRef.current = [];
+    historyChanged();
   };
   const clearHistory = () => {
-    setUndoStack([]);
-    setRedoStack([]);
+    undoRef.current = [];
+    redoRef.current = [];
+    historyChanged();
   };
-  const restore = (from: Snap[], setFrom: (v: Snap[]) => void, setTo: (f: (v: Snap[]) => Snap[]) => void, verb: string) => {
+  // restores run one after another, each from the state the previous one left
+  const restoring = useRef(Promise.resolve());
+  const restoreSeq = useRef(0);
+  const restore = (from: typeof undoRef, to: typeof undoRef, verb: string) => {
     const cur = procRef.current;
-    const snap = from[from.length - 1];
-    if (!cur || !snap || saving) return;
-    setFrom(from.slice(0, -1));
-    setTo((t) => [...t, snapOf(cur, snap.label)]);
+    const snap = from.current[from.current.length - 1];
+    if (!cur || !snap) return;
+    from.current = from.current.slice(0, -1);
+    to.current = [...to.current, snapOf(cur, snap.label)];
+    procRef.current = { ...cur, ...snap.data };
+    historyChanged();
     const back = snap.data.steps.find((st) => !cur.steps.some((c) => c.id === st.id));
-    void track(async () => {
-      setProc((p) => (p ? { ...p, ...snap.data } : p));
-      if (back) setSelId(back.id);
-      else if (selId && !snap.data.steps.some((st) => st.id === selId)) setSelId(snap.data.steps[0]?.id ?? null);
-      setProc(await api.updateProcess(id, snap.data));
-      toast.info(`${verb}: ${snap.label}`);
-    });
+    setProc((p) => (p ? { ...p, ...snap.data } : p));
+    if (back) setSelId(back.id);
+    else if (selId && !snap.data.steps.some((st) => st.id === selId)) setSelId(snap.data.steps[0]?.id ?? null);
+    const seq = ++restoreSeq.current;
+    restoring.current = restoring.current.then(() =>
+      track(async () => {
+        const saved = await api.updateProcess(id, snap.data);
+        if (seq === restoreSeq.current) setProc(saved); // a later press is already on screen otherwise
+        toast.info(`${verb}: ${snap.label}`);
+      }).then(() => undefined),
+    );
   };
-  const undo = () => restore(undoStack, setUndoStack, setRedoStack, "Undone");
-  const redo = () => restore(redoStack, setRedoStack, setUndoStack, "Redone");
+  const undo = () => restore(undoRef, redoRef, "Undone");
+  const redo = () => restore(redoRef, undoRef, "Redone");
 
   const patchProcess = (patch: Partial<Process>, label = "edit") => {
     remember(label);
@@ -415,6 +431,15 @@ export function ProcessEditor({ id }: { id: string }) {
         e.preventDefault();
         if (k === "y" || e.shiftKey) redo();
         else undo();
+        return;
+      }
+      // Delete (Backspace on a Mac keyboard) deletes the selected step, after the usual confirmation
+      if ((e.key === "Delete" || e.key === "Backspace") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const sel = selRef.current.views[selRef.current.selIndex]?.step.id;
+        if (sel && !job && !session) {
+          e.preventDefault();
+          void deleteStep(sel);
+        }
         return;
       }
       const { selIndex: i, views: vs } = selRef.current;

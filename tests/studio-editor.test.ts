@@ -84,6 +84,23 @@ describe.skipIf(!fs.existsSync(STUDIO))("Studio process editor", () => {
     await page.close();
   }, 30_000);
 
+  it("deletes the selected step with the Delete key (Enter confirms)", async () => {
+    const page = await open();
+    await page.click("[data-step-id=s3]");
+    await page.keyboard.press("Delete");
+    await page.waitForSelector(".overlay button:has-text('Delete step')");
+    await expect.poll(() => page.evaluate(() => document.activeElement?.textContent?.trim())).toBe("Delete step"); // focused when the dialog opens
+    await page.keyboard.press("Enter");
+    await expect.poll(serverSteps).toEqual(["s1", "s2"]);
+    // typing in a field never deletes a step
+    await page.click("[data-step-id=s2]");
+    await page.locator(".pane-inspector textarea").first().press("Delete");
+    await page.waitForTimeout(300);
+    expect(await page.locator(".overlay").count()).toBe(0);
+    expect(serverSteps()).toEqual(["s1", "s2"]);
+    await page.close();
+  }, 30_000);
+
   it("undoes an instruction edit", async () => {
     const page = await open();
     await page.click("[data-step-id=s3]");
