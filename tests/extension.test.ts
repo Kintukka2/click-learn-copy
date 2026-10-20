@@ -182,4 +182,23 @@ describe("extension: guides for the page", () => {
       await app.close();
     }
   }, 30_000);
+
+  it("asks a fresh install for the server address instead of reporting it offline", async () => {
+    const popup = await ctx.newPage();
+    try {
+      await sw.evaluate(() => chrome.storage.local.remove("serverUrl"));
+      await popup.goto(`chrome-extension://${extId}/popup.html`);
+      await expect.poll(() => popup.locator("#status").textContent(), { timeout: 5000 }).toBe("Not set up");
+      expect(await popup.locator("#setup").isVisible()).toBe(true);
+      expect(await popup.locator("#offline").isVisible()).toBe(false);
+      expect(await popup.inputValue("#server")).toBe("");
+      await popup.fill("#server", origin);
+      await popup.click("#save-server");
+      await expect.poll(() => popup.locator("#status").textContent(), { timeout: 5000 }).toBe("Connected");
+      expect(await popup.locator("#setup").isVisible()).toBe(false);
+    } finally {
+      await sw.evaluate((s) => chrome.storage.local.set({ serverUrl: s }), origin);
+      await popup.close();
+    }
+  }, 30_000);
 });

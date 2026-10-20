@@ -3,7 +3,7 @@
 // project/process choice (or a new process), Start/Stop recording with a live step counter.
 /// <reference path="./lib/chrome.d.ts" />
 import { SAME_PAGE, startGuide, type LookupRow } from "./lib/guide.js";
-import { $, api, ApiError, esc, getAccessKey, getServerUrl, send, setAccessKey, setServerUrl, type RecState } from "./lib/shared.js";
+import { $, api, ApiError, esc, getAccessKey, getServerUrl, isConfigured, send, setAccessKey, setServerUrl, type RecState } from "./lib/shared.js";
 
 interface ProjectRow { id: string; name: string; processCount: number; languages: string[] }
 interface ProcessRow { id: string; title: string; chapter?: string; steps: unknown[] }
@@ -15,16 +15,18 @@ const NEW = "__new__";
 
 /** "idle" is the recorder form, inside the collapsible Record section; a running recording and the
  * offline notice are shown at the top instead. */
-function show(id: "idle" | "recording" | "offline") {
+function show(id: "idle" | "recording" | "offline" | "setup") {
   $("#record").hidden = id !== "idle" || !author;
   $("#recording").hidden = id !== "recording";
   $("#offline").hidden = id !== "offline";
+  $("#setup").hidden = id !== "setup";
+  $("footer.links").hidden = id === "setup";
 }
 
-function setStatus(on: boolean | null) {
+function setStatus(on: boolean | null, label?: string) {
   const el = $("#status");
   el.className = "status" + (on === null ? "" : on ? " on" : " off");
-  el.querySelector("span")!.textContent = on === null ? "…" : on ? "Connected" : "Offline";
+  el.querySelector("span")!.textContent = label ?? (on === null ? "…" : on ? "Connected" : "Offline");
 }
 
 function error(sel: string, msg: string) {
@@ -178,6 +180,15 @@ async function init() {
   ($("#server") as HTMLInputElement).value = server;
   ($("#access-key") as HTMLInputElement).value = await getAccessKey();
   ($("#open-studio") as HTMLAnchorElement).href = server + "/studio/";
+  if (!(await isConfigured())) {
+    // fresh install: no server yet, so nothing to be offline from
+    ($("#server") as HTMLInputElement).value = "";
+    setStatus(null, "Not set up");
+    show("setup");
+    ($("#settings") as HTMLDetailsElement).open = true;
+    ($("#server") as HTMLInputElement).focus();
+    return;
+  }
   setStatus(null);
   try {
     await api(server, "/health");
