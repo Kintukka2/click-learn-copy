@@ -317,7 +317,7 @@ export async function replayProcess(proc: Process, opts: ReplayOptions): Promise
             if (!step.titleEdited && nameChanged) {
               if (newName) step.target.name = newName;
               if (newLabel) step.target.label = newLabel;
-              step.title = instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive }, proc.lang);
+              step.title = instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive, learnerChooses: step.learnerChooses }, proc.lang);
             }
           } else {
             const loc = (out.localizations[lang] ??= { steps: {} });
@@ -330,7 +330,7 @@ export async function replayProcess(proc: Process, opts: ReplayOptions): Promise
             else delete ls.label;
             if (step.action === "select" && (displayed ?? d.optionLabel)) ls.value = displayed ?? d.optionLabel;
             if (!step.titleEdited && !ls.titleEdited && ls.title !== undefined) {
-              ls.title = instructionFor({ action: step.action, target: step.target, value: ls.value ?? step.value, sensitive: step.sensitive, name: ls.label ?? ls.name }, lang);
+              ls.title = instructionFor({ action: step.action, target: step.target, value: ls.value ?? step.value, sensitive: step.sensitive, learnerChooses: step.learnerChooses, name: ls.label ?? ls.name }, lang);
             }
           }
         }

@@ -26,6 +26,16 @@ describe("instructions", () => {
     expect(instructionFor({ action: "type", target: field("Name"), value: "Contoso Ltd." })).toBe("In the **Name** field, enter **Contoso Ltd.**");
   });
 
+  it("words steps where the learner picks the value or the row", () => {
+    const link: Target = { ...button("000992"), tag: "a", role: "link", row: { grid: "#grid", inRow: "td:nth-of-type(1) > a", column: "Purchase requisition" } };
+    expect(instructionFor({ action: "type", target: field("Filter"), value: "000992", learnerChooses: true })).toBe("In the **Filter** field, enter the value you need.");
+    expect(instructionFor({ action: "click", target: link, learnerChooses: true })).toBe("In the **Purchase requisition** column, click the record you need.");
+    expect(instructionFor({ action: "click", target: { ...link, row: { grid: "#grid", inRow: "td > a" } }, learnerChooses: true })).toBe("Click the record you need in the list.");
+    expect(instructionFor({ action: "click", target: link, learnerChooses: true }, "de")).toBe("Klicken Sie in der Spalte **Purchase requisition** auf den gewünschten Datensatz.");
+    // without a row, a click step keeps its normal wording
+    expect(instructionFor({ action: "click", target: button("Save"), learnerChooses: true })).toBe("Click **Save**.");
+  });
+
   it("masks sensitive values", () => {
     const t = instructionFor({ action: "type", target: field("Password"), value: "hunter2", sensitive: true });
     expect(t).not.toContain("hunter2");
@@ -126,6 +136,32 @@ describe("recording noise reduction", () => {
     expect(proc.steps[0].screenshot).toBeTruthy(); // inherited from the focusing click
     expect(proc.steps[0].title).toBe("In the **Name** field, enter **Contoso**.");
     expect(proc.startUrl).toBe("http://x/#/c");
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("marks filtering for a record and clicking its row as the learner's choice", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sl-store-"));
+    const store = new Store(dir);
+    const project = store.createProject({ name: "T" });
+    let proc = store.createProcess(project.id, { title: "P" })!;
+    const row = { grid: "#grid", inRow: "td:nth-of-type(1) > a", column: "Purchase requisition" };
+    const link = (name: string): Target => ({ ...button(name), tag: "a", role: "link", selectors: [{ kind: "role", value: `link|${name}` }], row });
+    const add = (e: Partial<CaptureEvent>) => {
+      applyCapture(store, proc, { event: ev(e) });
+      proc = store.getProcess(proc.id)!;
+    };
+    add({ action: "type", target: field("Filter"), value: "000992" });
+    add({ action: "press", value: "Enter" });
+    add({ action: "click", target: link("000992") });
+    add({ action: "click", target: button("Edit") });
+    expect(proc.steps.map((s) => !!s.learnerChooses)).toEqual([true, false, true, false]);
+    expect(proc.steps[0].title).toBe("In the **Filter** field, enter the value you need.");
+    expect(proc.steps[2].title).toBe("In the **Purchase requisition** column, click the record you need.");
+    // a row clicked without searching for it first stays the recorded record
+    add({ action: "type", target: field("Quantity"), value: "12" });
+    add({ action: "click", target: link("000815") });
+    expect(proc.steps.slice(-2).map((s) => !!s.learnerChooses)).toEqual([false, false]);
+    expect(resolveProcess(proc, "en").steps[2].learnerChooses).toBe(true);
     fs.rmSync(dir, { recursive: true, force: true });
   });
 });

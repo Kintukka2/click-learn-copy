@@ -21,7 +21,14 @@ export async function getServerUrl(): Promise<string> {
 }
 
 export async function setServerUrl(url: string): Promise<void> {
-  await chrome.storage.local.set({ serverUrl: url.trim().replace(/\/+$/, "") || DEFAULT_SERVER });
+  const clean = url.trim().replace(/\/+$/, "");
+  if (clean) await chrome.storage.local.set({ serverUrl: clean });
+  else await chrome.storage.local.remove("serverUrl");
+}
+
+/** False until the user has entered a server address (a fresh install shows the setup screen). */
+export async function isConfigured(): Promise<boolean> {
+  return !!(await chrome.storage.local.get("serverUrl")).serverUrl;
 }
 
 /** Optional access key for servers started with STEPLIGHT_ACCESS_KEY (sent as X-Steplight-Key). */

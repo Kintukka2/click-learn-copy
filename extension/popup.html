@@ -33,6 +33,14 @@
     <div class="error" id="rec-error" hidden></div>
   </section>
 
+  <section class="body" id="setup" hidden>
+    <div class="setup">
+      <h2>Welcome to Steplight</h2>
+      <p>To see guides for the applications you use, enter your organisation's Steplight server address under <strong>Settings</strong> and click <strong>Save</strong>.</p>
+      <p class="hint">Your trainer or IT team can give you the address.</p>
+    </div>
+  </section>
+
   <section class="body" id="offline" hidden>
     <div class="error">Cannot reach the Steplight server. Check the server URL below and make sure Steplight is running.</div>
   </section>
@@ -59,7 +67,7 @@
   <details class="settings" id="settings">
     <summary>Settings</summary>
     <label class="f" for="server">Steplight server URL</label>
-    <input type="url" id="server" placeholder="http://localhost:4100">
+    <input type="url" id="server" placeholder="e.g. https://your-company.com/steplight">
     <label class="f" for="access-key">Access key <small>(authors only)</small></label>
     <input type="password" id="access-key" autocomplete="off">
     <div class="error" id="settings-error" hidden></div>

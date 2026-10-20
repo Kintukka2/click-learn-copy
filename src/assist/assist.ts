@@ -6,6 +6,7 @@ import type { ResolvedProcess, ResolvedStep, Target } from "../core/model.js";
 import { positionCard } from "../players/stage.js";
 import { playerStrings } from "../players/strings.js";
 import css from "./assist.css";
+import { rowCandidates } from "../capture/rows.js";
 import { accessibleName, isVisible, resolveTarget as fallbackResolve, type Resolved } from "./fallback-resolve.js";
 
 export type AssistEventType = "start" | "step" | "complete" | "exit";
@@ -144,6 +145,8 @@ export class AssistSession {
   private ring: HTMLElement;
   private card: HTMLElement;
   private target: Element | null = null;
+  /** A step where the learner picks the row: the same cell in every row, any of which completes it. */
+  private choices: Element[] = [];
   private lastRect: DOMRect | null = null;
   private raf = 0;
   private poll = 0;
@@ -268,6 +271,7 @@ export class AssistSession {
     this.done = false;
     this.advancing = false;
     this.target = null;
+    this.choices = [];
     this.lastRect = null;
     this.scrolled = false;
     this.searchStarted = Date.now();
@@ -298,6 +302,19 @@ export class AssistSession {
     if (!this.needsTarget(st)) {
       this.target = null;
       this.updateStatus();
+      return;
+    }
+    const row = st.learnerChooses ? st.target!.row : undefined;
+    this.choices = row ? rowCandidates(row).filter((e) => !covered(e)) : [];
+    if (this.choices.length) {
+      // highlight the first row (or keep the one already highlighted); a click on any row counts
+      const pick = this.target && this.choices.includes(this.target) ? this.target : this.choices[0];
+      if (pick !== this.target) {
+        this.target = pick;
+        this.lastRect = null;
+        this.updateStatus();
+        this.place(true);
+      }
       return;
     }
     // Apps that re-use elements (D365's navigation pane) can relabel the highlighted one.
@@ -527,6 +544,7 @@ export class AssistSession {
     const t = this.target;
     if (!t || !(node instanceof Node)) return false;
     if (t === node || t.contains(node)) return true;
+    if (this.choices.some((c) => c === node || c.contains(node))) return true;
     // A click on the <label> of the target control (or the control of a target label).
     if (node instanceof HTMLLabelElement && node.control === t) return true;
     if (t instanceof HTMLLabelElement && t.control === node) return true;

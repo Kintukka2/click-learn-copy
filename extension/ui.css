@@ -1,3 +1,4 @@
+[hidden] { display: none !important; }
 :root {
   --brand: #2f6fed;
   --brand-600: #2257c9;
@@ -19,7 +20,7 @@ header.top { display: flex; align-items: center; gap: 9px; padding: 12px 14px; b
 .logo svg { width: 16px; height: 16px; }
 header.top h1 { font-size: 14px; margin: 0; font-weight: 650; }
 header.top .sub { font-size: 11.5px; color: var(--muted); }
-.status { margin-left: auto; display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); }
+.status { margin-left: auto; display: flex; align-items: center; gap: 5px; white-space: nowrap; flex-shrink: 0; font-size: 11.5px; color: var(--muted); }
 .status i { width: 8px; height: 8px; border-radius: 50%; background: #98a2b3; display: inline-block; }
 .status.on i { background: var(--green); }
 .status.off i { background: var(--red); }
@@ -48,6 +49,10 @@ button.btn:disabled { opacity: 0.55; cursor: default; }
 @keyframes pulse { 50% { opacity: 0.35; } }
 .error { color: var(--red); font-size: 12px; margin-top: 8px; }
 .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+.setup { border: 1px solid #c9d8fb; background: var(--brand-50); border-radius: 10px; padding: 12px 14px; }
+.setup h2 { font-size: 14px; margin: 0 0 6px; }
+.setup p { margin: 0; font-size: 12.5px; line-height: 1.45; }
+.setup p.hint { margin-top: 8px; }
 .link { color: var(--brand); text-decoration: none; cursor: pointer; background: none; border: 0; font: inherit; padding: 0; }
 .guides { padding: 12px 14px 2px; background: var(--brand-50); border-bottom: 1px solid #c9d8fb; }
 .guides-head { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--brand-600); font-weight: 700; }

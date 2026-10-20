@@ -399,6 +399,64 @@ document.getElementById("pr").addEventListener("click", function () { open = !op
     await page.close();
   }, 30_000);
 
+  // A D365-style list page: filter for a record, open it from the grid, then act on it.
+  const gridHtml = `<!doctype html><html><body><h1>All purchase requisitions</h1>
+<input id="filter" aria-label="Filter">
+<div role="grid" id="prs"><div role="row"><div role="columnheader" aria-colindex="1">Purchase requisition</div><div role="columnheader" aria-colindex="2">Name</div></div>
+${["000815", "000992", "001080"].map((n) => `<div role="row"><div role="gridcell" aria-colindex="1"><a href="#${n}">${n}</a></div><div role="gridcell" aria-colindex="2">PR ${n}</div></div>`).join("")}</div>
+<button id="edit">Edit</button>
+<script>
+document.getElementById("filter").addEventListener("keydown", function (e) {
+  if (e.key !== "Enter") return;
+  var q = e.target.value.trim();
+  document.querySelectorAll("#prs [role=row]").forEach(function (r, i) { if (i) r.hidden = !!q && r.textContent.indexOf(q) < 0; });
+});
+</script></body></html>`;
+  const gridProc = (chooses: boolean): ResolvedProcess => ({
+    ...proc,
+    id: "grid",
+    title: "Open a purchase requisition",
+    steps: [
+      { id: "g1", action: "type", value: "000992", learnerChooses: chooses, title: "Filter.", target: { selectors: [{ kind: "label", value: "Filter" }], tag: "input", role: "textbox", name: "Filter", label: "Filter", bbox } },
+      {
+        id: "g2",
+        action: "click",
+        learnerChooses: chooses,
+        title: "Open it.",
+        target: { ...tgt("link", "000992", "#prs > div:nth-of-type(3) > div:nth-of-type(1) > a"), row: { grid: "#prs", inRow: "div:nth-of-type(1) > a", column: "Purchase requisition" } },
+      },
+      { id: "g3", action: "click", title: "Click Edit.", target: tgt("button", "Edit", "#edit") },
+    ].map((s, i) => ({ ...s, index: i + 1, url: "http://app.test/" })) as ResolvedStep[],
+  });
+
+  it("lets the learner filter for their own record and open any row of the column", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page, { html: gridHtml });
+    await page.goto("http://app.test/");
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p), gridProc(true));
+    await expect.poll(async () => (await state(page))?.count).toBe("Step 1 of 3");
+    await page.fill("#filter", "000815"); // not the recorded 000992
+    await page.press("#filter", "Enter");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 2 of 3");
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "a[href='#000815']"))).toBe(true);
+    await page.click("a[href='#000815']");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 3 of 3");
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
+  it("keeps to the recorded record when the step is not the learner's choice", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await serve(page, { html: gridHtml });
+    await page.goto("http://app.test/");
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p, { startAt: 1 }), gridProc(false));
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "a[href='#000992']"))).toBe(true);
+    await page.click("a[href='#000815']"); // another row does not complete the step
+    await page.waitForTimeout(400);
+    expect((await state(page))!.count).toBe("Step 2 of 3");
+    await page.close();
+  }, 30_000);
+
   it("fallback resolver handles role|name, label, text and css selectors", async () => {
     const page = await browser.newPage();
     await serve(page);

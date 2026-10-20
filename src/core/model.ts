@@ -45,6 +45,20 @@ export interface Target {
   bbox: Rect;
   /** Optional nearby context for disambiguation, e.g. the section/dialog heading. */
   context?: string;
+  /** Set when the element is inside a row of a table or grid, so a step can accept the same cell of any row. */
+  row?: RowPlace;
+}
+
+/** Where an element sits in a table or grid (e.g. the record link in a list page). */
+export interface RowPlace {
+  /** CSS path of the table/grid element. */
+  grid: string;
+  /** CSS path of the element from its row, e.g. "td:nth-of-type(2) > a" (children of the row, "" = the row). */
+  inRow: string;
+  /** Header of the element's column, e.g. "Purchase requisition". */
+  column?: string;
+  /** Area of that column on screen at capture time (viewport CSS pixels), for screenshot-based practice. */
+  columnBox?: Rect;
 }
 
 export type ActionType =
@@ -66,6 +80,12 @@ export interface Step {
   optionValue?: string;
   /** Mask the value in all outputs (passwords, personal data). */
   sensitive?: boolean;
+  /**
+   * The learner picks their own value or record here: a type step accepts any text, and a click on a
+   * cell of a table/grid row accepts the same cell of any row (see Target.row). Recorded value and
+   * element are just the example.
+   */
+  learnerChooses?: boolean;
   /** Page URL when the step was captured. */
   url: string;
   /** Page title when the step was captured. */
@@ -243,6 +263,7 @@ export interface ResolvedStep {
   description?: string;
   value?: string; // already masked if sensitive
   sensitive?: boolean;
+  learnerChooses?: boolean;
   /** Screenshot URL or path (resolver decides: relative URL for web, absolute path for generators). */
   screenshot?: string;
   bbox?: Rect;

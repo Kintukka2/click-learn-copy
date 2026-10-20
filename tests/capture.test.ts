@@ -256,4 +256,18 @@ describe("event capture semantics", () => {
     await page.locator("#print").click();
     expect(await events()).toEqual([]);
   });
+
+  it("records the column of an element in a table or grid row", async () => {
+    await load(`<!doctype html><html><body>
+<table id="prs"><thead><tr><th></th><th>Purchase requisition</th><th>Name</th></tr></thead>
+<tbody><tr><td>✓</td><td><a href="#1">000991</a></td><td>CSR test</td></tr><tr><td>✓</td><td><a href="#2">000992</a></td><td>PR_SIT_003</td></tr></tbody></table>
+<div role="grid" id="g"><div role="row"><div role="columnheader" aria-colindex="1">Vendor account</div><div role="columnheader" aria-colindex="2">Name</div></div>
+<div role="row"><div role="gridcell" aria-colindex="1"><span><a href="#v1">V-001</a></span></div><div role="gridcell" aria-colindex="2">Contoso</div></div></div>
+<button id="save">Save</button></body></html>`);
+    const t = await describeEl("a[href='#2']");
+    expect(t.row).toMatchObject({ grid: "#prs", inRow: "td:nth-of-type(2) > a", column: "Purchase requisition" });
+    expect(t.row!.columnBox!.height).toBeGreaterThan(t.bbox.height); // both rows
+    expect((await describeEl("a[href='#v1']")).row).toMatchObject({ grid: "#g", inRow: "div:nth-of-type(1) > span > a", column: "Vendor account" });
+    expect((await describeEl("#save")).row).toBeUndefined();
+  });
 });

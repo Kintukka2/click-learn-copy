@@ -3,7 +3,7 @@
 // library (served by the Steplight server at /lib/assist.js) into the tab.
 /// <reference path="./lib/chrome.d.ts" />
 import { SAME_PAGE, startGuide, type LookupRow } from "./lib/guide.js";
-import { $, api, esc, getServerUrl } from "./lib/shared.js";
+import { $, api, esc, getServerUrl, isConfigured } from "./lib/shared.js";
 
 let server = "";
 let currentTab: { id: number; url?: string; windowId: number } | null = null;
@@ -49,6 +49,11 @@ async function refresh() {
   if (!url || !/^https?:/.test(url)) {
     rows = [];
     render();
+    return;
+  }
+  if (!(await isConfigured())) {
+    rows = [];
+    $("#list").innerHTML = '<div class="empty">Steplight is not set up yet.<br>Click the Steplight icon in the toolbar and enter your organisation\'s server address under Settings.</div>';
     return;
   }
   try {

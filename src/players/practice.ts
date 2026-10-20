@@ -346,7 +346,7 @@ export class PracticeController implements Controller {
     const b = st.bbox;
     if (b) {
       const tol = Math.max(6, 10 / (stage.scale * stage.z));
-      const r = padRect(b, tol);
+      const r = padRect(answerArea(st, b), tol);
       if (p.x >= r.x && p.x <= r.x + r.width && p.y >= r.y && p.y <= r.y + r.height) {
         if (st.action === "type") this.input?.focus({ preventScroll: true });
         else if (st.action === "select" && st.value) {
@@ -376,7 +376,7 @@ export class PracticeController implements Controller {
       this.feedback(this.ctx.s.typeHere, "info");
       return;
     }
-    const ok = st.sensitive || !st.value ? true : norm(value) === norm(st.value);
+    const ok = st.sensitive || st.learnerChooses || !st.value ? true : norm(value) === norm(st.value);
     if (ok) this.success(st, value);
     else this.miss(st, "value", value);
   }
@@ -415,7 +415,7 @@ export class PracticeController implements Controller {
     if (!st?.bbox || this.locked) return;
     this.spot.show(st.bbox, { pulse: true });
     this.ctx.stage.zoomTo(this.ctx.compact() ? st.bbox : null);
-    if (st.action === "type" && st.value && !st.sensitive) this.feedback(fill(this.ctx.s.expected, { v: st.value }), "info");
+    if (st.action === "type" && st.value && !st.sensitive && !st.learnerChooses) this.feedback(fill(this.ctx.s.expected, { v: st.value }), "info");
     else if (st.action === "select" && st.value) this.feedback(fill(this.ctx.s.expectedOption, { v: st.value }), "info");
   }
 
@@ -444,7 +444,7 @@ export class PracticeController implements Controller {
     let msg = kind === "click" ? s.wrongClick : s.wrongValue;
     if (this.misses >= 2 && st.bbox) {
       this.spot.show(st.bbox, { pulse: true });
-      if (st.action === "type" && st.value && !st.sensitive) msg = fill(s.expected, { v: st.value });
+      if (st.action === "type" && st.value && !st.sensitive && !st.learnerChooses) msg = fill(s.expected, { v: st.value });
       if (st.action === "select" && st.value) msg = fill(s.expectedOption, { v: st.value });
     }
     this.feedback(msg, "bad");
@@ -583,4 +583,14 @@ export class PracticeController implements Controller {
     if (ctx.cfg.scorm) scorm.reportScore(score, passed);
     ctx.emit({ type: "complete", mode: "test", score, passed });
   }
+}
+
+/**
+ * Where a click counts on the screenshot: the element, or for a step where the learner picks the
+ * row, any row of its column (recorded with the source-language screenshot).
+ */
+function answerArea(st: ResolvedStep, b: Rect): Rect {
+  const t = st.target?.bbox;
+  const col = st.learnerChooses ? st.target?.row?.columnBox : undefined;
+  return col && t && t.x === b.x && t.y === b.y ? col : b;
 }

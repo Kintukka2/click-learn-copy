@@ -19,8 +19,11 @@ type Kind =
   | "clickMenu"
   | "clickField"
   | "clickGeneric"
+  | "clickRow"
+  | "clickRowAny"
   | "type"
   | "typeSecret"
+  | "typeOwn"
   | "select"
   | "check"
   | "uncheck"
@@ -28,7 +31,7 @@ type Kind =
   | "navigate"
   | "note";
 
-// {n} = element name, {v} = value
+// {n} = element name, {v} = value, {c} = column header (a step where the learner picks a row)
 const T: Record<Lang, Record<Kind, string>> = {
   en: {
     clickButton: "Click **{n}**.",
@@ -37,8 +40,11 @@ const T: Record<Lang, Record<Kind, string>> = {
     clickMenu: "Choose **{n}** from the menu.",
     clickField: "Click the **{n}** field.",
     clickGeneric: "Click **{n}**.",
+    clickRow: "In the **{c}** column, click the record you need.",
+    clickRowAny: "Click the record you need in the list.",
     type: "In the **{n}** field, enter **{v}**.",
     typeSecret: "In the **{n}** field, enter your {n}.",
+    typeOwn: "In the **{n}** field, enter the value you need.",
     select: "In **{n}**, select **{v}**.",
     check: "Select the **{n}** check box.",
     uncheck: "Clear the **{n}** check box.",
@@ -53,8 +59,11 @@ const T: Record<Lang, Record<Kind, string>> = {
     clickMenu: "Vælg **{n}** i menuen.",
     clickField: "Klik i feltet **{n}**.",
     clickGeneric: "Klik på **{n}**.",
+    clickRow: "Klik på den post, du skal bruge, i kolonnen **{c}**.",
+    clickRowAny: "Klik på den post, du skal bruge, på listen.",
     type: "Indtast **{v}** i feltet **{n}**.",
     typeSecret: "Indtast din {n} i feltet **{n}**.",
+    typeOwn: "Indtast den værdi, du skal bruge, i feltet **{n}**.",
     select: "Vælg **{v}** i **{n}**.",
     check: "Markér afkrydsningsfeltet **{n}**.",
     uncheck: "Fjern markeringen i afkrydsningsfeltet **{n}**.",
@@ -69,8 +78,11 @@ const T: Record<Lang, Record<Kind, string>> = {
     clickMenu: "Wählen Sie im Menü **{n}**.",
     clickField: "Klicken Sie in das Feld **{n}**.",
     clickGeneric: "Klicken Sie auf **{n}**.",
+    clickRow: "Klicken Sie in der Spalte **{c}** auf den gewünschten Datensatz.",
+    clickRowAny: "Klicken Sie in der Liste auf den gewünschten Datensatz.",
     type: "Geben Sie im Feld **{n}** **{v}** ein.",
     typeSecret: "Geben Sie im Feld **{n}** Ihr(e) {n} ein.",
+    typeOwn: "Geben Sie im Feld **{n}** den benötigten Wert ein.",
     select: "Wählen Sie unter **{n}** **{v}** aus.",
     check: "Aktivieren Sie das Kontrollkästchen **{n}**.",
     uncheck: "Deaktivieren Sie das Kontrollkästchen **{n}**.",
@@ -85,8 +97,11 @@ const T: Record<Lang, Record<Kind, string>> = {
     clickMenu: "Choisissez **{n}** dans le menu.",
     clickField: "Cliquez dans le champ **{n}**.",
     clickGeneric: "Cliquez sur **{n}**.",
+    clickRow: "Dans la colonne **{c}**, cliquez sur l’enregistrement souhaité.",
+    clickRowAny: "Dans la liste, cliquez sur l’enregistrement souhaité.",
     type: "Dans le champ **{n}**, saisissez **{v}**.",
     typeSecret: "Dans le champ **{n}**, saisissez votre {n}.",
+    typeOwn: "Dans le champ **{n}**, saisissez la valeur dont vous avez besoin.",
     select: "Dans **{n}**, sélectionnez **{v}**.",
     check: "Cochez la case **{n}**.",
     uncheck: "Décochez la case **{n}**.",
@@ -101,8 +116,11 @@ const T: Record<Lang, Record<Kind, string>> = {
     clickMenu: "Elija **{n}** en el menú.",
     clickField: "Haga clic en el campo **{n}**.",
     clickGeneric: "Haga clic en **{n}**.",
+    clickRow: "En la columna **{c}**, haga clic en el registro que necesite.",
+    clickRowAny: "En la lista, haga clic en el registro que necesite.",
     type: "En el campo **{n}**, escriba **{v}**.",
     typeSecret: "En el campo **{n}**, escriba su {n}.",
+    typeOwn: "En el campo **{n}**, escriba el valor que necesite.",
     select: "En **{n}**, seleccione **{v}**.",
     check: "Active la casilla **{n}**.",
     uncheck: "Desactive la casilla **{n}**.",
@@ -117,8 +135,11 @@ const T: Record<Lang, Record<Kind, string>> = {
     clickMenu: "Kies **{n}** in het menu.",
     clickField: "Klik in het veld **{n}**.",
     clickGeneric: "Klik op **{n}**.",
+    clickRow: "Klik in de kolom **{c}** op het record dat u nodig hebt.",
+    clickRowAny: "Klik in de lijst op het record dat u nodig hebt.",
     type: "Voer in het veld **{n}** **{v}** in.",
     typeSecret: "Voer in het veld **{n}** uw {n} in.",
+    typeOwn: "Voer in het veld **{n}** de waarde in die u nodig hebt.",
     select: "Selecteer in **{n}** **{v}**.",
     check: "Schakel het selectievakje **{n}** in.",
     uncheck: "Schakel het selectievakje **{n}** uit.",
@@ -133,8 +154,11 @@ const T: Record<Lang, Record<Kind, string>> = {
     clickMenu: "Välj **{n}** i menyn.",
     clickField: "Klicka i fältet **{n}**.",
     clickGeneric: "Klicka på **{n}**.",
+    clickRow: "Klicka på den post du behöver i kolumnen **{c}**.",
+    clickRowAny: "Klicka på den post du behöver i listan.",
     type: "Ange **{v}** i fältet **{n}**.",
     typeSecret: "Ange ditt {n} i fältet **{n}**.",
+    typeOwn: "Ange det värde du behöver i fältet **{n}**.",
     select: "Välj **{v}** i **{n}**.",
     check: "Markera kryssrutan **{n}**.",
     uncheck: "Avmarkera kryssrutan **{n}**.",
@@ -163,10 +187,10 @@ export function uiStrings(lang: Lang): Record<string, string> {
   return { ...UI.en, ...(UI[lang] ?? {}) };
 }
 
-function kindFor(action: ActionType, target: Target | undefined, value: string | undefined, sensitive?: boolean): Kind {
+function kindFor(action: ActionType, target: Target | undefined, value: string | undefined, sensitive?: boolean, chooses?: boolean): Kind {
   switch (action) {
     case "type":
-      return sensitive ? "typeSecret" : "type";
+      return sensitive ? "typeSecret" : chooses ? "typeOwn" : "type";
     case "select":
       return "select";
     case "check":
@@ -178,6 +202,7 @@ function kindFor(action: ActionType, target: Target | undefined, value: string |
     case "note":
       return "note";
     case "click": {
+      if (chooses && target?.row) return clean(target.row.column) ? "clickRow" : "clickRowAny";
       const role = target?.role ?? "";
       const tag = target?.tag ?? "";
       if (role === "tab") return "clickTab";
@@ -199,6 +224,8 @@ export interface InstructionInput {
   target?: Target;
   value?: string;
   sensitive?: boolean;
+  /** The learner picks the value or row (Step.learnerChooses). */
+  learnerChooses?: boolean;
   /** Override names (e.g. localized label from a localized replay). */
   name?: string;
 }
@@ -206,7 +233,7 @@ export interface InstructionInput {
 /** Generate the instruction text for a step in a language. */
 export function instructionFor(input: InstructionInput, lang: Lang = "en"): string {
   const table = T[lang] ?? T.en;
-  const kind = kindFor(input.action, input.target, input.value, input.sensitive);
+  const kind = kindFor(input.action, input.target, input.value, input.sensitive, input.learnerChooses);
   let n = clean(input.name ?? input.target?.label ?? input.target?.name);
   if (!n) n = kindFallbackName(input, lang);
   let v = clean(input.value);
@@ -218,6 +245,7 @@ export function instructionFor(input: InstructionInput, lang: Lang = "en"): stri
     .replace("{n}", n)
     .replace("{n}", kind === "typeSecret" ? n.toLowerCase() : n)
     .replace("{v}", v)
+    .replace("{c}", clean(input.target?.row?.column))
     .replace(/([.!?])(\*\*)?\.$/, "$1$2"); // "Ext. Doc. No.**." → no double full stop
 }
 
@@ -228,7 +256,7 @@ function kindFallbackName(input: InstructionInput, lang: Lang): string {
 
 /** Instruction for an existing step in its source language. */
 export function instructionForStep(step: Step, lang: Lang = "en"): string {
-  return instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive }, lang);
+  return instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive, learnerChooses: step.learnerChooses }, lang);
 }
 
 /** Minimal, safe **bold** → <strong> conversion with HTML escaping. Newlines become <br>. */
