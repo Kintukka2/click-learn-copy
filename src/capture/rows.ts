@@ -69,6 +69,15 @@ function isCalendar(grid: Element, cell: Element | null): boolean {
   return !!cell && DAY.test(norm(visibleText(cell))) && dayCells(grid).length >= 28;
 }
 
+/** A day in a calendar (date picker month), e.g. D365's jQuery UI date picker. */
+export function isCalendarDay(el: Element): boolean {
+  const cell = el.closest(CELL);
+  const grid = cell?.closest(GRID);
+  if (!cell || !grid) return false;
+  if (el.closest(".ui-datepicker-calendar") && DAY.test(norm(visibleText(cell)))) return true;
+  return isCalendar(grid, cell);
+}
+
 /** The element at inCell in every day cell of a calendar. */
 function sameInDays(grid: Element, inCell: string): Element[] {
   const out: Element[] = [];

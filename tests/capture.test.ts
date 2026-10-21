@@ -6,6 +6,7 @@ import { captureScript } from "../src/capture/bundle.js";
 import { looksGeneratedId } from "../src/capture/selectors.js";
 import { withUrlParam } from "../src/replay/replay.js";
 import type { CaptureEvent, Target } from "../src/core/model.js";
+import { d365DateHtml } from "./d365-date-fixture.js";
 
 let browser: Browser;
 let page: Page;
@@ -278,5 +279,25 @@ describe("event capture semantics", () => {
     const t = await page.locator("#cal button", { hasText: /^14$/ }).evaluate((el) => (window as any).SteplightCapture.describe(el));
     expect(t.row).toMatchObject({ grid: "#cal", calendar: true, inCell: "button" });
     expect(t.row.column).toBeUndefined();
+  });
+
+  it("names D365's calendar and lookup buttons after their field", async () => {
+    await load(d365DateHtml);
+    expect((await describeEl("#ledgertrialbalancelistpage_2_StartDate .lookupButton")).field).toEqual({ kind: "calendar", name: "From date" });
+    expect((await describeEl("#ledgertrialbalancelistpage_2_Vendor .lookupButton")).field).toEqual({ kind: "lookup", name: "Vendor account" });
+    expect((await describeEl("#calc")).field).toBeUndefined();
+  });
+
+  it("records a day picked in the calendar as the date entered in the field", async () => {
+    await load(d365DateHtml);
+    await startCapture();
+    await page.click("#ledgertrialbalancelistpage_2_StartDate .lookupButton");
+    await page.click("#idDay-14");
+    await page.waitForTimeout(250);
+    const evs = await events();
+    expect(evs.map((e) => e.action)).toEqual(["click", "type"]);
+    expect(evs[0].target!.field).toEqual({ kind: "calendar", name: "From date" });
+    expect(evs[1].value).toBe("7/14/2026");
+    expect(evs[1].target!.label).toBe("From date");
   });
 });

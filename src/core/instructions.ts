@@ -19,6 +19,9 @@ type Kind =
   | "clickMenu"
   | "clickField"
   | "clickGeneric"
+  | "clickFieldCalendar"
+  | "clickFieldLookup"
+  | "clickFieldButton"
   | "clickRow"
   | "clickRowAny"
   | "clickRowHint"
@@ -66,6 +69,9 @@ const T: Record<Lang, Record<Kind, string>> = {
     selectOwn: "In **{n}**, select the option you need.",
     checkOwn: "Select or clear the **{n}** check box as needed.",
     checkOwnHint: "**{n}**: {h}.",
+    clickFieldCalendar: "Open the calendar of the **{n}** field.",
+    clickFieldLookup: "Open the list of the **{n}** field.",
+    clickFieldButton: "Click the button next to the **{n}** field.",
   },
   da: {
     clickButton: "Klik på **{n}**.",
@@ -92,6 +98,9 @@ const T: Record<Lang, Record<Kind, string>> = {
     selectOwn: "Vælg den mulighed, du skal bruge, i **{n}**.",
     checkOwn: "Markér eller fjern markeringen i afkrydsningsfeltet **{n}** efter behov.",
     checkOwnHint: "**{n}**: {h}.",
+    clickFieldCalendar: "Åbn kalenderen for feltet **{n}**.",
+    clickFieldLookup: "Åbn listen for feltet **{n}**.",
+    clickFieldButton: "Klik på knappen ved feltet **{n}**.",
   },
   de: {
     clickButton: "Klicken Sie auf **{n}**.",
@@ -118,6 +127,9 @@ const T: Record<Lang, Record<Kind, string>> = {
     selectOwn: "Wählen Sie in **{n}** die benötigte Option aus.",
     checkOwn: "Aktivieren oder deaktivieren Sie das Kontrollkästchen **{n}** nach Bedarf.",
     checkOwnHint: "**{n}**: {h}.",
+    clickFieldCalendar: "Öffnen Sie den Kalender des Felds **{n}**.",
+    clickFieldLookup: "Öffnen Sie die Liste des Felds **{n}**.",
+    clickFieldButton: "Klicken Sie auf die Schaltfläche neben dem Feld **{n}**.",
   },
   fr: {
     clickButton: "Cliquez sur **{n}**.",
@@ -144,6 +156,9 @@ const T: Record<Lang, Record<Kind, string>> = {
     selectOwn: "Dans **{n}**, sélectionnez l’option dont vous avez besoin.",
     checkOwn: "Cochez ou décochez la case **{n}** selon vos besoins.",
     checkOwnHint: "**{n}**: {h}.",
+    clickFieldCalendar: "Ouvrez le calendrier du champ **{n}**.",
+    clickFieldLookup: "Ouvrez la liste du champ **{n}**.",
+    clickFieldButton: "Cliquez sur le bouton à côté du champ **{n}**.",
   },
   es: {
     clickButton: "Haga clic en **{n}**.",
@@ -170,6 +185,9 @@ const T: Record<Lang, Record<Kind, string>> = {
     selectOwn: "En **{n}**, seleccione la opción que necesite.",
     checkOwn: "Active o desactive la casilla **{n}** según sea necesario.",
     checkOwnHint: "**{n}**: {h}.",
+    clickFieldCalendar: "Abra el calendario del campo **{n}**.",
+    clickFieldLookup: "Abra la lista del campo **{n}**.",
+    clickFieldButton: "Haga clic en el botón junto al campo **{n}**.",
   },
   nl: {
     clickButton: "Klik op **{n}**.",
@@ -196,6 +214,9 @@ const T: Record<Lang, Record<Kind, string>> = {
     selectOwn: "Selecteer in **{n}** de optie die u nodig hebt.",
     checkOwn: "Schakel het selectievakje **{n}** naar behoefte in of uit.",
     checkOwnHint: "**{n}**: {h}.",
+    clickFieldCalendar: "Open de kalender van het veld **{n}**.",
+    clickFieldLookup: "Open de lijst van het veld **{n}**.",
+    clickFieldButton: "Klik op de knop naast het veld **{n}**.",
   },
   sv: {
     clickButton: "Klicka på **{n}**.",
@@ -222,6 +243,9 @@ const T: Record<Lang, Record<Kind, string>> = {
     selectOwn: "Välj det alternativ du behöver i **{n}**.",
     checkOwn: "Markera eller avmarkera kryssrutan **{n}** efter behov.",
     checkOwnHint: "**{n}**: {h}.",
+    clickFieldCalendar: "Öppna kalendern för fältet **{n}**.",
+    clickFieldLookup: "Öppna listan för fältet **{n}**.",
+    clickFieldButton: "Klicka på knappen bredvid fältet **{n}**.",
   },
 };
 
@@ -267,6 +291,7 @@ function kindFor(input: InstructionInput): Kind {
       if (row?.calendar) return hint ? "clickDayHint" : "clickDay";
       if (row && clean(row.column)) return hint ? "clickRowHint" : "clickRow";
       if (row) return hint ? "clickRowAnyHint" : "clickRowAny";
+      if (target?.field) return target.field.kind === "calendar" ? "clickFieldCalendar" : target.field.kind === "lookup" ? "clickFieldLookup" : "clickFieldButton";
       const role = target?.role ?? "";
       const tag = target?.tag ?? "";
       if (role === "tab") return "clickTab";
@@ -300,7 +325,7 @@ export interface InstructionInput {
 export function instructionFor(input: InstructionInput, lang: Lang = "en"): string {
   const table = T[lang] ?? T.en;
   const kind = kindFor(input);
-  let n = clean(input.name ?? input.target?.label ?? input.target?.name);
+  let n = clean(input.name ?? input.target?.label ?? input.target?.name ?? input.target?.field?.name);
   if (!n) n = kindFallbackName(input, lang);
   const h = input.learnerChooses ? clean(input.hint) : "";
   let v = h && (kind === "type" || kind === "select") ? h : clean(input.value);

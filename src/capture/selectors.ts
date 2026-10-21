@@ -5,6 +5,7 @@
 import type { Selector, Target } from "../core/model.js";
 import { accessibleName, bboxOf, contextOf, getRole, inputType, isFormControl, labelOf, norm, visibleText } from "./dom.js";
 import { matchesForSelector } from "./resolve.js";
+import { fieldButtonOf } from "./fields.js";
 import { rowPlaceOf } from "./rows.js";
 
 const TESTID_ATTRS = ["data-testid", "data-test", "data-qa", "data-test-id", "data-cy"];
@@ -125,6 +126,8 @@ export function describeElement(el: Element): Target {
   if (context) t.context = context;
   const row = rowPlaceOf(el, cssPath);
   if (row) t.row = row;
+  const field = name ? undefined : fieldButtonOf(el);
+  if (field) t.field = field;
   return t;
 }
 
