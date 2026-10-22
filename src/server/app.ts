@@ -8,7 +8,7 @@ import type { AnalyticsEvent, CapturePayload, OutputFormat, Process, Step } from
 import { resolveProcess } from "../core/resolve.js";
 import { joinUrl, normalizeBasePath, pageKey, pageMatch, swapPrefix } from "../core/url.js";
 import { accessKeyMiddleware } from "./auth.js";
-import { applyCapture, activeSessions, getSession, startSession, stopSession } from "./recording.js";
+import { applyBuildCapture, applyCapture, activeSessions, assignLastAction, buildPlan, draftsLeft, getSession, recordNote, startSession, stopSession } from "./recording.js";
 import { Store } from "./store.js";
 import { importRoutes } from "./guide-import.js";
 import { pipelineRoutes } from "./pipeline.js";
@@ -220,11 +220,14 @@ export function createApp(config: AppConfig) {
   });
 
   // -------------------------------------------------------------- recording (extension / recorder)
+  /** body { processId, replace?, build? }; build: record a process drafted from a guide → session + plan (its draft steps). */
   api.post("/recordings", (req, res) => {
-    const { processId, replace } = req.body ?? {};
-    const s = startSession(store, processId, !!replace);
-    if (!s) return res.status(404).json({ error: "process not found" });
-    res.status(201).json(s);
+    const { processId, replace, build } = req.body ?? {};
+    const proc = store.getProcess(processId);
+    if (!proc) return res.status(404).json({ error: "process not found" });
+    if (build && !draftsLeft(proc)) return res.status(400).json({ error: "This process has no steps from a guide left to record." });
+    const s = startSession(store, processId, !!replace, !!build)!;
+    res.status(201).json(build ? { ...s, plan: buildPlan(proc) } : s);
   });
   api.get("/recordings/active", (_req, res) => res.json(activeSessions()));
   api.post("/recordings/:token/events", (req, res) => {
@@ -234,9 +237,34 @@ export function createApp(config: AppConfig) {
     if (!proc) return res.status(404).json({ error: "process not found" });
     const payload = req.body as CapturePayload;
     if (!payload?.event?.action) return res.status(400).json({ error: "event required" });
+    if (s.build && payload.build) {
+      const r = applyBuildCapture(store, proc, payload, s.token);
+      s.count = proc.steps.length;
+      return res.json({ ...r, stepCount: proc.steps.length });
+    }
     const step = applyCapture(store, proc, payload);
     s.count = proc.steps.length;
     res.json({ step, stepCount: proc.steps.length });
+  });
+  /** Recording from a guide: the extra step recorded just before draft `stepId` is that step. body { stepId } */
+  api.post("/recordings/:token/assign", (req, res) => {
+    const s = getSession(req.params.token);
+    if (!s || !s.active || !s.build) return res.status(410).json({ error: "recording session is not active" });
+    const proc = store.getProcess(s.processId);
+    if (!proc) return res.status(404).json({ error: "process not found" });
+    const step = assignLastAction(store, proc, String(req.body?.stepId ?? ""), s.token);
+    if (!step) return res.status(409).json({ error: "Do the step in the application first: Steplight then records it as this step." });
+    res.json({ step, draftsLeft: draftsLeft(proc), stepCount: proc.steps.length });
+  });
+  /** Recording from a guide: a draft note shown in the application. body { stepId, screenshotDataUrl?, url?, pageTitle?, viewport? } */
+  api.post("/recordings/:token/note", (req, res) => {
+    const s = getSession(req.params.token);
+    if (!s || !s.active || !s.build) return res.status(410).json({ error: "recording session is not active" });
+    const proc = store.getProcess(s.processId);
+    if (!proc) return res.status(404).json({ error: "process not found" });
+    const step = recordNote(store, proc, String(req.body?.stepId ?? ""), req.body ?? {}, s.token);
+    if (!step) return res.status(404).json({ error: "no draft note with that id" });
+    res.json({ step, draftsLeft: draftsLeft(proc), stepCount: proc.steps.length });
   });
   api.post("/recordings/:token/stop", (req, res) => {
     const s = stopSession(req.params.token);

@@ -12,7 +12,8 @@ import { actionableElement, isFormControl, isIgnored, isTextField, norm } from "
 import { dateFieldForDay, forgetPickerField, noteFieldButton } from "./fields.js";
 import { describeElement } from "./selectors.js";
 
-export type Emit = (ev: CaptureEvent) => void | Promise<void>;
+/** Receives each event and the element it happened on. */
+export type Emit = (ev: CaptureEvent, el?: Element) => void | Promise<void>;
 
 export interface CaptureOptions {
   /** Called when a text field gets focus (the extension pre-captures a screenshot of the empty field). */
@@ -40,9 +41,9 @@ function baseEvent(action: CaptureEvent["action"], target?: Target): CaptureEven
   };
 }
 
-function send(ev: CaptureEvent) {
+function send(ev: CaptureEvent, el?: Element) {
   try {
-    const r = state?.emit(ev);
+    const r = state?.emit(ev, el);
     if (r && typeof (r as Promise<void>).catch === "function") (r as Promise<void>).catch(() => undefined);
   } catch {
     /* never break the host page */
@@ -72,7 +73,7 @@ function emitType(el: HTMLInputElement | HTMLTextAreaElement) {
   const ev = baseEvent("type", describeElement(el));
   ev.value = value;
   if (isSensitive(el)) ev.sensitive = true;
-  send(ev);
+  send(ev, el);
 }
 
 function onPointerDown(e: Event) {
@@ -92,7 +93,7 @@ function onPointerDown(e: Event) {
   if (dateField) return pickDate(dateField, el);
   flushFocusedField(el);
   noteFieldButton(el);
-  send(baseEvent("click", describeElement(el)));
+  send(baseEvent("click", describeElement(el)), el);
 }
 
 /**
@@ -110,7 +111,7 @@ function pickDate(field: HTMLInputElement, day: Element) {
       forgetPickerField();
       emitType(field);
     } else if (Date.now() - started < 1500) window.setTimeout(check, 50);
-    else send(baseEvent("click", dayTarget)); // the day did not fill the field after all
+    else send(baseEvent("click", dayTarget), day); // the day did not fill the field after all
   };
   window.setTimeout(check, 0);
 }
@@ -137,7 +138,7 @@ function onClick(e: Event) {
   if (k.el !== el || Date.now() - k.time > 1000) return;
   if (isFormControl(el) || isDisabled(el)) return;
   flushFocusedField(el);
-  send(baseEvent("click", describeElement(el)));
+  send(baseEvent("click", describeElement(el)), el);
 }
 
 function onKeyDown(e: Event) {
@@ -154,7 +155,7 @@ function onKeyDown(e: Event) {
     }
     const ev = baseEvent("press", describeElement(raw));
     ev.value = ke.key;
-    send(ev);
+    send(ev, raw);
     return;
   }
   if (ke.key === "Enter" || ke.key === " ") state!.lastKey = { el: actionableElement(raw), time: Date.now() };
@@ -169,20 +170,20 @@ function onChange(e: Event) {
       const ev = baseEvent("select", describeElement(el));
       ev.value = opts.map((o) => norm(o.text)).join(", ");
       ev.optionValue = opts.map((o) => o.value).join(",");
-      send(ev);
+      send(ev, el);
       return;
     }
     const opt = el.options[el.selectedIndex];
     const ev = baseEvent("select", describeElement(el));
     ev.value = opt ? norm(opt.label || opt.text) : "";
     ev.optionValue = opt ? opt.value : "";
-    send(ev);
+    send(ev, el);
     return;
   }
   if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) {
     const ev = baseEvent("check", describeElement(el));
     ev.value = String(el.checked);
-    send(ev);
+    send(ev, el);
     return;
   }
   if ((el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && isTextField(el)) {

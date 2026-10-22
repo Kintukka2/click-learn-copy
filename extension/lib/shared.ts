@@ -1,7 +1,15 @@
 // Shared helpers for the Steplight Recorder extension (popup, side panel, background).
 /// <reference path="./chrome.d.ts" />
 
+import type { ResolvedProcess } from "../../src/core/model.js";
+
 export const DEFAULT_SERVER = "http://localhost:4100";
+
+/** Recording from a guide: its draft steps and the one shown (kept across page loads). */
+export interface BuildPlan {
+  plan: ResolvedProcess;
+  index: number;
+}
 
 export interface RecState {
   token: string;
@@ -13,6 +21,7 @@ export interface RecState {
   serverUrl: string;
   stepCount: number;
   startedAt: number;
+  build?: BuildPlan;
 }
 
 export async function getServerUrl(): Promise<string> {

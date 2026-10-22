@@ -300,6 +300,19 @@ describe.skipIf(!fs.existsSync(STUDIO))("importing in the Studio", () => {
     await page.fill("[data-testid=element-name]", "New pool");
     await page.press("[data-testid=element-name]", "Enter");
     await expect.poll(() => ctx.store.getProcess(proc.id)!.steps[3].title).toBe("Click **New pool**.");
+    await expect.poll(() => page.textContent(`[data-step-id=${proc.steps[3].id}] .step-title`)).toBe("Click New pool.");
+    // coming back to the window keeps the undo history of edits made here
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await page.waitForTimeout(300);
+    expect(await page.isDisabled("[data-testid=undo]")).toBe(false);
+    // steps recorded from the guide in the application's tab show up on coming back
+    const recorded = ctx.store.getProcess(proc.id)!;
+    delete recorded.steps[0].draft;
+    ctx.store.saveProcess(recorded);
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await expect.poll(() => page.locator(`[data-step-id=${proc.steps[0].id}] .step-flag`).allTextContents(), { timeout: 5000 }).not.toContain("draft");
+    expect(await page.textContent("[data-testid=draft-banner]")).toContain("8 of 9 steps not recorded yet");
+    expect(await page.isDisabled("[data-testid=undo]")).toBe(true); // the server changed the process
 
     // the start URL is remembered for the next import into this project
     await page.goto(`${origin}/studio/projects/${prj.id}`);

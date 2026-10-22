@@ -42,6 +42,8 @@ export function ProcessEditor({ id }: { id: string }) {
   const [noteAfter, setNoteAfter] = useState<string | undefined>(undefined);
   const [session, setSession] = useState<RecordingSession | null>(null);
   const [saving, setSaving] = useState(0);
+  const savingRef = useRef(0);
+  savingRef.current = saving;
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const elapsed = useElapsed(!!job);
   const exportElapsed = useElapsed(!!exporting);
@@ -84,6 +86,27 @@ export function ProcessEditor({ id }: { id: string }) {
     });
     return () => ac.abort();
   }, [id, lang, version, !!proc]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // a draft is recorded from the guide in the application's tab: show the result on coming back
+  const hasDrafts = !!proc?.steps.some((st) => st.draft);
+  useEffect(() => {
+    if (!hasDrafts || session) return;
+    const onFocus = async () => {
+      if (savingRef.current) return; // an edit made here is still being saved
+      try {
+        const p = await api.process(id);
+        // only steps changed elsewhere (edits made here are already in procRef, and keep their undo history)
+        if (savingRef.current || JSON.stringify(p.steps) === JSON.stringify(procRef.current?.steps)) return;
+        clearHistory();
+        setProc(p);
+        bump();
+      } catch {
+        /* ignore transient errors */
+      }
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [hasDrafts, session, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // live recording: poll the process while a session is active
   useEffect(() => {
@@ -822,12 +845,22 @@ function DraftBanner({ proc, selId, onSelect }: { proc: Process; selId: string |
           {drafts === proc.steps.length ? "Not recorded in the application yet." : `${drafts} of ${proc.steps.length} steps not recorded yet.`}{" "}
           {flagged.length ? `${flagged.length} step${flagged.length === 1 ? "" : "s"} to check.` : "Nothing left to check."}
         </span>
+        <span className="small block draft-banner-how" data-testid="draft-how">
+          To record it, choose <strong>Record from the guide</strong> in the Steplight extension: it shows each step in the application and records what you do.
+        </span>
       </div>
-      {next && (
-        <Button size="sm" onClick={() => onSelect(next.id)} data-testid="next-to-check">
-          Next to check
-        </Button>
-      )}
+      <div className="draft-banner-actions">
+        {next && (
+          <Button size="sm" onClick={() => onSelect(next.id)} data-testid="next-to-check">
+            Next to check
+          </Button>
+        )}
+        {proc.startUrl && (
+          <Button size="sm" variant="ghost" icon="external" onClick={() => window.open(absoluteUrl(proc.startUrl), "_blank")} data-testid="open-app">
+            Open the application
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

@@ -29,6 +29,7 @@
       <div class="title" id="rec-title"></div>
       <div class="count"><span id="rec-count">0</span><small>steps</small></div>
     </div>
+    <div class="hint" id="rec-build" hidden>Recording from the guide: do each step shown on the page.</div>
     <div class="row"><button class="btn danger" id="stop">Stop recording</button></div>
     <div class="error" id="rec-error" hidden></div>
   </section>
@@ -57,6 +58,10 @@
         <input type="text" id="new-title" placeholder="e.g. Create a new customer">
         <label class="f" for="new-chapter">Chapter</label>
         <input type="text" id="new-chapter" placeholder="e.g. Sales">
+      </div>
+      <div class="build" id="build-wrap" hidden>
+        <div class="hint" id="build-hint"></div>
+        <div class="row"><button class="btn primary" id="build">Record from the guide</button></div>
       </div>
       <label class="check" id="replace-wrap"><input type="checkbox" id="replace"> Replace the existing steps</label>
       <div class="row"><button class="btn primary" id="start">Start recording</button></div>

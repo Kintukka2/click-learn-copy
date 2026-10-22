@@ -231,6 +231,11 @@ export interface CapturePayload {
   event: CaptureEvent;
   /** PNG data URL of the viewport taken just before the action happened. */
   screenshotDataUrl?: string;
+  /**
+   * Recording from a guide: the draft step shown when the action happened, and whether it was done
+   * on the element highlighted for it (see recording.ts, applyBuildCapture).
+   */
+  build?: { stepId: string; onTarget: boolean };
 }
 
 // ---------------------------------------------------------------- replay / testing
