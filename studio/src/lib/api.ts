@@ -112,6 +112,29 @@ export async function download(url: string, fallbackName: string): Promise<{ nam
   return { name, size: blob.size };
 }
 
+export interface ImportResult {
+  process: Process;
+  provider: "claude" | "offline";
+  warning?: string;
+}
+
+const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+/** Upload a Word guide (sent as the request body); the server drafts a process from it. */
+async function importGuide(pid: string, file: File, opts: { startUrl?: string; chapter?: string; appName?: string }): Promise<ImportResult> {
+  const q = new URLSearchParams({ fileName: file.name });
+  for (const [k, v] of Object.entries(opts)) if (v?.trim()) q.set(k, v.trim());
+  let res: Response;
+  try {
+    res = await fetch(`${ROOT}/api/projects/${pid}/import-guide?${q}`, { method: "POST", headers: { "Content-Type": file.type || DOCX }, body: file });
+  } catch {
+    throw new ApiError("Cannot reach the Steplight server. Is it running?", 0);
+  }
+  if (res.status === 413) throw new ApiError("The document is too large to import (60 MB at most).", 413);
+  if (!res.ok) throw await errorFrom(res);
+  return (await res.json()) as ImportResult;
+}
+
 export const api = {
   health: () => get<{ ok: boolean }>("/health"),
   aiStatus: () => get<AiStatus>("/ai/status"),
@@ -124,6 +147,7 @@ export const api = {
   deleteProject: (pid: string) => del<void>(`/projects/${pid}`),
   reorder: (pid: string, processIds: string[]) => put<Project>(`/projects/${pid}/order`, { processIds }),
   demoProject: (b: { name?: string; languages?: string[] } = {}) => post<Project>("/demo-project", b),
+  importGuide,
   publish: (pid: string) => post<{ url: string }>(`/projects/${pid}/publish`),
   analytics: (pid: string) => get<Analytics>(`/projects/${pid}/analytics`),
 

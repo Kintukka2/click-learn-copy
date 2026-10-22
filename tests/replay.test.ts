@@ -62,7 +62,7 @@ describe("scripted demo recordings", () => {
       expect(s.screenshot).toMatch(/\.png$/);
       expect(fs.existsSync(path.join(dataDir, "projects", project.id, "media", s.screenshot!)) || fs.readdirSync(dataDir, { recursive: true }).some((f) => String(f).endsWith(s.screenshot!))).toBe(true);
       expect(s.viewport).toEqual({ width: 1280, height: 800 });
-      const b = s.target!.bbox;
+      const b = s.target!.bbox!;
       expect(b.width).toBeGreaterThan(0);
       expect(b.x + b.width).toBeLessThanOrEqual(1280);
       expect(b.y + b.height).toBeLessThanOrEqual(800);

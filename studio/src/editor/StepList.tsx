@@ -167,7 +167,19 @@ export function StepList({
                       </span>
                     )
                   )}
-                  {s.titleEdited && s.action !== "note" && <span className="step-flag">edited</span>}
+                  {s.draft?.flag ? (
+                    <span className="step-flag amber" title={s.draft.flag} data-testid="step-check">
+                      <Icon name="alert" size={11} /> check
+                    </span>
+                  ) : (
+                    s.draft && <span className="step-flag" title="From the imported guide, not recorded in the application yet">draft</span>
+                  )}
+                  {s.draft?.added && (
+                    <span className="step-flag amber" title="Not in the guide: added because the process needs it">
+                      added
+                    </span>
+                  )}
+                  {s.titleEdited && s.action !== "note" && !s.draft && <span className="step-flag">edited</span>}
                   {v.localizedShot && <span className="step-flag teal">localized</span>}
                 </div>
               </div>

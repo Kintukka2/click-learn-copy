@@ -8,15 +8,15 @@ import { resolveProcess } from "../core/resolve.js";
 import { SearchIndex, type SearchDoc } from "../core/search.js";
 import type { AppContext } from "./app.js";
 
-const MODEL = process.env.STEPLIGHT_MODEL || "claude-opus-5-5";
+export const MODEL = process.env.STEPLIGHT_MODEL || "claude-opus-5-5";
 
-function claudeEnabled(): boolean {
+export function claudeEnabled(): boolean {
   if (process.env.STEPLIGHT_AI === "off") return false;
   return !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN || process.env.STEPLIGHT_AI === "on");
 }
 
 let client: Anthropic | undefined;
-function claude(): Anthropic {
+export function claude(): Anthropic {
   client ??= new Anthropic();
   return client;
 }

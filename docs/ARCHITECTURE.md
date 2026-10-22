@@ -24,7 +24,7 @@ Steplight is a **record once, publish everywhere** platform for software trainin
 | Path | What |
 |---|---|
 | `src/core/` | **Shared contract.** `model.ts` (all types), `instructions.ts` (auto-instructions in 7 languages, UI strings, `**bold**` helpers), `resolve.ts` (Process → ResolvedProcess for a language), `search.ts` (BM25), `ids.ts`. Browser-safe, with no Node imports. |
-| `src/server/` | `app.ts` (core REST API + static mounts), `pipeline.ts` (replay, demo-record, export, translate, publish, ask), `recording.ts` (capture events → steps, with noise reduction), `store.ts` (JSON/PNG files), `ai.ts` |
+| `src/server/` | `app.ts` (core REST API + static mounts), `pipeline.ts` (replay, demo-record, export, translate, publish, ask), `recording.ts` (capture events → steps, with noise reduction), `store.ts` (JSON/PNG files), `ai.ts`, `guide-import.ts` + `guide-plan.ts` + `docx.ts` (import a Word guide as a draft process) |
 | `src/capture/` | DOM capture script and selector generation/resolution (browser) |
 | `src/recorder/` | Playwright scripted recorder + `scenarios.ts` (demo scenarios) |
 | `src/replay/` | Replay / automated-testing engine (Playwright) |
@@ -47,6 +47,7 @@ Steplight is a **record once, publish everywhere** platform for software trainin
   - `value` / `optionValue`.
   - `title`: the auto instruction, editable. `titleEdited` stops it from being regenerated.
   - `description`, `screenshot` (a file name in the project media folder, PNG at viewport size, taken **before** the action) and `viewport`.
+  - `draft`: set on a step drafted from an imported written guide until it is recorded: `source` (the guide's words), `flag` (what the author should check, cleared by "Mark as checked") and `added` (not in the guide). Its `target` is built from the element the guide names (`src/core/draft.ts`: role/label/text selectors, no `bbox` until a highlight is drawn), so instructions generate and translate as for recorded steps. The process records `importedFrom`.
 - **Localization:** `localizations[lang].steps[stepId]` can override `title` and `description`, and can carry a localized `screenshot`, `bbox`, `name`, `label` and `value` captured by a **localized replay**. When no title is stored, `resolveProcess(proc, lang)` regenerates the instruction from templates, using the localized UI name. Instructions therefore localize without machine translation.
 - **ResolvedProcess** is what players and generators consume: localized text, masked sensitive values, 1-based `index`, and `screenshot` as a URL (web) or an absolute path (generators).
 
@@ -117,6 +118,7 @@ Portal search and the AI chat widget.
 | POST | `/recordings/:token/events` | a `CapturePayload` → `{step, stepCount}` |
 | POST | `/recordings/:token/stop` | → process |
 | POST | `/processes/:id/demo-record` | `{scenarioId}`: scripted headless recording of a demo scenario |
+| POST | `/projects/:pid/import-guide?fileName=&startUrl=&chapter=&appName=` | body: a Word `.docx` (up to 60 MB) → `201 {process, provider, warning?}`: a new draft process (see "Importing a written guide") |
 | POST | `/demo-project` | `{name?, languages?}`: creates a project with every demo scenario recorded |
 | POST | `/processes/:id/replay` | `{mode: "update"\|"test", lang?}` → `{report, process}` |
 | POST | `/processes/:id/translate` | `{lang, replayUi?}` → process (localized replay plus text translation) |
@@ -137,6 +139,12 @@ Static mounts:
 - `/demo-erp/`
 - `/portal/:pid/` (published portal)
 - `/media/:pid/:file`
+
+## Importing a written guide (`src/server/guide-import.ts`)
+1. **Read** (`docx.ts`): `word/document.xml` with its styles, numbering and relationships, into blocks in reading order: headings, paragraphs, numbered/bulleted items and table cells as text with `**bold**` runs, and the pictures between them.
+2. **Pictures:** PNGs are kept as they are; JPEG, GIF, BMP, WebP and SVG are converted to PNG by Chromium (EMF, WMF and TIFF are skipped). Up to 20 are downscaled (1568 px long side) for Claude.
+3. **Plan** (`guide-plan.ts`): with Claude configured, one structured-output request (`output_config.format` JSON schema, streamed) gets the guide as numbered lines plus its screenshots and returns the steps: action, element kind and name, value, learner choice, the guide's words, the screenshot that shows the step, a flag and whether the step was added. Without Claude (or when the request fails, with a warning) rules read the common phrasings: Steplight's own instruction templates, "Enter X in the Y field", "Set X to Yes", menu paths "A > B > C" (one click per entry). Lines no rule reads become flagged notes.
+4. **Draft:** a new process with `draft` steps (see the data model), the guide's screenshots as placeholder screenshots, the start URL given at import (the test environment) and `importedFrom`. The Studio shows the draft banner, flags steps to check and lets the author fix the element, convert notes and draw highlights.
 
 ## Replay contract (`src/replay/replay.ts`)
 - `replayProcess(proc, {mode, lang, mediaDir, saveMedia, baseUrl})` launches Chromium (1280×800 unless a step's viewport says otherwise).

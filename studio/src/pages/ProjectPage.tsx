@@ -6,7 +6,9 @@ import { api, mediaUrl } from "../lib/api";
 import { Link, navigate } from "../lib/router";
 import { useStudio } from "../lib/store";
 import { cx, initials, langName, timeAgo } from "../lib/util";
+import { flaggedSteps } from "../../../src/core/draft";
 import { AnalyticsTab } from "./AnalyticsTab";
+import { ImportGuideDialog } from "./ImportGuideDialog";
 import { PublishingTab } from "./PublishingTab";
 import { SettingsTab } from "./SettingsTab";
 import { withRoot } from "../lib/base";
@@ -19,6 +21,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
   const [processes, setProcesses] = useState<Process[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -99,6 +102,9 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
               View portal
             </Button>
           )}
+          <Button icon="upload" onClick={() => setImportOpen(true)} disabled={!project} data-testid="import-guide">
+            Import guide
+          </Button>
           <Button variant="primary" icon="plus" onClick={() => setNewOpen(true)} data-testid="new-process">
             New process
           </Button>
@@ -118,7 +124,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
       />
 
       <div className="tab-panel">
-        {tab === "processes" && <ProcessesTab project={project} processes={processes} setProject={setProject} reload={load} onNew={() => setNewOpen(true)} />}
+        {tab === "processes" && <ProcessesTab project={project} processes={processes} setProject={setProject} reload={load} onNew={() => setNewOpen(true)} onImport={() => setImportOpen(true)} />}
         {tab === "publishing" && project && (
           <PublishingTab
             project={project}
@@ -141,6 +147,22 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
         )}
       </div>
 
+      {project && (
+        <ImportGuideDialog
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          project={project}
+          processes={processes ?? []}
+          chapters={[...new Set((processes ?? []).map((p) => p.chapter).filter(Boolean) as string[])]}
+          onImported={({ process: proc, warning }) => {
+            const toCheck = flaggedSteps(proc.steps).length;
+            toast.success("Draft created", `${proc.steps.length} step${proc.steps.length === 1 ? "" : "s"}${toCheck ? `, ${toCheck} to check` : ""}`);
+            if (warning) toast.info("About this import", warning);
+            void refreshProjects();
+            navigate(`/processes/${proc.id}`);
+          }}
+        />
+      )}
       {project && (
         <NewProcessDialog
           open={newOpen}
@@ -182,7 +204,7 @@ function groupByChapter(list: Process[]): { chapter: string; items: Process[] }[
   return groups;
 }
 
-function ProcessesTab({ project, processes, setProject, reload, onNew }: { project: Project | null; processes: Process[] | null; setProject: (p: Project) => void; reload: () => Promise<void>; onNew: () => void }) {
+function ProcessesTab({ project, processes, setProject, reload, onNew, onImport }: { project: Project | null; processes: Process[] | null; setProject: (p: Project) => void; reload: () => Promise<void>; onNew: () => void; onImport: () => void }) {
   const { refreshProjects } = useStudio();
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -214,10 +236,13 @@ function ProcessesTab({ project, processes, setProject, reload, onNew }: { proje
               <Button variant="primary" icon="plus" onClick={onNew}>
                 New process
               </Button>
+              <Button icon="upload" onClick={onImport}>
+                Import guide
+              </Button>
             </>
           }
         >
-          A process is one business task, for example “Create a sales order”. Create one, then record it with the browser extension or a demo scenario.
+          A process is one business task, for example “Create a sales order”. Create one, then record it with the browser extension or a demo scenario, or import a Word guide you already have.
         </EmptyState>
       </div>
     );

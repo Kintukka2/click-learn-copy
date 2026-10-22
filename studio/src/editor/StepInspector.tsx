@@ -1,5 +1,6 @@
 import { useEffect, useState, type KeyboardEvent, type TextareaHTMLAttributes, type InputHTMLAttributes } from "react";
 import { canLearnerChoose, choiceSuggestion } from "../../../src/core/choice";
+import { defaultKind, draftElementOf, draftTarget, ELEMENT_KINDS, type ElementKind } from "../../../src/core/draft";
 import { richText } from "../../../src/core/instructions";
 import type { ActionType, Process, Rect, Step, StepLocalization } from "../../../src/core/model";
 import { Icon } from "../components/Icon";
@@ -64,7 +65,7 @@ export function StepInspector({
   total: number;
   lang: string;
   isSource: boolean;
-  onPatch: (patch: Partial<Step>) => void;
+  onPatch: (patch: Partial<Step>, label?: string) => void;
   onResetTitle: () => void;
   onSaveLoc: (fields: Partial<StepLocalization>) => void;
   onBBox: (r: Rect, localized: boolean) => void;
@@ -110,6 +111,7 @@ export function StepInspector({
           viewport={s.viewport}
           editable={!!view.bbox && s.action !== "note" && (isSource || bboxIsLocalized || !loc?.screenshot)}
           onChange={(r) => onBBox(r, bboxIsLocalized)}
+          emptyLabel={s.draft ? "The guide has no screenshot for this step" : undefined}
         />
         {view.bbox && s.action !== "note" && (
           <div className="stage-hint muted small">
@@ -117,7 +119,17 @@ export function StepInspector({
             {!isSource && !bboxIsLocalized ? " (applies to the source screenshot)" : ""}.
           </div>
         )}
+        {isSource && !view.bbox && view.screenshot && t && s.action !== "note" && (
+          <div className="stage-hint muted small">
+            <Button size="sm" variant="ghost" icon="target" onClick={() => onBBox(centeredBox(s.viewport), false)} data-testid="add-highlight">
+              Add highlight
+            </Button>
+            Mark where the element is on the guide's screenshot.
+          </div>
+        )}
       </div>
+
+      {isSource && s.draft && <GuideSource step={s} onPatch={onPatch} />}
 
       {!isSource && (
         <section className="insp-section">
@@ -218,7 +230,7 @@ export function StepInspector({
         </section>
       )}
 
-      {isSource && s.action !== "note" && (
+      {isSource && (s.action !== "note" || s.draft) && (
         <section className="insp-section">
           <div className="insp-section-head">
             <h3>
@@ -239,7 +251,7 @@ export function StepInspector({
               <Field label="State">
                 <Toggle checked={s.value !== "false"} onChange={(v) => onPatch({ value: v ? "true" : "false" })} label={s.value === "false" ? "Clear the check box" : "Select the check box"} />
               </Field>
-            ) : s.action !== "click" ? (
+            ) : s.action !== "click" && s.action !== "note" ? (
               <Field label={VALUE_LABEL[s.action] ?? "Value"} htmlFor="st-value" hint={s.action === "select" && s.optionValue ? <>Option value <code>{s.optionValue}</code></> : undefined}>
                 <DraftText id="st-value" multiline={false} className={cx("input", s.sensitive && "is-masked")} type={s.sensitive ? "password" : "text"} value={s.value ?? ""} onCommit={(v) => onPatch({ value: v })} />
               </Field>
@@ -263,7 +275,9 @@ export function StepInspector({
         </section>
       )}
 
-      {t && (
+      {isSource && s.draft && s.action !== "note" && s.action !== "press" && <DraftElement step={s} onPatch={onPatch} />}
+
+      {t && !s.draft && (
         <section className="insp-section">
           <div className="insp-section-head">
             <h3>
@@ -298,7 +312,13 @@ export function StepInspector({
             <div>
               <dt>Highlight</dt>
               <dd className="mono small">
-                {Math.round(t.bbox.x)}, {Math.round(t.bbox.y)} · {Math.round(t.bbox.width)}×{Math.round(t.bbox.height)}
+                {t.bbox ? (
+                  <>
+                    {Math.round(t.bbox.x)}, {Math.round(t.bbox.y)} · {Math.round(t.bbox.width)}×{Math.round(t.bbox.height)}
+                  </>
+                ) : (
+                  <span className="muted">–</span>
+                )}
               </dd>
             </div>
           </dl>
@@ -361,6 +381,100 @@ export function StepInspector({
         </dl>
       </section>
     </div>
+  );
+}
+
+/** A highlight in the middle of a screenshot, for the author to move onto the element. */
+function centeredBox(vp: Step["viewport"]): Rect {
+  const w = vp?.width ?? 1280;
+  const h = vp?.height ?? 800;
+  const width = Math.round(Math.min(w, Math.max(60, w * 0.2)));
+  const height = Math.round(Math.min(h, Math.max(24, h * 0.08)));
+  return { x: Math.round((w - width) / 2), y: Math.round((h - height) / 2), width, height };
+}
+
+/** What the imported guide says for this step, and what the author should check. */
+function GuideSource({ step: s, onPatch }: { step: Step; onPatch: (p: Partial<Step>, label?: string) => void }) {
+  const d = s.draft!;
+  return (
+    <section className="insp-section" data-testid="guide-source">
+      <div className="insp-section-head">
+        <h3>
+          <Icon name="fileText" size={15} /> From the guide
+        </h3>
+        {d.added && (
+          <Chip tone="warning" title="The guide doesn't have this step: it was added because the process needs it">
+            Added
+          </Chip>
+        )}
+      </div>
+      <div className="source-ref">
+        <span dangerouslySetInnerHTML={{ __html: richText(d.source) }} />
+      </div>
+      {d.flag ? (
+        <div className="callout callout-warning" data-testid="draft-flag">
+          <Icon name="alert" size={15} />
+          <div>{d.flag}</div>
+          <Button size="sm" onClick={() => onPatch({ draft: { source: d.source, ...(d.added ? { added: true } : {}) } }, "mark as checked")} data-testid="mark-checked">
+            Mark as checked
+          </Button>
+        </div>
+      ) : (
+        <div className="muted small">
+          <Icon name="check" size={12} /> Nothing to check. Recording the process in the application replaces the guide's screenshots with real ones.
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Which element a drafted step works on: its kind and the name or label the application shows. */
+function DraftElement({ step: s, onPatch }: { step: Step; onPatch: (p: Partial<Step>, label?: string) => void }) {
+  const el = draftElementOf(s.target) ?? { kind: defaultKind(s.action), name: "" };
+  const [kind, setKind] = useState(el.kind);
+  const save = (kind: ElementKind, name: string) => {
+    if (!name.trim()) return;
+    const patch: Partial<Step> = { target: { ...draftTarget(kind, name), bbox: s.target?.bbox } };
+    // the first element set on a step: its instruction is generated from now on, and the question is answered
+    if (!s.target) {
+      patch.titleEdited = false;
+      if (s.draft?.flag) patch.draft = { source: s.draft.source, ...(s.draft.added ? { added: true } : {}) };
+    }
+    onPatch(patch, "element change");
+  };
+  return (
+    <section className="insp-section" data-testid="draft-element">
+      <div className="insp-section-head">
+        <h3>
+          <Icon name="target" size={15} /> Element
+        </h3>
+        <span className="muted small">Found by name when you record or use Guide me</span>
+      </div>
+      <div className="form-grid-2">
+        <Field label="Kind" htmlFor="el-kind">
+          <select
+            id="el-kind"
+            className="input"
+            value={kind}
+            onChange={(e) => {
+              const k = e.target.value as ElementKind;
+              setKind(k);
+              save(k, el.name);
+            }}
+            data-testid="element-kind"
+          >
+            {ELEMENT_KINDS.map((k) => (
+              <option key={k.kind} value={k.kind}>
+                {k.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Name or label" htmlFor="el-name" hint="As the application shows it.">
+          <DraftText id="el-name" multiline={false} className="input" value={el.name} placeholder="e.g. New" onCommit={(v) => save(kind, v)} data-testid="element-name" />
+        </Field>
+      </div>
+    </section>
   );
 }
 

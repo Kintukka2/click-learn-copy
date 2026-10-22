@@ -10,6 +10,7 @@ import { joinUrl, normalizeBasePath, pageKey, pageMatch, swapPrefix } from "../c
 import { accessKeyMiddleware } from "./auth.js";
 import { applyCapture, activeSessions, getSession, startSession, stopSession } from "./recording.js";
 import { Store } from "./store.js";
+import { importRoutes } from "./guide-import.js";
 import { pipelineRoutes } from "./pipeline.js";
 import { privacyPage } from "./privacy.js";
 
@@ -310,6 +311,8 @@ export function createApp(config: AppConfig) {
 
   // pipeline: replay, demo recordings, exports, translate, publish, ask
   pipelineRoutes(api, ctx);
+  // import a written guide (Word) as a draft process
+  importRoutes(api, ctx);
 
   app.use("/api", api);
 
@@ -350,9 +353,11 @@ export function createApp(config: AppConfig) {
   });
   app.get("/", (_req, res) => res.redirect(`${basePath}/studio/`));
 
-  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-    console.error("[steplight]", err);
-    res.status(500).json({ error: err.message || "internal error" });
+  app.use((err: Error & { status?: number }, _req: Request, res: Response, _next: NextFunction) => {
+    // body parsers set a status, e.g. 413 for a file over the size limit
+    const status = typeof err.status === "number" && err.status >= 400 && err.status < 500 ? err.status : 500;
+    if (status === 500) console.error("[steplight]", err);
+    res.status(status).json({ error: err.message || "internal error" });
   });
 
   if (!basePath) return { app, ctx };
