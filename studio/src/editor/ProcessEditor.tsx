@@ -12,6 +12,7 @@ import { PreviewModal } from "./PreviewModal";
 import { DraftText, StepInspector } from "./StepInspector";
 import { StepList, type StepView } from "./StepList";
 import { canLearnerChoose, choiceSuggestion } from "../../../src/core/choice";
+import { flaggedSteps } from "../../../src/core/draft";
 import { ROOT } from "../lib/base";
 
 type Job = { kind: "replay" | "test" | "translate" | "record"; label: string };
@@ -691,6 +692,7 @@ export function ProcessEditor({ id }: { id: string }) {
               </Button>
             )}
           </div>
+          {isSource && proc.steps.some((st) => st.draft) && <DraftBanner proc={proc} selId={selId} onSelect={setSelId} />}
           <StepList
             items={views}
             selectedId={selId}
@@ -739,7 +741,7 @@ export function ProcessEditor({ id }: { id: string }) {
               total={views.length}
               lang={lang}
               isSource={isSource}
-              onPatch={(p) => void patchStep(selView.step.id, p)}
+              onPatch={(p, label) => void patchStep(selView.step.id, p, label)}
               onResetTitle={() => void resetTitle(selView.step.id)}
               onSaveLoc={(f) => void saveStepLoc(selView.step.id, f)}
               onBBox={(r, localized) => void saveBBox(selView.step.id, r, localized)}
@@ -805,8 +807,34 @@ function EditorSkeleton() {
   );
 }
 
+/** Imported from a written guide: how many steps are still drafts, and a jump to the next one to check. */
+function DraftBanner({ proc, selId, onSelect }: { proc: Process; selId: string | null; onSelect: (id: string) => void }) {
+  const drafts = proc.steps.filter((st) => st.draft).length;
+  const flagged = flaggedSteps(proc.steps);
+  const at = proc.steps.findIndex((st) => st.id === selId);
+  const next = flagged.find((st) => proc.steps.indexOf(st) > at) ?? flagged[0];
+  return (
+    <div className="draft-banner" data-testid="draft-banner">
+      <Icon name="fileText" size={15} />
+      <div>
+        <strong>Drafted from {proc.importedFrom?.fileName ?? "a written guide"}</strong>
+        <span className="small block">
+          {drafts === proc.steps.length ? "Not recorded in the application yet." : `${drafts} of ${proc.steps.length} steps not recorded yet.`}{" "}
+          {flagged.length ? `${flagged.length} step${flagged.length === 1 ? "" : "s"} to check.` : "Nothing left to check."}
+        </span>
+      </div>
+      {next && (
+        <Button size="sm" onClick={() => onSelect(next.id)} data-testid="next-to-check">
+          Next to check
+        </Button>
+      )}
+    </div>
+  );
+}
+
 /** Undo label for a step edit, from the fields it changes. */
 function stepEditLabel(patch: Partial<Step>): string {
+  if (patch.draft !== undefined) return "mark as checked";
   if (patch.title !== undefined) return "instruction edit";
   if (patch.description !== undefined) return "description edit";
   if (patch.learnerChooses !== undefined || patch.choiceHint !== undefined) return "learner picks";

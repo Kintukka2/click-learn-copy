@@ -41,8 +41,11 @@ export interface Target {
   label?: string;
   /** input type attribute for inputs. */
   inputType?: string;
-  /** Bounding box in CSS pixels relative to the viewport at capture time (matches the screenshot). */
-  bbox: Rect;
+  /**
+   * Bounding box in CSS pixels relative to the viewport at capture time (matches the screenshot).
+   * Absent for a step drafted from an imported guide until it is recorded or drawn in the Studio.
+   */
+  bbox?: Rect;
   /** Optional nearby context for disambiguation, e.g. the section/dialog heading. */
   context?: string;
   /** Set when the element is inside a row of a table or grid, so a step can accept the same cell of any row. */
@@ -121,6 +124,18 @@ export interface Step {
   capturedAt?: string; // ISO
   /** Set by Replay when the step could not be re-found or re-executed. */
   replayStatus?: "ok" | "healed" | "failed";
+  /** Set while the step comes from an imported written guide and has not been recorded in the application. */
+  draft?: StepDraft;
+}
+
+/** A step drafted from an imported written guide (see src/server/guide-import.ts). */
+export interface StepDraft {
+  /** The guide's own words for this step. */
+  source: string;
+  /** What the author should check (the element or value was unclear), until they mark it as checked. */
+  flag?: string;
+  /** The guide doesn't have this step; it was added because the process needs it (e.g. saving). */
+  added?: boolean;
 }
 
 export interface StepLocalization {
@@ -171,6 +186,8 @@ export interface Process {
   createdAt: string;
   updatedAt: string;
   lastReplay?: ReplayReport;
+  /** The written guide this process was drafted from. */
+  importedFrom?: { fileName: string; importedAt: string; provider: "claude" | "offline" };
 }
 
 export interface Branding {

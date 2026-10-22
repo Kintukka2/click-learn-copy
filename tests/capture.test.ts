@@ -102,7 +102,7 @@ describe("describe(): role, accessible name, label, context and selectors", () =
     expect(t).toMatchObject({ tag: "button", role: "button", name: "Save", context: "Actions" });
     expect(t.selectors[0]).toEqual({ kind: "id", value: "customer-save" });
     expect(t.selectors.some((s) => s.kind === "role" && s.value === "button|Save")).toBe(true);
-    expect(t.bbox.width).toBeGreaterThan(0);
+    expect(t.bbox!.width).toBeGreaterThan(0);
   });
 
   it("skips generated-looking ids", async () => {
@@ -267,7 +267,7 @@ describe("event capture semantics", () => {
 <button id="save">Save</button></body></html>`);
     const t = await describeEl("a[href='#2']");
     expect(t.row).toMatchObject({ grid: "#prs", inRow: "td:nth-of-type(2) > a", column: "Purchase requisition" });
-    expect(t.row!.columnBox!.height).toBeGreaterThan(t.bbox.height); // both rows
+    expect(t.row!.columnBox!.height).toBeGreaterThan(t.bbox!.height); // both rows
     expect((await describeEl("a[href='#v1']")).row).toMatchObject({ grid: "#g", inRow: "div:nth-of-type(1) > span > a", column: "Vendor account" });
     expect((await describeEl("#save")).row).toBeUndefined();
   });

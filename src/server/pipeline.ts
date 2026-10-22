@@ -11,17 +11,10 @@ import { DEMO_SCENARIOS } from "../recorder/scenarios.js";
 import { replayProcess } from "../replay/replay.js";
 import { ask, translateProcess, aiStatus } from "./ai.js";
 import { LIB_DIR, wrap, type AppContext } from "./app.js";
+import { serial } from "./queue.js";
 import { applyCapture } from "./recording.js";
 
 const FORMATS: OutputFormat[] = ["docx", "pdf", "pptx", "html", "scorm", "video"];
-
-// One heavy browser job at a time keeps memory predictable.
-let queue: Promise<unknown> = Promise.resolve();
-function serial<T>(fn: () => Promise<T>): Promise<T> {
-  const run = queue.then(fn, fn);
-  queue = run.catch(() => undefined);
-  return run;
-}
 
 export function pipelineRoutes(api: Router, ctx: AppContext) {
   const { store, config } = ctx;
