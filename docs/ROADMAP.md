@@ -18,7 +18,6 @@ Planned enhancements that are not built yet, so they don't get lost.
 
 ## Recording
 
-- **Build an imported guide in the application.** A process imported from a Word guide is a draft: its screenshots come from the document and its elements are found by name. Planned: a "Build from guide" mode in the extension that walks the draft in the author's own browser (signed in to the test environment), highlights each element, and records the step when the author clicks it, replacing the draft step with a recorded one. When an element can't be found, it pauses and the author's own click is recorded instead.
 - **Import PDF guides.** Word (.docx) only today; a PDF guide would follow the same draft flow.
 
 - **Record the state of expanders.** D365 menus have no `aria-expanded`. Assist learns which elements are toggles during playback; the recorder should store whether a group was open so the first run is right too.

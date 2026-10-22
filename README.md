@@ -27,7 +27,7 @@ Plus the mechanics that make it maintainable:
 - **Localization without re-recording** — a *localized replay* drives the application in another UI language, captures localized screenshots and the real localized element names, and regenerates every instruction from built-in templates (7 languages: en, da, de, fr, es, nl, sv). Author-written text is machine-translated by Claude when configured.
 - **Analytics** — views, completions, test scores, downloads and search queries per process.
 - **Browser extension** — records in Chrome/Edge, and its side panel suggests guides for the page you're on (a "user experience panel").
-- **Import a Word guide** — upload a written guide you already have (`.docx`). Claude reads its steps and screenshots and drafts the process: the instructions, the elements they name, the guide's screenshots as placeholders, and a flag on every step the author should check. Without an API key, rules read the common phrasings ("Click **New**", "In the **Name** field, enter …").
+- **Import a Word guide** — upload a written guide you already have (`.docx`). Claude reads its steps and screenshots and drafts the process: the instructions, the elements they name, the guide's screenshots as placeholders, and a flag on every step the author should check. Without an API key, rules read the common phrasings ("Click **New**", "In the **Name** field, enter …"). Then **Record from the guide** in the extension shows each step in the real application and records what the author does, with real screenshots and selectors.
 
 ## Quick start
 

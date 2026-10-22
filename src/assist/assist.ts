@@ -18,6 +18,12 @@ export interface AssistOptions {
   primaryColor?: string;
   /** Steplight analytics endpoint (…/api/events); kept with the saved session so it survives navigation. */
   eventsUrl?: string;
+  /** Keep the session in sessionStorage so it resumes after navigation (default true). */
+  persist?: boolean;
+  /** Show the Back button (default true). */
+  back?: boolean;
+  /** More buttons for a step, shown before Skip / Next (e.g. when recording from a guide). */
+  buttons?: (step: ResolvedStep) => { label: string; primary?: boolean; onClick: () => void }[];
 }
 
 /** Optional external resolver (e.g. SteplightCapture.resolve when capture.js is on the page). */
@@ -173,6 +179,8 @@ export class AssistSession {
   private valueAtStart: string | null = null;
   private typed = false;
   private onDocKey = (e: KeyboardEvent) => this.handleKey(e);
+  /** A line under the instruction (setNote), until the step changes. */
+  private note: string | null = null;
   private onNav = () => this.handleNav();
   private onResize = () => this.place(true);
 
@@ -242,9 +250,39 @@ export class AssistSession {
     return this.i;
   }
 
+  /** The step shown, or undefined once the process is complete. */
+  get current(): ResolvedStep | undefined {
+    return this.done ? undefined : this.step;
+  }
+
+  /** The node is (inside) the element highlighted for the current step, or contains it. */
+  owns(node: EventTarget | null): boolean {
+    return this.isTarget(node) || (node instanceof Element && !!this.target && node.contains(this.target));
+  }
+
+  /** Hide the overlay without stopping, e.g. while a screenshot of the application is taken. */
+  setHidden(hidden: boolean) {
+    this.host.style.visibility = hidden ? "hidden" : "";
+  }
+
+  /** Show a line (rich text) under the instruction of the current step; null removes it. */
+  setNote(text: string | null) {
+    if (this.done || this.stopped) return;
+    this.note = text;
+    this.renderCard();
+    this.updateStatus();
+    this.place(true);
+  }
+
+  /** The current step was done elsewhere (e.g. confirmed by the server): move on as if the user did it here. */
+  completeStep(stepId: string) {
+    if (!this.done && !this.stopped && this.step?.id === stepId) this.advanceSoon(60);
+  }
+
   // ------------------------------------------------------------------ persistence
 
   private save(i: number) {
+    if (this.opts.persist === false) return;
     try {
       const st = storage();
       st?.setItem(keyFor(this.proc.id), JSON.stringify({ i }));
@@ -255,6 +293,7 @@ export class AssistSession {
   }
 
   private clearSaved() {
+    if (this.opts.persist === false) return;
     try {
       storage()?.removeItem(keyFor(this.proc.id));
       storage()?.removeItem(KEY_ACTIVE);
@@ -283,6 +322,7 @@ export class AssistSession {
     this.advancing = false;
     this.target = null;
     this.choices = [];
+    this.note = null;
     this.valueAtStart = null;
     this.typed = false;
     this.lastRect = null;
@@ -458,6 +498,7 @@ export class AssistSession {
     const title = el("div", "title", richText(st.title));
     this.card.append(head, title);
     if (st.description) this.card.append(el("div", "desc", richText(st.description)));
+    if (this.note) this.card.append(el("div", "note", richText(this.note)));
     const status = el("div", "status");
     status.hidden = true;
     this.card.append(status);
@@ -475,7 +516,9 @@ export class AssistSession {
     const fwd = needsAction ? this.button(s.skip, "", () => this.next()) : this.button(s.next, "primary", () => this.next());
     fwd.classList.add("fwd");
     const right = el("div", "right");
-    right.append(back, fwd);
+    if (this.opts.back !== false) right.append(back);
+    for (const b of this.opts.buttons?.(st) ?? []) right.append(this.button(b.label, b.primary ? "primary" : "", b.onClick));
+    right.append(fwd);
     actions.append(exit, right);
     this.card.append(actions, bar);
     if (st.action === "navigate" && st.value) {

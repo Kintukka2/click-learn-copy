@@ -130,6 +130,37 @@ export function resolveTarget(target: Target, root: Document = document): Resolv
   return null;
 }
 
+/** The words of a name, without symbols or case ("+ New…" → "new"). */
+const words = (s: string | null | undefined) =>
+  norm(s)
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+
+/**
+ * A looser search for an element a written guide names, e.g. "New" for a button that shows "+ New":
+ * the visible element whose name (or label) contains the guide's words, preferring the element's
+ * role, then any control. Of several, the one with the shortest name; a tie finds nothing.
+ */
+export function resolveByName(target: Target, root: Document = document): ResolveResult | null {
+  const want = words(target.label ?? target.name);
+  if (!want) return null;
+  const nameOf = (el: Element) => words(target.label ? labelOf(el) : accessibleName(el)) || words(visibleText(el));
+  const pools = [target.role ? candidatesForRole(target.role, root) : [], Array.from(root.querySelectorAll(target.label ? FORM_CONTROLS : INTERACTIVE_SELECTOR))];
+  for (const pool of pools) {
+    const hits = pool
+      .filter((el) => isVisible(el) && !isIgnored(el))
+      .map((el) => ({ el, name: nameOf(el) }))
+      .filter((h) => ` ${h.name} `.includes(` ${want} `));
+    if (!hits.length) continue;
+    const shortest = Math.min(...hits.map((h) => h.name.length));
+    const best = hits.filter((h) => h.name.length === shortest);
+    if (best.length !== 1) return null;
+    return { element: best[0].el, index: target.selectors?.length ?? 0, selector: { kind: "text", value: target.name ?? target.label ?? "" } };
+  }
+  return null;
+}
+
 /** Convenience for overlays: element or null. */
 export function findElement(target: Target, root: Document = document): Element | null {
   return resolveTarget(target, root)?.element ?? null;

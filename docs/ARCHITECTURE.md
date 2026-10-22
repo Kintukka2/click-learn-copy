@@ -113,10 +113,12 @@ Portal search and the AI chat widget.
 | POST | `/processes/:id/steps` | insert a note `{afterStepId?, title, description?}` |
 | PATCH/DELETE | `/processes/:id/steps/:stepId` | edit or delete a step (editing the title sets `titleEdited`) |
 | POST | `/processes/:id/steps/:stepId/reset-title` | regenerate the auto title |
-| POST | `/recordings` | `{processId, replace?}` → session `{token,...}` |
+| POST | `/recordings` | `{processId, replace?, build?}` → session `{token,...}`; `build`: record a drafted process from the guide → also `plan` (its draft steps as a ResolvedProcess) |
 | GET | `/recordings/active` | active sessions |
 | POST | `/recordings/:token/events` | a `CapturePayload` → `{step, stepCount}` |
 | POST | `/recordings/:token/stop` | → process |
+| POST | `/recordings/:token/assign` | build session: `{stepId}`, the extra step recorded just before draft `stepId` becomes that step ("That was it") |
+| POST | `/recordings/:token/note` | build session: `{stepId, screenshotDataUrl, url, pageTitle, viewport}`, a draft note gets a screenshot of the page |
 | POST | `/processes/:id/demo-record` | `{scenarioId}`: scripted headless recording of a demo scenario |
 | POST | `/projects/:pid/import-guide?fileName=&startUrl=&chapter=&appName=` | body: a Word `.docx` (up to 60 MB) → `201 {process, provider, warning?}`: a new draft process (see "Importing a written guide") |
 | POST | `/demo-project` | `{name?, languages?}`: creates a project with every demo scenario recorded |
@@ -145,6 +147,13 @@ Static mounts:
 2. **Pictures:** PNGs are kept as they are; JPEG, GIF, BMP, WebP and SVG are converted to PNG by Chromium (EMF, WMF and TIFF are skipped). Up to 20 are downscaled (1568 px long side) for Claude.
 3. **Plan** (`guide-plan.ts`): with Claude configured, one structured-output request (`output_config.format` JSON schema, streamed) gets the guide as numbered lines plus its screenshots and returns the steps: action, element kind and name, value, learner choice, the guide's words, the screenshot that shows the step, a flag and whether the step was added. Without Claude (or when the request fails, with a warning) rules read the common phrasings: Steplight's own instruction templates, "Enter X in the Y field", "Set X to Yes", menu paths "A > B > C" (one click per entry). Lines no rule reads become flagged notes.
 4. **Draft:** a new process with `draft` steps (see the data model), the guide's screenshots as placeholder screenshots, the start URL given at import (the test environment) and `importedFrom`. The Studio shows the draft banner, flags steps to check and lets the author fix the element, convert notes and draw highlights.
+
+## Recording from a guide (extension "Record from the guide")
+The author records a drafted process in their own browser, signed in to the application:
+- The popup starts a build session (`POST /recordings {build: true}`), opening the process's start page first if the tab shows another site. The content script runs Assist (`AssistSession` with `persist: false`, no Back, a "That was it" button) over the plan: each draft step is highlighted, found by its selectors and then by a looser name search (`resolveByName`: "New" finds "+ New").
+- Every captured action is sent with `build: {stepId, onTarget}`: the draft step shown and whether the action was on its highlighted element. `applyBuildCapture` (src/server/recording.ts) makes it that step (on target, or `draftMatches`: the guide's name and a fitting action) keeping the draft's id, explanation and learner choice, or inserts it as an extra step before the draft. The usual noise rules apply (typing again keeps the last value; a calendar click before the date is one step). The page is told where it went, so the card moves on or offers "That was it".
+- A note gets a screenshot when the author moves on from it. The pill and the card are hidden, and a frame drawn without them, before each screenshot; screenshots are booked within `captureVisibleTab`'s two-a-second limit.
+- The session ends with the last step (or Exit / Stop). Skipped steps stay drafts.
 
 ## Replay contract (`src/replay/replay.ts`)
 - `replayProcess(proc, {mode, lang, mediaDir, saveMedia, baseUrl})` launches Chromium (1280×800 unless a step's viewport says otherwise).

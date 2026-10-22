@@ -49,6 +49,8 @@ button.btn:disabled { opacity: 0.55; cursor: default; }
 @keyframes pulse { 50% { opacity: 0.35; } }
 .error { color: var(--red); font-size: 12px; margin-top: 8px; }
 .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+.build { border: 1px solid #c9d8fb; background: var(--brand-50); border-radius: 10px; padding: 2px 12px 12px; margin-top: 12px; }
+.build .hint { color: #344054; line-height: 1.45; }
 .setup { border: 1px solid #c9d8fb; background: var(--brand-50); border-radius: 10px; padding: 12px 14px; }
 .setup h2 { font-size: 14px; margin: 0 0 6px; }
 .setup p { margin: 0; font-size: 12.5px; line-height: 1.45; }

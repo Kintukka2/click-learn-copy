@@ -1,14 +1,16 @@
 // Steplight popup: guides recorded on the current page ("Guide me") and the server setting for
 // everyone; for authors (the server accepts their access key, or needs none) also the recorder:
-// project/process choice (or a new process), Start/Stop recording with a live step counter.
+// project/process choice (or a new process), Start/Stop recording with a live step counter, and
+// "Record from the guide" for a process drafted from a written guide.
 /// <reference path="./lib/chrome.d.ts" />
 import { SAME_PAGE, startGuide, type LookupRow } from "./lib/guide.js";
 import { $, api, ApiError, esc, getAccessKey, getServerUrl, isConfigured, send, setAccessKey, setServerUrl, type RecState } from "./lib/shared.js";
 
 interface ProjectRow { id: string; name: string; processCount: number; languages: string[] }
-interface ProcessRow { id: string; title: string; chapter?: string; steps: unknown[] }
+interface ProcessRow { id: string; title: string; chapter?: string; startUrl?: string; steps: { draft?: unknown }[] }
 
 let server = "";
+let processes: ProcessRow[] = [];
 /** Learners (no access key for a server that needs one) see only the guides: no Record, no Studio. */
 let author = false;
 const NEW = "__new__";
@@ -46,6 +48,7 @@ async function targetTab(): Promise<{ id: number; windowId: number; url?: string
 async function loadProcesses(projectId: string) {
   const sel = $("#process") as HTMLSelectElement;
   const procs = await api<ProcessRow[]>(server, `/projects/${projectId}/processes`);
+  processes = procs;
   sel.innerHTML =
     `<option value="${NEW}">+ New process…</option>` +
     procs.map((p) => `<option value="${esc(p.id)}">${esc(p.title)}${p.chapter ? " · " + esc(p.chapter) : ""} (${p.steps.length})</option>`).join("");
@@ -54,10 +57,61 @@ async function loadProcesses(projectId: string) {
   onProcessChange();
 }
 
+const selectedProcess = () => processes.find((p) => p.id === ($("#process") as HTMLSelectElement).value);
+
 function onProcessChange() {
   const isNew = ($("#process") as HTMLSelectElement).value === NEW;
   $("#new-wrap").hidden = !isNew;
   $("#replace-wrap").hidden = isNew;
+  // a process drafted from a guide is recorded step by step, from the guide
+  const drafts = selectedProcess()?.steps.filter((st) => st.draft).length ?? 0;
+  $("#build-wrap").hidden = !drafts;
+  $("#build-hint").textContent = `${drafts === 1 ? "1 step" : `${drafts} steps`} from an imported guide ${drafts === 1 ? "isn't" : "aren't"} recorded yet. Steplight shows each one on the page; you do it, and it is recorded.`;
+  $("#start").className = drafts ? "btn" : "btn primary";
+}
+
+/** Opens the process's start page in the tab when the tab shows another application, and waits for it. */
+async function openStartPage(tab: { id: number; url?: string }, startUrl?: string) {
+  let want: URL;
+  try {
+    want = new URL(startUrl ?? "");
+  } catch {
+    return;
+  }
+  if (!/^https?:$/.test(want.protocol) || (tab.url && new URL(tab.url).host === want.host)) return;
+  await chrome.tabs.update(tab.id, { url: want.href });
+  await new Promise<void>((resolve) => {
+    const done = () => {
+      chrome.tabs.onUpdated.removeListener(on);
+      clearTimeout(timer);
+      resolve();
+    };
+    const on = (id: number, info: { status?: string }) => {
+      if (id === tab.id && info.status === "complete") done();
+    };
+    const timer = setTimeout(done, 30_000);
+    chrome.tabs.onUpdated.addListener(on);
+  });
+}
+
+async function buildFromGuide() {
+  error("#error", "");
+  const btn = $("#build") as HTMLButtonElement;
+  btn.disabled = true;
+  try {
+    const proc = selectedProcess();
+    if (!proc) throw new Error("Choose a process.");
+    const projectId = ($("#project") as HTMLSelectElement).value;
+    await chrome.storage.local.set({ lastProject: projectId, lastProcess: proc.id });
+    const tab = await targetTab();
+    await openStartPage(tab, proc.startUrl);
+    const r = await send<{ state?: RecState; error?: string }>({ type: "steplight:start", serverUrl: server, processId: proc.id, processTitle: proc.title, projectId, tabId: tab.id, build: true });
+    if (r?.error || !r?.state) throw new Error(r?.error ?? "could not start");
+    window.close(); // the steps are shown on the page
+  } catch (err) {
+    error("#error", (err as Error).message);
+    btn.disabled = false;
+  }
 }
 
 async function renderIdle(projects: ProjectRow[]) {
@@ -112,6 +166,7 @@ function renderRecording(st: RecState, err?: string) {
   $("#guides").hidden = true;
   $("#rec-title").textContent = st.processTitle;
   $("#rec-count").textContent = String(st.stepCount);
+  $("#rec-build").hidden = !st.build;
   error("#rec-error", err ?? "");
 }
 
@@ -227,6 +282,7 @@ $("#record").addEventListener("toggle", () => void chrome.storage.local.set({ re
 $("#project").addEventListener("change", (e) => void loadProcesses((e.target as HTMLSelectElement).value));
 $("#process").addEventListener("change", onProcessChange);
 $("#start").addEventListener("click", () => void start());
+$("#build").addEventListener("click", () => void buildFromGuide());
 $("#stop").addEventListener("click", () => void stopRec());
 $("#save-server").addEventListener("click", async () => {
   await setServerUrl(($("#server") as HTMLInputElement).value);

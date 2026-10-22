@@ -3,8 +3,10 @@
 // takes the viewport screenshot the moment a capture event arrives (clicks fire on pointerdown, so
 // the page has not reacted yet), and posts CapturePayloads to /api/recordings/:token/events in order.
 // Also badges the toolbar icon with the number of guides recorded on the page in each tab.
+// Recording from a guide (build), it keeps the draft steps and the one shown, tells the page where
+// the server put each action, and records notes and "That was it" for the page.
 /// <reference path="./lib/chrome.d.ts" />
-import type { CaptureEvent, CapturePayload, Target } from "../src/core/model.js";
+import type { CaptureEvent, CapturePayload, ResolvedProcess, Target } from "../src/core/model.js";
 import { SAME_PAGE, type LookupRow } from "./lib/guide.js";
 import { api, authHeaders, getServerUrl, type RecState } from "./lib/shared.js";
 
@@ -39,22 +41,38 @@ function broadcast() {
   if (state) chrome.tabs.sendMessage(state.tabId, msg).catch(() => undefined);
 }
 
-/** captureVisibleTab is rate-limited (~2/s), so retry once after a short pause. */
+/** Start times of the latest screenshots, including ones booked for later. */
+let shotSlots: number[] = [];
+
+/**
+ * captureVisibleTab allows two calls a second, and a refused call counts too: book the next free
+ * slot rather than retry into the limit (quick actions, e.g. Next on a note and then a click).
+ */
+function bookShot(): number {
+  const now = Date.now();
+  shotSlots = shotSlots.filter((t) => t > now - 1100);
+  const at = shotSlots.length >= 2 ? Math.max(now, shotSlots[shotSlots.length - 2] + 1050) : now;
+  shotSlots.push(at);
+  return at - now;
+}
+
 async function screenshot(windowId: number): Promise<string | undefined> {
   for (let i = 0; i < 3; i++) {
+    const wait = bookShot();
+    if (wait > 0) await sleep(wait);
     try {
       return await chrome.tabs.captureVisibleTab(windowId, { format: "png" });
     } catch {
-      await sleep(400);
+      /* try again in the next free slot */
     }
   }
   return undefined;
 }
 
-async function startRecording(opts: { serverUrl: string; processId: string; processTitle?: string; projectId?: string; tabId: number; replace?: boolean }): Promise<RecState> {
+async function startRecording(opts: { serverUrl: string; processId: string; processTitle?: string; projectId?: string; tabId: number; replace?: boolean; build?: boolean }): Promise<RecState> {
   await ready;
   if (state) await stopRecording();
-  const session = await api<{ token: string }>(opts.serverUrl, "/recordings", { method: "POST", body: JSON.stringify({ processId: opts.processId, replace: !!opts.replace }) });
+  const session = await api<{ token: string; plan?: ResolvedProcess }>(opts.serverUrl, "/recordings", { method: "POST", body: JSON.stringify({ processId: opts.processId, replace: !!opts.replace && !opts.build, build: !!opts.build }) });
   const proc = await api<{ steps: unknown[]; title: string; projectId: string }>(opts.serverUrl, `/processes/${opts.processId}`);
   const tab = await chrome.tabs.get(opts.tabId);
   state = {
@@ -68,11 +86,18 @@ async function startRecording(opts: { serverUrl: string; processId: string; proc
     stepCount: proc.steps.length,
     startedAt: Date.now(),
   };
+  if (session.plan) {
+    state.build = { plan: session.plan, index: 0 };
+    // a running Guide me would show its own card on top: stop it
+    await chrome.scripting
+      .executeScript({ target: { tabId: opts.tabId }, world: "MAIN", func: () => (window as unknown as { SteplightAssist?: { stop?(): void } }).SteplightAssist?.stop?.() })
+      .catch(() => undefined);
+  }
   lastError = "";
   focusShot = null;
   await persist();
   try {
-    await chrome.tabs.sendMessage(opts.tabId, { type: "steplight:start", stepCount: state.stepCount });
+    await chrome.tabs.sendMessage(opts.tabId, { type: "steplight:start", stepCount: state.stepCount, build: state.build });
   } catch {
     // the tab was open before the extension was installed: inject the content script now (it starts itself)
     await chrome.scripting.executeScript({ target: { tabId: opts.tabId }, files: ["content.js"] });
@@ -132,9 +157,10 @@ async function normalizeShot(dataUrl: string | undefined, ev: CaptureEvent): Pro
   }
 }
 
-function onCaptureEvent(ev: CaptureEvent, tab: { id: number; windowId: number }) {
+/** Sends the event to the server in order; resolves once its screenshot is taken (the page then shows its overlay again). */
+function onCaptureEvent(ev: CaptureEvent, tab: { id: number; windowId: number }, build?: CapturePayload["build"]): Promise<unknown> {
   const s = state;
-  if (!s || tab.id !== s.tabId) return;
+  if (!s || tab.id !== s.tabId) return Promise.resolve();
   let shot: Promise<string | undefined>;
   if (ev.action === "type" && focusShot && focusShot.key === targetKey(ev.target) && Date.now() - focusShot.at < 300_000) {
     shot = Promise.resolve(focusShot.dataUrl);
@@ -144,6 +170,7 @@ function onCaptureEvent(ev: CaptureEvent, tab: { id: number; windowId: number })
   }
   chain = chain.then(async () => {
     const payload: CapturePayload = { event: ev, screenshotDataUrl: await normalizeShot(await shot, ev) };
+    if (build && s.build) payload.build = build;
     try {
       const res = await fetch(`${s.serverUrl}/api/recordings/${s.token}/events`, { method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) }, body: JSON.stringify(payload) });
       if (res.status === 410) {
@@ -151,29 +178,65 @@ function onCaptureEvent(ev: CaptureEvent, tab: { id: number; windowId: number })
         await stopRecording();
         return;
       }
-      const j = (await res.json()) as { stepCount?: number; error?: string };
+      const j = (await res.json()) as { stepCount?: number; error?: string; placed?: string; draftId?: string; step?: { title?: string } };
       if (!res.ok) throw new Error(j.error ?? res.statusText);
       if (state && state.token === s.token) {
         state.stepCount = j.stepCount ?? state.stepCount;
         lastError = "";
         await persist();
       }
+      if (j.placed) chrome.tabs.sendMessage(s.tabId, { type: "steplight:placed", placed: j.placed, draftId: j.draftId, title: j.step?.title }).catch(() => undefined);
     } catch (err) {
       lastError = `Could not send the step: ${(err as Error).message}`;
     }
     broadcast();
   });
+  return shot;
+}
+
+/** A build request made after the actions before it reached the server (it refers to what they recorded). */
+async function buildCall(path: string, body: Record<string, unknown>): Promise<{ error?: string; stepCount?: number }> {
+  const s = state;
+  if (!s?.build) return { error: "Not recording from a guide." };
+  await chain.catch(() => undefined);
+  try {
+    const r = await api<{ stepCount?: number }>(s.serverUrl, `/recordings/${s.token}/${path}`, { method: "POST", body: JSON.stringify(body) });
+    if (state?.token === s.token) {
+      state.stepCount = r.stepCount ?? state.stepCount;
+      await persist();
+    }
+    broadcast();
+    return r;
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
 }
 
 chrome.runtime.onMessage.addListener((msg: { type: string; [k: string]: unknown }, sender: { tab?: { id: number; windowId: number } }, sendResponse: (r: unknown) => void) => {
   (async () => {
     await ready;
     switch (msg.type) {
-      case "steplight:hello":
-        return { recording: !!state && sender.tab?.id === state.tabId, stepCount: state?.stepCount ?? 0, title: state?.processTitle };
+      case "steplight:hello": {
+        const here = !!state && sender.tab?.id === state.tabId;
+        return { recording: here, stepCount: state?.stepCount ?? 0, title: state?.processTitle, build: here ? state?.build : undefined };
+      }
       case "steplight:event":
-        if (sender.tab) onCaptureEvent(msg.event as CaptureEvent, sender.tab);
+        if (sender.tab) await onCaptureEvent(msg.event as CaptureEvent, sender.tab, msg.build as CapturePayload["build"]);
         return { ok: true };
+      case "steplight:build-step":
+        if (state?.build && sender.tab?.id === state.tabId) {
+          state.build.index = Number(msg.index) || 0;
+          await persist();
+        }
+        return { ok: true };
+      case "steplight:assign":
+        return buildCall("assign", { stepId: msg.stepId });
+      case "steplight:note": {
+        if (!state?.build || !sender.tab || sender.tab.id !== state.tabId) return { error: "Not recording from a guide." };
+        const shot = { viewport: msg.viewport as { width: number; height: number } } as CaptureEvent;
+        const dataUrl = await normalizeShot(await screenshot(sender.tab.windowId), shot);
+        return buildCall("note", { stepId: msg.stepId, screenshotDataUrl: dataUrl, viewport: shot.viewport, url: msg.url, pageTitle: msg.pageTitle });
+      }
       case "steplight:focus":
         if (state && sender.tab && sender.tab.id === state.tabId) {
           const key = targetKey(msg.target as Target);

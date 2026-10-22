@@ -190,6 +190,19 @@
   color: var(--muted);
   font-size: 13.5px;
 }
+.note {
+  margin-top: 8px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: var(--p-soft);
+  color: var(--ink2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.note strong {
+  color: var(--ink);
+  font-weight: 650;
+}
 .status {
   display: flex;
   flex-wrap: wrap;

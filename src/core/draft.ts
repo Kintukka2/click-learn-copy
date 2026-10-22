@@ -1,7 +1,7 @@
 // Steps drafted from an imported written guide (Step.draft): the element a guide names ("Click **New**")
 // becomes a Target with selectors built from its name, so instructions are generated and translated as
 // for recorded steps and the element can be found in the live application. Pure functions, browser-safe.
-import type { ActionType, Selector, Step, Target } from "./model.js";
+import type { ActionType, CaptureEvent, Selector, Step, Target } from "./model.js";
 
 export type ElementKind = "button" | "link" | "tab" | "menuitem" | "field" | "dropdown" | "checkbox" | "text";
 
@@ -57,4 +57,24 @@ export function draftElementOf(t: Target | undefined): { kind: ElementKind; name
 /** Steps of a process that the author still needs to check. */
 export function flaggedSteps(steps: Step[]): Step[] {
   return steps.filter((s) => s.draft?.flag);
+}
+
+const norm = (s?: string) => (s ?? "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+
+/**
+ * A recorded action is the drafted step: the element has the name the guide gave it (or one that
+ * contains it, e.g. "New" and "New customer pool") and the action fits. Used when the action was
+ * not done on the element highlighted for the step, e.g. when that element could not be found.
+ */
+export function draftMatches(draft: Step, ev: CaptureEvent): boolean {
+  if (draft.action === "note" || draft.action === "navigate") return false;
+  if (draft.action === "press") return ev.action === "press" && norm(ev.value) === norm(draft.value || "Enter");
+  const want = norm(draft.target?.label ?? draft.target?.name);
+  if (!want) return false;
+  const names = [ev.target?.label, ev.target?.name, ev.target?.field?.name].map(norm).filter(Boolean);
+  const named = names.some((n) => n === want || (n.length > 2 && want.length > 2 && (n.includes(want) || want.includes(n))));
+  if (!named) return false;
+  if (ev.action === draft.action) return true;
+  // a click on a custom check box or drop-down, or a check box where the guide says "click"
+  return (ev.action === "click" && (draft.action === "check" || draft.action === "select")) || (ev.action === "check" && draft.action === "click");
 }
