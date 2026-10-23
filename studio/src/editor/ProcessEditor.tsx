@@ -14,6 +14,7 @@ import { StepList, type StepView } from "./StepList";
 import { canLearnerChoose, choiceSuggestion } from "../../../src/core/choice";
 import { flaggedSteps } from "../../../src/core/draft";
 import { ROOT } from "../lib/base";
+import { extensionVersion, finaliseGuide } from "../lib/extension";
 
 type Job = { kind: "replay" | "test" | "translate" | "record"; label: string };
 
@@ -836,6 +837,23 @@ function DraftBanner({ proc, selId, onSelect }: { proc: Process; selId: string |
   const flagged = flaggedSteps(proc.steps);
   const at = proc.steps.findIndex((st) => st.id === selId);
   const next = flagged.find((st) => proc.steps.indexOf(st) > at) ?? flagged[0];
+  const [busy, setBusy] = useState(false);
+  const [help, setHelp] = useState(false);
+
+  const finalise = async () => {
+    if (!proc.startUrl) return toast.error("No start URL", "Set the application's address (Start URL) in the header first.");
+    setBusy(true);
+    try {
+      if (!(await extensionVersion())) return setHelp(true);
+      setHelp(false);
+      const r = await finaliseGuide(proc.id);
+      if (r.error) toast.error("Could not finalise the guide", r.error);
+      else toast.success("Finalising in the new tab", "Do each step Steplight shows there. Each screen and element is recorded, and shows here when you come back.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="draft-banner" data-testid="draft-banner">
       <Icon name="fileText" size={15} />
@@ -846,10 +864,19 @@ function DraftBanner({ proc, selId, onSelect }: { proc: Process; selId: string |
           {flagged.length ? `${flagged.length} step${flagged.length === 1 ? "" : "s"} to check.` : "Nothing left to check."}
         </span>
         <span className="small block draft-banner-how" data-testid="draft-how">
-          To record it, choose <strong>Record from the guide</strong> in the Steplight extension: it shows each step in the application and records what you do.
+          <strong>Finalise the guide</strong> to record it: Steplight opens the application and shows each step there. You do it, and Steplight records the screen and the element.
         </span>
+        {help && (
+          <span className="small block draft-banner-help" data-testid="finalise-help">
+            Finalising needs the Steplight browser extension (0.7 or later), connected to this server: <code>{window.location.origin + ROOT}</code>, with your access key. Installed or reloaded it just now? Refresh this page. You can also open the application and choose{" "}
+            <strong>Finalise the guide</strong> in the extension.
+          </span>
+        )}
       </div>
       <div className="draft-banner-actions">
+        <Button size="sm" variant="primary" icon="record" loading={busy} onClick={() => void finalise()} data-testid="finalise">
+          Finalise the guide
+        </Button>
         {next && (
           <Button size="sm" onClick={() => onSelect(next.id)} data-testid="next-to-check">
             Next to check

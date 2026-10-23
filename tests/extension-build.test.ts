@@ -1,9 +1,11 @@
-// "Record from the guide" in the browser extension: a process drafted from a written guide is
-// recorded in the application step by step. Loads the built extension (dist/extension) in Chromium
-// against a Steplight server; the application page is served by route interception.
+// "Finalise the guide" in the browser extension (from the popup or the Studio): a process drafted
+// from a written guide is recorded in the application step by step. Loads the built extension
+// (dist/extension) in Chromium against a Steplight server; the application page is served by route
+// interception.
 /// <reference path="../extension/lib/chrome.d.ts" />
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import http from "node:http";
 import type { AddressInfo, Server } from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -161,7 +163,7 @@ describe("extension: record from the guide", () => {
     await page.close();
   }, 60_000);
 
-  it("offers Record from the guide in the popup and opens the process's start page", async () => {
+  it("offers Finalise the guide in the popup and opens the process's start page", async () => {
     const page = await ctx.newPage();
     await page.goto("http://other.test/somewhere");
     const extId = new URL(sw.url()).host;
@@ -181,4 +183,76 @@ describe("extension: record from the guide", () => {
     await expect.poll(() => page.$("[data-steplight-assist]"), { timeout: 5000 }).toBeNull();
     await page.close();
   }, 60_000);
+
+  const recState = () => sw.evaluate(() => (self as unknown as { steplight: { getState(): { processId: string; tabId: number } | null } }).steplight.getState());
+
+  it("finalises the guide from the Studio: the application opens in a new tab and each step records its screen and element", async () => {
+    // a tab the extension opens loads before Playwright can intercept it: a real server for the application
+    const erp = http.createServer((_req, res) => res.writeHead(200, { "Content-Type": "text/html" }).end(appPage));
+    await new Promise<void>((r) => erp.listen(0, "127.0.0.1", r));
+    const erpUrl = `http://127.0.0.1:${(erp.address() as AddressInfo).port}/?cmp=101a&mi=CustPool`;
+    const steps = [draft("f1", "click", "button", "Modules"), draft("f2", "click", "button", "Save")].map((st) => ({ ...st, url: erpUrl, screenshot: undefined, title: instructionForStep(st) }));
+    const pid = app.store.createProcess(projectId, { title: "Close a customer pool", startUrl: erpUrl, steps })!.id;
+    const studio = await ctx.newPage();
+    await studio.goto(`${origin}/studio/processes/${pid}`);
+    await studio.waitForSelector("[data-testid=finalise]");
+    expect(await studio.textContent(".stage-empty")).toContain("Screenshot to come");
+    const opened = ctx.waitForEvent("page");
+    await studio.click("[data-testid=finalise]");
+    const page = await opened;
+    await expect.poll(() => page.url(), { timeout: 10_000 }).toBe(erpUrl);
+    await expect.poll(() => card(page, ".title"), { timeout: 10_000 }).toBe("Click Modules.");
+    expect(await page.textContent("#steplight-recording-indicator")).toContain("Recording from the guide");
+    expect((await recState())?.processId).toBe(pid);
+    await expect.poll(() => studio.textContent(".toaster"), { timeout: 5000 }).toContain("Finalising in the new tab");
+    expect(await studio.isDisabled("[data-testid=finalise]")).toBe(false);
+
+    await page.bringToFront();
+    await page.click("#modules");
+    await expect.poll(() => card(page, ".count"), { timeout: 5000 }).toBe("Step 2 of 2");
+    const first = app.store.getProcess(pid)!.steps[0];
+    expect(first.id).toBe("f1");
+    expect(first.draft).toBeUndefined();
+    expect(first.screenshot).toBeTruthy();
+    expect(first.target?.bbox).toBeTruthy();
+    await sw.evaluate(() => (self as unknown as { steplight: { stopRecording(): Promise<unknown> } }).steplight.stopRecording());
+    await page.close();
+    await studio.close();
+    erp.close();
+  }, 60_000);
+
+  it("answers only Studio pages of the server it is connected to", async () => {
+    const ask = (page: Page) =>
+      page.evaluate(
+        (pid) =>
+          new Promise((resolve) => {
+            addEventListener("message", (e) => {
+              if (e.data?.source === "steplight-extension") resolve(e.data);
+            });
+            postMessage({ source: "steplight-studio", id: "a", type: "ping" }, location.origin);
+            postMessage({ source: "steplight-studio", id: "b", type: "finalise", processId: pid }, location.origin);
+            setTimeout(() => resolve(null), 1500);
+          }),
+        otherId,
+      );
+    const other = await ctx.newPage();
+    await other.goto("http://other.test/somewhere");
+    expect(await ask(other)).toBeNull();
+    expect(await recState()).toBeNull();
+    await other.close();
+    // the Studio learns which extension it talks to
+    const studio = await ctx.newPage();
+    await studio.goto(`${origin}/studio/`);
+    const pong = await studio.evaluate(
+      () =>
+        new Promise((resolve) => {
+          addEventListener("message", (e) => {
+            if (e.data?.source === "steplight-extension") resolve(e.data);
+          });
+          postMessage({ source: "steplight-studio", id: "a", type: "ping" }, location.origin);
+        }),
+    );
+    expect(pong).toEqual({ source: "steplight-extension", id: "a", extension: JSON.parse(fs.readFileSync(path.join(EXT, "manifest.json"), "utf8")).version });
+    await studio.close();
+  }, 30_000);
 });

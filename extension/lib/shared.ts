@@ -81,6 +81,22 @@ export async function api<T = unknown>(server: string, path: string, init?: Requ
   return (await res.json()) as T;
 }
 
+/** Resolves once the tab has loaded the page it is navigating to (at the latest after 30 s). */
+export function tabLoaded(tabId: number): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const done = () => {
+      chrome.tabs.onUpdated.removeListener(on);
+      clearTimeout(timer);
+      resolve();
+    };
+    const on = (id: number, info: { status?: string }) => {
+      if (id === tabId && info.status === "complete") done();
+    };
+    const timer = setTimeout(done, 30_000);
+    chrome.tabs.onUpdated.addListener(on);
+  });
+}
+
 export function send<T = unknown>(msg: Record<string, unknown>): Promise<T> {
   return chrome.runtime.sendMessage(msg) as Promise<T>;
 }

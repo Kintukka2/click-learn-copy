@@ -311,6 +311,10 @@ describe.skipIf(!fs.existsSync(STUDIO))("importing in the Studio", () => {
     expect(page.url()).toContain(`/processes/${proc.id}`);
     expect(await page.textContent("[data-testid=draft-banner]")).toContain("Customer pools.docx");
     expect(await page.locator("[data-testid=step-check]").count()).toBe(1);
+    // no extension in this browser: Finalise the guide says what it needs
+    await page.click("[data-testid=finalise]");
+    await page.waitForSelector("[data-testid=finalise-help]");
+    expect(await page.textContent("[data-testid=finalise-help]")).toContain(`connected to this server: ${origin}`);
 
     // jump to the flagged step, see what the guide says, and mark it as checked
     await page.click("[data-testid=next-to-check]");
