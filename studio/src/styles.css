@@ -3338,6 +3338,7 @@ select.input {
   gap: 6px;
   padding-left: 2px;
 }
+.stage-tools { flex-wrap: wrap; }
 .insp-section {
   background: var(--surface);
   border: 1px solid var(--border);

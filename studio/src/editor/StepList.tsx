@@ -23,6 +23,7 @@ export function StepList({
   onDelete,
   onInsertNote,
   onRecord,
+  onRecordAgain,
   readOnlyOrder,
   picking,
   onTogglePick,
@@ -34,6 +35,8 @@ export function StepList({
   onDelete: (id: string) => void;
   onInsertNote: (afterId?: string) => void;
   onRecord: () => void;
+  /** Record a recorded step again when the guide is finalised. */
+  onRecordAgain?: (id: string) => void;
   readOnlyOrder?: boolean;
   /** "Learner picks…" mode: the steps ticked so far (only steps that can be the learner's choice). */
   picking?: Set<string>;
@@ -197,6 +200,7 @@ export function StepList({
                   )}
                   items={[
                     { id: "note", label: "Insert note after", icon: "noteAdd", onSelect: () => onInsertNote(s.id) },
+                    ...(onRecordAgain && !s.draft ? [{ id: "again", label: "Record again", icon: "record", onSelect: () => onRecordAgain(s.id) }] : []),
                     { id: "del", label: "Delete step", icon: "trash", danger: true, divider: true, onSelect: () => onDelete(s.id) },
                   ]}
                 />

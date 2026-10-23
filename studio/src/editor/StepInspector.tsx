@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent, type TextareaHTMLAttributes, type InputHTMLAttributes } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type TextareaHTMLAttributes, type InputHTMLAttributes } from "react";
 import { canLearnerChoose, choiceSuggestion } from "../../../src/core/choice";
 import { defaultKind, draftElementOf, draftTarget, ELEMENT_KINDS, type ElementKind } from "../../../src/core/draft";
 import { richText } from "../../../src/core/instructions";
@@ -58,6 +58,8 @@ export function StepInspector({
   onNext,
   onDelete,
   onTranslate,
+  onRecordAgain,
+  onReplaceShot,
 }: {
   proc: Process;
   view: StepView;
@@ -73,8 +75,29 @@ export function StepInspector({
   onNext: () => void;
   onDelete: () => void;
   onTranslate: () => void;
+  /** Make the step a draft again: finalising the guide records it again (screen and element). */
+  onRecordAgain: () => void;
+  /** Replace the screenshot with an image the author has (file or pasted). */
+  onReplaceShot: (image: Blob) => void;
 }) {
   const s = view.step;
+  /** A step drafted from the guide (not one recorded before and marked to record again). */
+  const fromGuide = !!s.draft && !s.draft.again;
+  const fileRef = useRef<HTMLInputElement>(null);
+  // a pasted image (e.g. Win+Shift+S, then Ctrl+V) replaces the screenshot of the source step
+  useEffect(() => {
+    if (!isSource) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      const img = [...(e.clipboardData?.files ?? [])].find((f) => f.type.startsWith("image/"));
+      if (!img) return;
+      e.preventDefault();
+      onReplaceShot(img);
+    };
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, [isSource, onReplaceShot]);
   const loc = isSource ? undefined : proc.localizations[lang]?.steps[s.id];
   const hasLocalization = !isSource && !!proc.localizations[lang];
   const bboxIsLocalized = !isSource && !!loc?.screenshot && !!loc?.bbox;
@@ -119,6 +142,31 @@ export function StepInspector({
             {!isSource && !bboxIsLocalized ? " (applies to the source screenshot)" : ""}.
           </div>
         )}
+        {isSource && (
+          <div className="stage-hint muted small stage-tools">
+            {!s.draft && (
+              <Button size="sm" variant="ghost" icon="record" onClick={onRecordAgain} data-testid="record-again">
+                Record again
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" icon="image" onClick={() => fileRef.current?.click()} data-testid="replace-shot">
+              Replace screenshot
+            </Button>
+            <span>or paste an image here (Ctrl+V)</span>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              data-testid="replace-shot-file"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                if (f) onReplaceShot(f);
+              }}
+            />
+          </div>
+        )}
         {isSource && !view.bbox && view.screenshot && t && s.action !== "note" && (
           <div className="stage-hint muted small">
             <Button size="sm" variant="ghost" icon="target" onClick={() => onBBox(centeredBox(s.viewport), false)} data-testid="add-highlight">
@@ -129,7 +177,7 @@ export function StepInspector({
         )}
       </div>
 
-      {isSource && s.draft && <GuideSource step={s} onPatch={onPatch} />}
+      {isSource && s.draft && (s.draft.again ? <RecordAgain step={s} onPatch={onPatch} /> : <GuideSource step={s} onPatch={onPatch} />)}
 
       {!isSource && (
         <section className="insp-section">
@@ -275,9 +323,9 @@ export function StepInspector({
         </section>
       )}
 
-      {isSource && s.draft && s.action !== "note" && s.action !== "press" && <DraftElement step={s} onPatch={onPatch} />}
+      {isSource && fromGuide && s.action !== "note" && s.action !== "press" && <DraftElement step={s} onPatch={onPatch} />}
 
-      {t && !s.draft && (
+      {t && !fromGuide && (
         <section className="insp-section">
           <div className="insp-section-head">
             <h3>
@@ -424,6 +472,25 @@ function GuideSource({ step: s, onPatch }: { step: Step; onPatch: (p: Partial<St
           <Icon name="check" size={12} /> Nothing to check. Finalising the guide records each step in the application, with its screen and element.
         </div>
       )}
+    </section>
+  );
+}
+
+/** A recorded step marked to record again: finalising the guide shows it in the application. */
+function RecordAgain({ step: s, onPatch }: { step: Step; onPatch: (p: Partial<Step>, label?: string) => void }) {
+  return (
+    <section className="insp-section" data-testid="record-again-panel">
+      <div className="insp-section-head">
+        <h3>
+          <Icon name="record" size={15} /> To record again
+        </h3>
+      </div>
+      <div className="muted small">Finalise the guide: Steplight shows this step in the application, and records its screen and element again. Until then, it keeps the current recording.</div>
+      <div className="stage-hint">
+        <Button size="sm" onClick={() => onPatch({ draft: null } as unknown as Partial<Step>, "keep the recording")} data-testid="keep-recording">
+          Keep the current recording
+        </Button>
+      </div>
     </section>
   );
 }

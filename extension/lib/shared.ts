@@ -5,10 +5,17 @@ import type { ResolvedProcess } from "../../src/core/model.js";
 
 export const DEFAULT_SERVER = "http://localhost:4100";
 
+/** The extra step recorded while draft step `stepId` was shown: the card offers "That was it". */
+export interface BuildLast {
+  stepId: string;
+  title: string;
+}
+
 /** Recording from a guide: its draft steps and the one shown (kept across page loads). */
 export interface BuildPlan {
   plan: ResolvedProcess;
   index: number;
+  last?: BuildLast;
 }
 
 export interface RecState {
@@ -22,6 +29,35 @@ export interface RecState {
   stepCount: number;
   startedAt: number;
   build?: BuildPlan;
+  /** Paused: nothing is recorded while the author goes somewhere in the application. */
+  paused?: boolean;
+  /** The recorded tab's address, as it last changed. */
+  lastUrl?: string;
+}
+
+/**
+ * Steps before the process's first draft step are recorded: finalising goes on from there, paused
+ * until the author is where that step is done.
+ */
+export const resumes = (steps: { draft?: unknown }[]): boolean => steps.findIndex((s) => !!s.draft) > 0;
+
+/** Where recording a process from its guide stopped, if it was in the application of `startUrl`. */
+export async function resumeUrl(processId: string, startUrl?: string): Promise<string | undefined> {
+  const url = ((await chrome.storage.local.get("resumeUrls")).resumeUrls as Record<string, string> | undefined)?.[processId];
+  try {
+    return url && startUrl && new URL(url).host === new URL(startUrl).host ? url : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function saveResumeUrl(processId: string, url: string): Promise<void> {
+  const all = { ...((await chrome.storage.local.get("resumeUrls")).resumeUrls as Record<string, string> | undefined) };
+  delete all[processId];
+  all[processId] = url;
+  const keys = Object.keys(all);
+  for (const k of keys.slice(0, Math.max(0, keys.length - 50))) delete all[k]; // the 50 latest
+  await chrome.storage.local.set({ resumeUrls: all });
 }
 
 export async function getServerUrl(): Promise<string> {

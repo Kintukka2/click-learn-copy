@@ -136,6 +136,8 @@ export interface StepDraft {
   flag?: string;
   /** The guide doesn't have this step; it was added because the process needs it (e.g. saving). */
   added?: boolean;
+  /** A recorded step the author chose to record again (Studio "Record again"); source is its instruction. */
+  again?: boolean;
 }
 
 export interface StepLocalization {

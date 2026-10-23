@@ -258,6 +258,25 @@ describe("event capture semantics", () => {
     expect(await events()).toEqual([]);
   });
 
+  it("records a click on a read-only text box shown as a link (D365 grid links), not on other read-only fields", async () => {
+    await load(`<!doctype html><html><body>
+<div role="grid"><div role="row"><div role="columnheader" id="h-batch">Journal batch number</div><div role="columnheader" id="h-desc">Description</div></div>
+<div role="row"><div role="gridcell"><input id="batch" class="textbox field hyperlink" readonly aria-labelledby="h-batch" value="101A-000042" style="cursor:pointer"></div>
+<div role="gridcell"><input id="desc" readonly aria-labelledby="h-desc" value="Bank Reconciliation Journal"></div></div></div>
+<input id="balance" aria-readonly="true" aria-label="Balance" value="0.00" style="cursor:pointer" readonly>
+<input id="plain" aria-label="Name"></body></html>`);
+    await startCapture();
+    await page.click("#batch");
+    await page.click("#desc");
+    await page.click("#plain");
+    const ev = await events();
+    expect(ev).toHaveLength(1);
+    expect(ev[0]).toMatchObject({ action: "click", target: { tag: "input", label: "Journal batch number" } });
+    expect(ev[0].target!.row).toMatchObject({ column: "Journal batch number" });
+    await page.click("#balance"); // read-only with a hand cursor: shown as a link
+    expect(await events()).toHaveLength(2);
+  });
+
   it("records the column of an element in a table or grid row", async () => {
     await load(`<!doctype html><html><body>
 <table id="prs"><thead><tr><th></th><th>Purchase requisition</th><th>Name</th></tr></thead>
