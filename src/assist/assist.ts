@@ -181,6 +181,8 @@ export class AssistSession {
   private onDocKey = (e: KeyboardEvent) => this.handleKey(e);
   /** A line under the instruction (setNote), until the step changes. */
   private note: string | null = null;
+  /** setPaused: the card shows the step but doesn't move on (recording paused while the author navigates). */
+  private paused = false;
   private onNav = () => this.handleNav();
   private onResize = () => this.place(true);
 
@@ -258,6 +260,11 @@ export class AssistSession {
   /** The node is (inside) the element highlighted for the current step, or contains it. */
   owns(node: EventTarget | null): boolean {
     return this.isTarget(node) || (node instanceof Element && !!this.target && node.contains(this.target));
+  }
+
+  /** Keep showing the current step, but don't move on from it, e.g. while the author navigates. */
+  setPaused(paused: boolean) {
+    this.paused = paused;
   }
 
   /** Hide the overlay without stopping, e.g. while a screenshot of the application is taken. */
@@ -349,7 +356,7 @@ export class AssistSession {
     const st = this.step;
     if (!st || this.stopped || this.done) return;
     this.checkPopups();
-    if (st.action === "navigate" && st.value && this.urlMatches(st.value)) {
+    if (st.action === "navigate" && st.value && !this.paused && this.urlMatches(st.value)) {
       this.next();
       return;
     }
@@ -375,8 +382,8 @@ export class AssistSession {
     // Apps that re-use elements (D365's navigation pane) can relabel the highlighted one.
     if (this.target && this.target.isConnected && isVisible(this.target) && nameMatches(this.target, st.target!) && !covered(this.target)) return;
     const found = this.resolve(st.target!);
-    if (found && this.skipExpanded(found)) return;
-    if (!found && this.backToExpander()) return;
+    if (found && !this.paused && this.skipExpanded(found)) return;
+    if (!found && !this.paused && this.backToExpander()) return;
     if (found !== this.target) {
       this.target = found;
       if (found instanceof HTMLInputElement || found instanceof HTMLTextAreaElement) this.valueAtStart ??= found.value;
@@ -659,7 +666,7 @@ export class AssistSession {
   }
 
   private advanceSoon(delay = 120) {
-    if (this.advancing) return;
+    if (this.advancing || this.paused) return;
     this.advancing = true;
     this.ring.classList.add("ok");
     // Persist first: the action may navigate away.

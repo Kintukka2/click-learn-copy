@@ -31,6 +31,16 @@ export function isTextField(el: Element): boolean {
   return role === "textbox" || role === "searchbox";
 }
 
+/**
+ * A read-only text box shown as a link: D365 draws grid links (a journal batch number, say) as
+ * read-only text boxes with a hand cursor. No typing follows a click on one: the click is the step.
+ */
+export function isLinkField(el: Element): boolean {
+  if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) || !isTextField(el)) return false;
+  if (!el.readOnly && el.getAttribute("aria-readonly") !== "true") return false;
+  return el.getAttribute("role") === "link" || /\bhyperlink\b/i.test(el.className) || getComputedStyle(el).cursor === "pointer";
+}
+
 /** Controls whose own change/input events produce the step (so their pointerdown is not a step). */
 export function isFormControl(el: Element): boolean {
   if (el instanceof HTMLSelectElement || el instanceof HTMLTextAreaElement) return true;

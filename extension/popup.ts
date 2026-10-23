@@ -4,7 +4,7 @@
 // "Finalise the guide" for a process drafted from a written guide.
 /// <reference path="./lib/chrome.d.ts" />
 import { SAME_PAGE, startGuide, type LookupRow } from "./lib/guide.js";
-import { $, api, ApiError, esc, getAccessKey, getServerUrl, isConfigured, send, setAccessKey, setServerUrl, tabLoaded, type RecState } from "./lib/shared.js";
+import { $, api, ApiError, esc, getAccessKey, getServerUrl, isConfigured, resumes, resumeUrl, send, setAccessKey, setServerUrl, tabLoaded, type RecState } from "./lib/shared.js";
 
 interface ProjectRow { id: string; name: string; processCount: number; languages: string[] }
 interface ProcessRow { id: string; title: string; chapter?: string; startUrl?: string; steps: { draft?: unknown }[] }
@@ -94,8 +94,10 @@ async function buildFromGuide() {
     const projectId = ($("#project") as HTMLSelectElement).value;
     await chrome.storage.local.set({ lastProject: projectId, lastProcess: proc.id });
     const tab = await targetTab();
-    await openStartPage(tab, proc.startUrl);
-    const r = await send<{ state?: RecState; error?: string }>({ type: "steplight:start", serverUrl: server, processId: proc.id, processTitle: proc.title, projectId, tabId: tab.id, build: true });
+    // going on with a process partly recorded: from where it stopped, paused until the author is at the step
+    const paused = resumes(proc.steps);
+    await openStartPage(tab, (paused && (await resumeUrl(proc.id, proc.startUrl))) || proc.startUrl);
+    const r = await send<{ state?: RecState; error?: string }>({ type: "steplight:start", serverUrl: server, processId: proc.id, processTitle: proc.title, projectId, tabId: tab.id, build: true, paused });
     if (r?.error || !r?.state) throw new Error(r?.error ?? "could not start");
     window.close(); // the steps are shown on the page
   } catch (err) {
@@ -157,7 +159,15 @@ function renderRecording(st: RecState, err?: string) {
   $("#rec-title").textContent = st.processTitle;
   $("#rec-count").textContent = String(st.stepCount);
   $("#rec-build").hidden = !st.build;
+  $("#pause").textContent = st.paused ? "Resume" : "Pause";
+  $("#rec-paused").hidden = !st.paused;
   error("#rec-error", err ?? "");
+}
+
+async function togglePause() {
+  const r = await send<{ state?: RecState }>({ type: "steplight:state" });
+  const p = await send<{ state?: RecState }>({ type: "steplight:pause", paused: !r?.state?.paused });
+  if (p?.state) renderRecording(p.state);
 }
 
 async function start() {
@@ -274,6 +284,7 @@ $("#process").addEventListener("change", onProcessChange);
 $("#start").addEventListener("click", () => void start());
 $("#build").addEventListener("click", () => void buildFromGuide());
 $("#stop").addEventListener("click", () => void stopRec());
+$("#pause").addEventListener("click", () => void togglePause());
 $("#save-server").addEventListener("click", async () => {
   await setServerUrl(($("#server") as HTMLInputElement).value);
   await setAccessKey(($("#access-key") as HTMLInputElement).value);
@@ -287,10 +298,12 @@ $("#open-panel").addEventListener("click", async () => {
     error("#error", (err as Error).message);
   }
 });
-chrome.runtime.onMessage.addListener((msg: { type: string; stepCount: number; recording: boolean; error?: string }) => {
+chrome.runtime.onMessage.addListener((msg: { type: string; stepCount: number; recording: boolean; paused?: boolean; error?: string }) => {
   if (msg.type !== "steplight:count") return;
   if (!msg.recording) return void init();
   $("#rec-count").textContent = String(msg.stepCount);
+  $("#pause").textContent = msg.paused ? "Resume" : "Pause";
+  $("#rec-paused").hidden = !msg.paused;
   error("#rec-error", msg.error ?? "");
 });
 

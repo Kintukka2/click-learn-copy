@@ -167,4 +167,25 @@ describe("recording from a guide", () => {
     expect((await post(`/recordings/${token}/stop`, {})).status).toBe(200);
     expect((await post(`/recordings/${token}/assign`, { stepId: "d6" })).status).toBe(410);
   });
+
+  it("records a step marked to record again with its new screen and element, keeping what the author wrote", async () => {
+    const proc = ctx.store.getProcess(procId)!;
+    const d3 = proc.steps.find((x) => x.id === "d3")!;
+    const old = { screenshot: d3.screenshot, title: "Enter the pool's ID.", description: d3.description };
+    Object.assign(d3, { title: old.title, titleEdited: true, draft: { source: "Enter the pool's ID.", again: true } });
+    ctx.store.saveProcess(proc);
+    const r = await post("/recordings", { processId: procId, build: true });
+    expect(r.status).toBe(201);
+    token = r.body.token;
+    // shown with its recorded element (found by its selectors)
+    expect(r.body.plan.steps.map((x: Step) => x.id)).toEqual(["d3"]);
+    expect(r.body.plan.steps[0].target.selectors.length).toBeGreaterThan(0);
+    const t = await send("d3", true, ev("type", field("Pool ID"), "RETAIL"));
+    expect(t.body).toMatchObject({ placed: "replaced", draftId: "d3", draftsLeft: 0 });
+    const again = steps().find((x) => x.id === "d3")!;
+    expect(again).toMatchObject({ value: "RETAIL", title: old.title, titleEdited: true, description: old.description });
+    expect(again.draft).toBeUndefined();
+    expect(again.screenshot).not.toBe(old.screenshot);
+    await post(`/recordings/${token}/stop`, {});
+  });
 });

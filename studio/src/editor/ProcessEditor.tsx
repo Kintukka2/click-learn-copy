@@ -306,6 +306,23 @@ export function ProcessEditor({ id }: { id: string }) {
     });
   };
 
+  /** The step becomes a draft again: finalising the guide shows it in the application and records it anew. */
+  const recordAgain = (stepId: string) => {
+    const s = proc?.steps.find((x) => x.id === stepId);
+    if (!s || s.draft) return;
+    void patchStep(stepId, { draft: { source: s.title.replace(/\*\*/g, ""), again: true } }, "record again");
+    toast.info("Marked to record again", "Finalise the guide to record its screen and element.");
+  };
+
+  const replaceShot = async (stepId: string, image: Blob) => {
+    remember("screenshot change");
+    await track(async () => {
+      const step = await api.replaceScreenshot(id, stepId, await toPng(image));
+      setProc((p) => (p ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? step : s)) } : p));
+      toast.success("Screenshot replaced", step.target && !step.target.bbox && step.action !== "note" ? "Add the highlight again: the image has another shape. Undo with Ctrl+Z." : "Undo with Ctrl+Z.");
+    });
+  };
+
   const insertNote = async (title: string, description: string) => {
     remember("insert note");
     await track(async () => {
@@ -728,6 +745,7 @@ export function ProcessEditor({ id }: { id: string }) {
               setDialog("note");
             }}
             onRecord={() => setDialog("record")}
+            onRecordAgain={isSource ? recordAgain : undefined}
             picking={picking ?? undefined}
             onTogglePick={(sid) =>
               setPicking((cur) => {
@@ -773,6 +791,8 @@ export function ProcessEditor({ id }: { id: string }) {
               onNext={() => selIndex < views.length - 1 && setSelId(views[selIndex + 1].step.id)}
               onDelete={() => void deleteStep(selView.step.id)}
               onTranslate={() => setDialog("translate")}
+              onRecordAgain={() => recordAgain(selView.step.id)}
+              onReplaceShot={(img) => void replaceShot(selView.step.id, img)}
             />
           ) : (
             <div className="inspector-empty">
@@ -834,6 +854,7 @@ function EditorSkeleton() {
 /** Imported from a written guide: how many steps are still drafts, and a jump to the next one to check. */
 function DraftBanner({ proc, selId, onSelect }: { proc: Process; selId: string | null; onSelect: (id: string) => void }) {
   const drafts = proc.steps.filter((st) => st.draft).length;
+  const again = proc.steps.filter((st) => st.draft?.again).length;
   const flagged = flaggedSteps(proc.steps);
   const at = proc.steps.findIndex((st) => st.id === selId);
   const next = flagged.find((st) => proc.steps.indexOf(st) > at) ?? flagged[0];
@@ -858,11 +879,13 @@ function DraftBanner({ proc, selId, onSelect }: { proc: Process; selId: string |
     <div className="draft-banner" data-testid="draft-banner">
       <Icon name="fileText" size={15} />
       <div>
-        <strong>Drafted from {proc.importedFrom?.fileName ?? "a written guide"}</strong>
-        <span className="small block">
-          {drafts === proc.steps.length ? "Not recorded in the application yet." : `${drafts} of ${proc.steps.length} steps not recorded yet.`}{" "}
-          {flagged.length ? `${flagged.length} step${flagged.length === 1 ? "" : "s"} to check.` : "Nothing left to check."}
-        </span>
+        <strong>{again === drafts ? `${again === 1 ? "1 step" : `${again} steps`} to record again` : `Drafted from ${proc.importedFrom?.fileName ?? "a written guide"}`}</strong>
+        {again < drafts && (
+          <span className="small block">
+            {drafts === proc.steps.length ? "Not recorded in the application yet." : `${drafts} of ${proc.steps.length} steps not recorded yet.`}{" "}
+            {flagged.length ? `${flagged.length} step${flagged.length === 1 ? "" : "s"} to check.` : "Nothing left to check."}
+          </span>
+        )}
         <span className="small block draft-banner-how" data-testid="draft-how">
           <strong>Finalise the guide</strong> to record it: Steplight opens the application and shows each step there. You do it, and Steplight records the screen and the element.
         </span>
@@ -890,6 +913,17 @@ function DraftBanner({ proc, selId, onSelect }: { proc: Process; selId: string |
       </div>
     </div>
   );
+}
+
+/** An image as PNG (the server keeps screenshots as PNG). */
+async function toPng(image: Blob): Promise<Blob> {
+  if (image.type === "image/png") return image;
+  const bmp = await createImageBitmap(image);
+  const canvas = document.createElement("canvas");
+  canvas.width = bmp.width;
+  canvas.height = bmp.height;
+  canvas.getContext("2d")!.drawImage(bmp, 0, 0);
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not read the image."))), "image/png"));
 }
 
 /** Undo label for a step edit, from the fields it changes. */

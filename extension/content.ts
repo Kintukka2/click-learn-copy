@@ -2,7 +2,8 @@
 // background says this tab is being recorded, streams CaptureEvents to it. Shows a small
 // "Recording" indicator in the page (marked data-steplight-ignore so it is never recorded).
 // Recording from a guide, it also shows the guide's draft steps one by one with Assist: each action
-// is sent with the step shown, and the server makes it that step or an extra step before it.
+// is sent with the step shown, and the server makes it that step or an extra step before it. The
+// pill pauses the recording: nothing is recorded while the author goes somewhere.
 /// <reference path="./lib/chrome.d.ts" />
 import { AssistSession } from "../src/assist/assist.js";
 import type { Resolved } from "../src/assist/fallback-resolve.js";
@@ -10,7 +11,7 @@ import { start, stop, isRecording } from "../src/capture/capture.js";
 import { resolveByName, resolveTarget } from "../src/capture/resolve.js";
 import { uiStrings } from "../src/core/instructions.js";
 import type { ResolvedProcess, ResolvedStep } from "../src/core/model.js";
-import type { BuildPlan } from "./lib/shared.js";
+import type { BuildLast, BuildPlan } from "./lib/shared.js";
 
 declare global {
   interface Window {
@@ -20,16 +21,33 @@ declare global {
 
 const PILL_ID = "steplight-recording-indicator";
 
+/** Recording is paused: no action is recorded until the author resumes. */
+let paused = false;
+
+const PILL_BUTTON = "all:unset;cursor:pointer;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.14);font-weight:600";
+
 function pillHtml(count: number, fromGuide: boolean) {
   const steps = count === 1 ? "1 step" : `${count} steps`;
+  const dot = paused ? "background:#98a2b3" : "background:#f04438;box-shadow:0 0 0 3px rgba(240,68,56,.25);animation:slpulse 1.4s infinite";
+  const label = paused
+    ? '<span style="font-weight:600">Paused</span><span style="opacity:.75">nothing is recorded</span>'
+    : fromGuide
+      ? '<span style="font-weight:600">Recording from the guide</span>'
+      : `<span style="font-weight:600">Recording</span><span style="opacity:.75" data-count>${steps}</span>`;
   return (
-    '<span style="width:9px;height:9px;border-radius:50%;background:#f04438;box-shadow:0 0 0 3px rgba(240,68,56,.25);animation:slpulse 1.4s infinite"></span>' +
-    (fromGuide ? '<span style="font-weight:600">Recording from the guide</span>' : `<span style="font-weight:600">Recording</span><span style="opacity:.75" data-count>${steps}</span>`) +
-    '<button type="button" data-stop style="all:unset;cursor:pointer;margin-left:6px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.14);font-weight:600">Stop</button>'
+    `<span style="width:9px;height:9px;border-radius:50%;${dot}"></span>` +
+    label +
+    `<button type="button" data-pause style="${PILL_BUTTON};margin-left:6px">${paused ? "Resume" : "Pause"}</button>` +
+    `<button type="button" data-stop style="${PILL_BUTTON}">Stop</button>`
   );
 }
 
+let pillCount = 0;
+let pillGuide = false;
+
 function showPill(count: number, fromGuide: boolean) {
+  pillCount = count;
+  pillGuide = fromGuide;
   const mount = () => {
     let el = document.getElementById(PILL_ID);
     if (!el) {
@@ -48,6 +66,7 @@ function showPill(count: number, fromGuide: boolean) {
       el.appendChild(inner);
       el.addEventListener("click", (e) => {
         if ((e.target as Element).closest("[data-stop]")) void chrome.runtime.sendMessage({ type: "steplight:stop" });
+        else if ((e.target as Element).closest("[data-pause]")) void chrome.runtime.sendMessage({ type: "steplight:pause", paused: !paused });
       });
       document.documentElement.appendChild(el);
     }
@@ -58,6 +77,7 @@ function showPill(count: number, fromGuide: boolean) {
 }
 
 function updatePill(count: number) {
+  pillCount = count;
   const c = document.querySelector(`#${PILL_ID} [data-count]`);
   if (c) c.textContent = count === 1 ? "1 step" : `${count} steps`;
 }
@@ -72,8 +92,8 @@ interface Build {
   session: AssistSession;
   plan: ResolvedProcess;
   index: number;
-  /** The draft step an extra step was recorded for (offers "That was it"). */
-  extraFor: string | null;
+  /** What the card says about the latest action recorded (kept by the background across page loads). */
+  last: BuildLast | null;
   completed: boolean;
 }
 
@@ -81,10 +101,30 @@ let build: Build | null = null;
 
 const BUILD_UI = {
   finding: "Looking for it on the page…",
-  notFound: "Can’t find it on this page. Do the step yourself: Steplight records it as an extra step. If that was this step, press “That was it”.",
+  notFound: "Can’t find it on this page. Do the step yourself, then press “That was it”. Going somewhere first? Pause the recording.",
   done: "All the guide’s steps are recorded.",
   skip: "Skip",
 };
+
+const PAUSED_NOTE = "**Paused**: nothing is recorded. Go to where this step is done, then press **Resume** below.";
+
+/** The line under the step: paused, or the extra step just recorded for it. */
+function cardNote(b: Build, st: ResolvedStep): string | null {
+  if (paused) return PAUSED_NOTE;
+  return b.last?.stepId === st.id ? `Recorded an extra step: ${b.last.title}` : null;
+}
+
+function buildButtons(st: ResolvedStep) {
+  return !paused && build?.last?.stepId === st.id ? [{ label: "That was it", primary: true, onClick: () => void assign(st.id) }] : [];
+}
+
+/** Show the current step's note (after the card re-renders for a new step, hence the microtask). */
+function refreshNote() {
+  queueMicrotask(() => {
+    const st = build?.session.current;
+    if (build && st) build.session.setNote(cardNote(build, st));
+  });
+}
 
 // Screenshots show the application only: the pill and the guide card are hidden while one is taken.
 let hiding = 0;
@@ -99,16 +139,23 @@ function setOverlayHidden(hidden: boolean) {
   build?.session.setHidden(hidden);
 }
 
+/** Ends the wait for the frame now: the page is being left (a link opened another page). */
+let flushFrames: (() => void) | null = null;
+
 const twoFrames = () =>
   new Promise<void>((resolve) => {
-    const timer = setTimeout(resolve, 120); // a tab that draws no frames (in the background)
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        clearTimeout(timer);
-        resolve();
-      }),
-    );
+    const done = () => {
+      clearTimeout(timer);
+      flushFrames = null;
+      resolve();
+    };
+    flushFrames = done;
+    const timer = setTimeout(done, 120); // a tab that draws no frames (in the background)
+    requestAnimationFrame(() => requestAnimationFrame(done));
   });
+
+// an action that leaves the page is sent before the page goes, without waiting for a frame
+for (const type of ["beforeunload", "pagehide"]) addEventListener(type, () => flushFrames?.());
 
 /** Send a message the background answers once it has taken a screenshot, with the overlay hidden until then. */
 function sendForScreenshot(msg: Record<string, unknown>): Promise<unknown> {
@@ -131,8 +178,16 @@ async function assign(stepId: string) {
   const r = (await chrome.runtime.sendMessage({ type: "steplight:assign", stepId }).catch((e: Error) => ({ error: e.message }))) as { error?: string } | undefined;
   if (!build) return;
   if (r?.error) return build.session.setNote(r.error);
-  build.extraFor = null;
+  build.last = null;
   build.session.completeStep(stepId);
+}
+
+
+function setPaused(p: boolean) {
+  paused = p;
+  if (document.getElementById(PILL_ID)) showPill(pillCount, pillGuide);
+  build?.session.setPaused(p);
+  refreshNote();
 }
 
 /** A note is done when the author moves on from it: it gets a screenshot of the page. */
@@ -150,15 +205,16 @@ function startBuild(b: BuildPlan) {
     if (type === "step") {
       const index = (data as { index: number }).index;
       const prev = cur.plan.steps[cur.index];
-      if (prev?.action === "note" && index === cur.index + 1) void recordNote(prev);
+      // a note is recorded when the author moves on from it (not while paused: it stays to record)
+      if (prev?.action === "note" && index === cur.index + 1 && !paused) void recordNote(prev);
       cur.index = index;
-      cur.extraFor = null;
+      refreshNote();
       void chrome.runtime.sendMessage({ type: "steplight:build-step", index }).catch(() => undefined);
     } else if (type === "complete") {
       cur.completed = true;
       const last = cur.plan.steps[cur.index];
       void (async () => {
-        if (last?.action === "note") await recordNote(last);
+        if (last?.action === "note" && !paused) await recordNote(last);
         await chrome.runtime.sendMessage({ type: "steplight:stop" }).catch(() => undefined);
       })();
     } else if (type === "exit") {
@@ -171,14 +227,16 @@ function startBuild(b: BuildPlan) {
       ui: { ...uiStrings(lang), ...BUILD_UI },
       persist: false,
       back: false,
-      buttons: (st) => (build?.extraFor === st.id ? [{ label: "That was it", primary: true, onClick: () => void assign(st.id) }] : []),
+      buttons: buildButtons,
       onEvent,
     },
     // a guide names elements loosely ("New" for "+ New"): after the exact search, a search by name
     (t, root) => (resolveTarget(t, root ?? document) ?? resolveByName(t, root ?? document)) as Resolved | null,
   );
-  build = { session, plan: b.plan, index: b.index, extraFor: null, completed: false };
+  build = { session, plan: b.plan, index: b.index, last: b.last ?? null, completed: false };
+  session.setPaused(paused);
   session.start(b.index);
+  refreshNote();
 }
 
 /** Where the server put an action recorded from the guide. */
@@ -186,33 +244,36 @@ function onPlaced(msg: { placed: string; draftId?: string; title?: string }) {
   const cur = build?.session.current;
   if (!build || !cur || msg.draftId !== cur.id) return;
   if (msg.placed === "replaced") {
-    build.extraFor = null;
+    build.last = null;
     build.session.completeStep(cur.id);
   } else if (msg.placed === "inserted") {
-    build.extraFor = cur.id;
-    build.session.setNote(`Recorded an extra step: ${msg.title ?? ""}`);
+    build.last = { stepId: cur.id, title: msg.title ?? "" };
+    refreshNote();
   }
 }
 
 // ---------------------------------------------------------------- recording
 
-function begin(count: number, plan?: BuildPlan) {
+function begin(count: number, plan?: BuildPlan, isPaused = false) {
+  paused = isPaused;
   if (!isRecording()) {
     start(
       (ev, el) => {
+        if (paused) return;
         const st = build?.session.current;
         const info = st ? { stepId: st.id, onTarget: build!.session.owns(el ?? null) } : undefined;
         void sendForScreenshot({ type: "steplight:event", event: ev, build: info });
       },
       {
         onFieldFocus: (target) => {
-          void sendForScreenshot({ type: "steplight:focus", target });
+          if (!paused) void sendForScreenshot({ type: "steplight:focus", target });
         },
       },
     );
   }
   showPill(count, !!plan);
   if (plan && !build) startBuild(plan);
+  else build?.session.setPaused(paused);
 }
 
 function end() {
@@ -225,9 +286,10 @@ function end() {
 
 if (!window.__steplightContent && window.top === window) {
   window.__steplightContent = true;
-  chrome.runtime.onMessage.addListener((msg: { type: string; stepCount?: number; recording?: boolean; build?: BuildPlan; placed?: string; draftId?: string; title?: string }) => {
-    if (msg.type === "steplight:start") begin(msg.stepCount ?? 0, msg.build);
+  chrome.runtime.onMessage.addListener((msg: { type: string; stepCount?: number; recording?: boolean; build?: BuildPlan; paused?: boolean; placed?: string; draftId?: string; title?: string }) => {
+    if (msg.type === "steplight:start") begin(msg.stepCount ?? 0, msg.build, !!msg.paused);
     else if (msg.type === "steplight:stop") end();
+    else if (msg.type === "steplight:paused") setPaused(!!msg.paused);
     else if (msg.type === "steplight:placed") onPlaced(msg as { placed: string; draftId?: string; title?: string });
     else if (msg.type === "steplight:count") {
       if (msg.recording === false) end();
@@ -253,8 +315,8 @@ if (!window.__steplightContent && window.top === window) {
   // after a navigation the new page asks whether this tab is still being recorded
   chrome.runtime
     .sendMessage({ type: "steplight:hello" })
-    .then((r: { recording?: boolean; stepCount?: number; build?: BuildPlan } | undefined) => {
-      if (r?.recording) begin(r.stepCount ?? 0, r.build);
+    .then((r: { recording?: boolean; stepCount?: number; build?: BuildPlan; paused?: boolean } | undefined) => {
+      if (r?.recording) begin(r.stepCount ?? 0, r.build, !!r.paused);
     })
     .catch(() => undefined);
 }

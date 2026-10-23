@@ -8,7 +8,7 @@
 // Pointer-downs on form controls are not steps (their change event is), nor are clicks on a <label>
 // that only forwards to its control. Anything inside [data-steplight-ignore] is ignored.
 import type { CaptureEvent, Target } from "../core/model.js";
-import { actionableElement, isFormControl, isIgnored, isTextField, norm } from "./dom.js";
+import { actionableElement, isFormControl, isIgnored, isLinkField, isTextField, norm } from "./dom.js";
 import { dateFieldForDay, forgetPickerField, noteFieldButton } from "./fields.js";
 import { describeElement } from "./selectors.js";
 
@@ -85,7 +85,7 @@ function onPointerDown(e: Event) {
   if (el instanceof HTMLLabelElement) {
     if (el.control) return; // only forwards focus/toggle to its control; the control's change is the step
   }
-  if (isFormControl(el)) return; // the change event becomes the step
+  if (isFormControl(el) && !isLinkField(el)) return; // the change event becomes the step
   if (el.getAttribute("contenteditable") !== null && el.getAttribute("contenteditable") !== "false") return;
   if (isDisabled(el)) return;
   if (el === document.body || el === document.documentElement) return;
@@ -196,7 +196,7 @@ function onChange(e: Event) {
 function onFocusIn(e: Event) {
   const el = eventElement(e);
   if (!el || isIgnored(el)) return;
-  if ((el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && isTextField(el)) {
+  if ((el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && isTextField(el) && !isLinkField(el)) {
     state!.lastValue.set(el, el.value);
     if (state!.opts.onFieldFocus) {
       try {

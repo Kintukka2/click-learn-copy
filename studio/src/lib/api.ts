@@ -136,6 +136,19 @@ async function importGuide(pid: string, file: File, opts: { startUrl?: string; c
   return (await res.json()) as ImportResult;
 }
 
+/** Replace a step's screenshot with a PNG image. */
+async function replaceScreenshot(id: string, stepId: string, png: Blob): Promise<Step> {
+  let res: Response;
+  try {
+    res = await fetch(`${ROOT}/api/processes/${id}/steps/${stepId}/screenshot`, { method: "PUT", headers: { "Content-Type": "image/png" }, body: png });
+  } catch {
+    throw new ApiError("Cannot reach the Steplight server. Is it running?", 0);
+  }
+  if (res.status === 413) throw new ApiError("The image is too large (20 MB at most).", 413);
+  if (!res.ok) throw await errorFrom(res);
+  return (await res.json()) as Step;
+}
+
 export const api = {
   health: () => get<{ ok: boolean }>("/health"),
   aiStatus: () => get<AiStatus>("/ai/status"),
@@ -165,6 +178,7 @@ export const api = {
   updateStep: (id: string, stepId: string, b: Partial<Step>) => patch<Step>(`/processes/${id}/steps/${stepId}`, b),
   deleteStep: (id: string, stepId: string) => del<Process>(`/processes/${id}/steps/${stepId}`),
   resetTitle: (id: string, stepId: string) => post<Step>(`/processes/${id}/steps/${stepId}/reset-title`),
+  replaceScreenshot,
 
   startRecording: (processId: string, replace: boolean) => post<RecordingSession>("/recordings", { processId, replace }),
   stopRecording: (token: string) => post<Process>(`/recordings/${token}/stop`),

@@ -24,6 +24,7 @@ const APP = "http://erp.test/?cmp=101a&mi=CustPool";
 // a tinted page: the white guide card would stand out in a screenshot
 const appPage = `<!doctype html><html><body style="font:14px sans-serif;padding:20px;background:#dbe7f6">
 <button id="modules">Modules</button>
+<a id="away" href="/?cmp=101a&mi=LedgerJournalTransDaily">101A-000042</a>
 <div id="pools" hidden>
   <h1>Customer pools</h1>
   <button id="new">+ New</button>
@@ -55,6 +56,9 @@ describe("extension: record from the guide", () => {
   let procId = "";
   let projectId = "";
   let otherId = "";
+  // a tab the extension opens loads before Playwright can intercept it: a real server for the application
+  let erp: http.Server;
+  let erpBase = "";
 
   beforeAll(async () => {
     execFileSync(process.execPath, [path.join(ROOT, "scripts/build-lib.mjs")], { cwd: ROOT, stdio: "ignore" });
@@ -86,11 +90,15 @@ describe("extension: record from the guide", () => {
     await ctx.route(/^http:\/\/(erp|other)\.test\//, (route) => route.fulfill({ body: appPage, contentType: "text/html" }));
     sw = ctx.serviceWorkers()[0] ?? (await ctx.waitForEvent("serviceworker"));
     await sw.evaluate((s) => chrome.storage.local.set({ serverUrl: s }), origin);
+    erp = http.createServer((_req, res) => res.writeHead(200, { "Content-Type": "text/html" }).end(appPage));
+    await new Promise<void>((r) => erp.listen(0, "127.0.0.1", r));
+    erpBase = `http://127.0.0.1:${(erp.address() as AddressInfo).port}`;
   }, 120_000);
 
   afterAll(async () => {
     await ctx?.close();
     server?.close();
+    erp?.close();
   });
 
   const card = (page: Page, sel: string) => page.evaluate((s) => document.querySelector("[data-steplight-assist]")?.shadowRoot?.querySelector(s)?.textContent?.trim() ?? null, sel);
@@ -187,10 +195,7 @@ describe("extension: record from the guide", () => {
   const recState = () => sw.evaluate(() => (self as unknown as { steplight: { getState(): { processId: string; tabId: number } | null } }).steplight.getState());
 
   it("finalises the guide from the Studio: the application opens in a new tab and each step records its screen and element", async () => {
-    // a tab the extension opens loads before Playwright can intercept it: a real server for the application
-    const erp = http.createServer((_req, res) => res.writeHead(200, { "Content-Type": "text/html" }).end(appPage));
-    await new Promise<void>((r) => erp.listen(0, "127.0.0.1", r));
-    const erpUrl = `http://127.0.0.1:${(erp.address() as AddressInfo).port}/?cmp=101a&mi=CustPool`;
+    const erpUrl = `${erpBase}/?cmp=101a&mi=CustPool`;
     const steps = [draft("f1", "click", "button", "Modules"), draft("f2", "click", "button", "Save")].map((st) => ({ ...st, url: erpUrl, screenshot: undefined, title: instructionForStep(st) }));
     const pid = app.store.createProcess(projectId, { title: "Close a customer pool", startUrl: erpUrl, steps })!.id;
     const studio = await ctx.newPage();
@@ -218,7 +223,113 @@ describe("extension: record from the guide", () => {
     await sw.evaluate(() => (self as unknown as { steplight: { stopRecording(): Promise<unknown> } }).steplight.stopRecording());
     await page.close();
     await studio.close();
-    erp.close();
+  }, 60_000);
+
+  /** Starts recording process `pid` from its guide in the page's tab. */
+  async function buildIn(page: Page, pid: string) {
+    const tabId = await sw.evaluate(async (u) => Math.max(...((await chrome.tabs.query({})) as { id: number; url?: string }[]).filter((t) => t.url === u).map((t) => t.id)), page.url());
+    await sw.evaluate(({ s, p, t }) => (self as unknown as { steplight: { startRecording(o: unknown): Promise<unknown> } }).steplight.startRecording({ serverUrl: s, processId: p, tabId: t, build: true }), { s: origin, p: pid, t: tabId });
+  }
+  const stopRec = () => sw.evaluate(() => (self as unknown as { steplight: { stopRecording(): Promise<unknown> } }).steplight.stopRecording());
+  const pill = (page: Page) => page.textContent("#steplight-recording-indicator");
+  const togglePause = (page: Page) => page.click("#steplight-recording-indicator [data-pause]");
+  const drafted = (pid: string, ...steps: Step[]) => app.store.createProcess(projectId, { title: `Process ${pid}`, startUrl: APP, steps: steps.map((st) => ({ ...st, title: st.title || instructionForStep(st) })) })!.id;
+
+  it("pauses: nothing is recorded while the author goes somewhere, until Resume", async () => {
+    const pid = drafted("pause", draft("p1", "click", "button", "Modules"), draft("p2", "click", "button", "Save"));
+    const page = await ctx.newPage();
+    await page.goto(APP);
+    await page.bringToFront();
+    await buildIn(page, pid);
+    await expect.poll(() => card(page, ".title"), { timeout: 5000 }).toBe("Click Modules.");
+    await togglePause(page);
+    await expect.poll(() => pill(page), { timeout: 5000 }).toContain("Paused");
+    expect(await card(page, ".note")).toContain("Paused: nothing is recorded");
+    // even the step's own element: the card stays on it
+    await page.click("#modules");
+    await page.click("#save");
+    await page.waitForTimeout(800);
+    expect(app.store.getProcess(pid)!.steps.map((s) => [s.id, !!s.draft])).toEqual([
+      ["p1", true],
+      ["p2", true],
+    ]);
+    expect(await card(page, ".count")).toBe("Step 1 of 2");
+    await togglePause(page);
+    await expect.poll(() => card(page, ".note"), { timeout: 5000 }).toBeNull();
+    expect(await pill(page)).toContain("Recording from the guide");
+    await page.click("#modules");
+    await expect.poll(() => card(page, ".count"), { timeout: 5000 }).toBe("Step 2 of 2");
+    expect(app.store.getProcess(pid)!.steps[0]).toMatchObject({ id: "p1", title: "Click **Modules**." });
+    expect(app.store.getProcess(pid)!.steps[0].draft).toBeUndefined();
+    await stopRec();
+    await page.close();
+  }, 60_000);
+
+  it("keeps “That was it” when the author's action opened another page", async () => {
+    const pid = drafted("away", draft("j1", "click", "link", "Journal batch number"), draft("j2", "click", "button", "Save"));
+    const page = await ctx.newPage();
+    await page.goto(APP);
+    await page.bringToFront();
+    await buildIn(page, pid);
+    await expect.poll(() => card(page, ".count"), { timeout: 5000 }).toBe("Step 1 of 2");
+    // the guide's element isn't on the page: the author clicks the link they mean, which opens another
+    // page, slow to load (the server places the step before that page asks where the guide is)
+    const slow = /mi=LedgerJournalTransDaily/;
+    await ctx.route(slow, async (route) => {
+      await new Promise((r) => setTimeout(r, 1500));
+      await route.fulfill({ body: appPage, contentType: "text/html" });
+    });
+    await page.click("#away");
+    await expect.poll(() => page.url(), { timeout: 5000 }).toContain("mi=LedgerJournalTransDaily");
+    // the new page shows the extra step, with "That was it"
+    await expect.poll(() => card(page, ".note"), { timeout: 8000 }).toBe("Recorded an extra step: Click the 101A-000042 link.");
+    await ctx.unroute(slow);
+    expect(await cardButton(page, "That was it")).toBe(true);
+    await expect.poll(() => card(page, ".count"), { timeout: 5000 }).toBe("Step 2 of 2");
+    const s = app.store.getProcess(pid)!.steps;
+    expect(s.map((x) => x.id)).toEqual(["j1", "j2"]);
+    expect(s[0]).toMatchObject({ target: { name: "101A-000042" } });
+    expect(s[0].draft).toBeUndefined();
+    await stopRec();
+    await page.close();
+  }, 60_000);
+
+  it("finalising again goes on from where it stopped, paused until the author resumes", async () => {
+    const erpUrl = `${erpBase}/?cmp=101a&mi=CustPool`;
+    const done: Step = { id: "r1", action: "click", target: draftTarget("button", "Modules"), url: erpUrl, title: "Click **Modules**." };
+    const pid = app.store.createProcess(projectId, { title: "Go on", startUrl: erpUrl, steps: [done, { ...draft("r2", "click", "button", "Save"), url: erpUrl, title: "Click **Save**." }] })!.id;
+    // the last session stopped on another page of the application
+    const last = `${erpBase}/journal?cmp=101a&mi=LedgerJournalTable3`;
+    const before = await ctx.newPage();
+    await before.goto(last);
+    await buildIn(before, pid);
+    await expect.poll(() => card(before, ".title"), { timeout: 5000 }).toBe("Click Save.");
+    await stopRec();
+    await before.close();
+
+    const studio = await ctx.newPage();
+    await studio.goto(`${origin}/studio/processes/${pid}`);
+    const opened = ctx.waitForEvent("page");
+    await studio.click("[data-testid=finalise]");
+    const page = await opened;
+    await expect.poll(() => page.url(), { timeout: 10_000 }).toBe(last);
+    await expect.poll(() => pill(page), { timeout: 10_000 }).toContain("Paused");
+    await expect.poll(() => card(page, ".note"), { timeout: 5000 }).toContain("Paused");
+    await page.bringToFront();
+    await page.click("#modules"); // getting to the step: not recorded
+    await page.waitForTimeout(500);
+    expect(app.store.getProcess(pid)!.steps).toHaveLength(2);
+    await togglePause(page);
+    await expect.poll(() => card(page, ".note"), { timeout: 5000 }).toBeNull();
+    await page.click("#save");
+    await expect.poll(() => card(page, ".title"), { timeout: 5000 }).toBe("All the guide’s steps are recorded.");
+    expect(app.store.getProcess(pid)!.steps.map((x) => [x.id, !!x.draft])).toEqual([
+      ["r1", false],
+      ["r2", false],
+    ]);
+    await expect.poll(() => recState(), { timeout: 5000 }).toBeNull();
+    await page.close();
+    await studio.close();
   }, 60_000);
 
   it("answers only Studio pages of the server it is connected to", async () => {

@@ -66,7 +66,7 @@ SteplightCapture.resolve(target: Target): { element: Element; index: number; sel
 - `select` fires on change. Its value is the selected option's **label** and `optionValue` is its value.
 - `check` fires on change, with value `"true"` or `"false"`.
 - `press` fires for Enter/Escape in a field. Tab is not recorded, because it would add a step after every field.
-- Clicking into a text field, select or checkbox is not recorded as a step; the field's own type/select/check event is.
+- Clicking into a text field, select or checkbox is not recorded as a step; the field's own type/select/check event is. The exception is a read-only text box shown as a link (a hand cursor, `role="link"` or a `hyperlink` class): D365 draws grid links such as a journal batch number that way, and the click is the step.
 - A field that has been typed into but not yet blurred is flushed before the next click, so the steps stay in order.
 - Element identity uses: `data-testid`/`data-test`/`data-qa`, `data-clid`, a stable `id` (not auto-generated looking), ARIA role + accessible name, label, placeholder, text and a CSS path.
 - Selector value formats:
@@ -113,6 +113,7 @@ Portal search and the AI chat widget.
 | POST | `/processes/:id/steps` | insert a note `{afterStepId?, title, description?}` |
 | PATCH/DELETE | `/processes/:id/steps/:stepId` | edit or delete a step (editing the title sets `titleEdited`) |
 | POST | `/processes/:id/steps/:stepId/reset-title` | regenerate the auto title |
+| PUT | `/processes/:id/steps/:stepId/screenshot` | replace the screenshot with a PNG body (Studio "Replace screenshot", or a pasted image); the highlight is scaled when the image has the same shape, otherwise removed |
 | POST | `/recordings` | `{processId, replace?, build?}` → session `{token,...}`; `build`: record a drafted process from the guide → also `plan` (its draft steps as a ResolvedProcess) |
 | GET | `/recordings/active` | active sessions |
 | POST | `/recordings/:token/events` | a `CapturePayload` → `{step, stepCount}` |
@@ -154,7 +155,11 @@ The author records a drafted process in their own browser, signed in to the appl
 - The build session (`POST /recordings {build: true}`) opens the process's start page first if the tab shows another site. The content script runs Assist (`AssistSession` with `persist: false`, no Back, a "That was it" button) over the plan: each draft step is highlighted, found by its selectors and then by a looser name search (`resolveByName`: "New" finds "+ New").
 - Every captured action is sent with `build: {stepId, onTarget}`: the draft step shown and whether the action was on its highlighted element. `applyBuildCapture` (src/server/recording.ts) makes it that step (on target, or `draftMatches`: the guide's name and a fitting action) keeping the draft's id, explanation and learner choice, or inserts it as an extra step before the draft. The usual noise rules apply (typing again keeps the last value; a calendar click before the date is one step). The page is told where it went, so the card moves on or offers "That was it".
 - A note gets a screenshot when the author moves on from it. The pill and the card are hidden, and a frame drawn without them, before each screenshot; screenshots are booked within `captureVisibleTab`'s two-a-second limit.
+- The background keeps the step shown and the latest extra step recorded for it in the session state, so a page loaded by the action (a grid link opening a form) shows the same card, with "That was it". An action that leaves the page is sent without waiting for the frame without the overlay.
+- **Pause** (the pill, or the popup) records nothing until **Resume**: the content script sends no events, the background drops any, and the card stays on its step (`AssistSession.setPaused`: no moving on by itself) with a note saying so. Next on a note while paused leaves it to record.
+- **Going on later:** when the session stops, the tab's address is kept per process (`resumeUrls` in `chrome.storage.local`). Finalising a process whose steps before the first draft are recorded opens that address (if it is in the application of the start URL) and starts paused, for the author to get to the step first.
 - The session ends with the last step (or Exit / Stop). Skipped steps stay drafts.
+- **Record again** (Studio: step menu or inspector) makes a recorded step a draft again (`draft: {source, again: true}`, keeping its target and screenshot until recorded): finalising shows it with its recorded element, and the new recording keeps its id, explanation and edited instruction. **Keep the current recording** removes the draft (`PATCH … {draft: null}`).
 
 ## Replay contract (`src/replay/replay.ts`)
 - `replayProcess(proc, {mode, lang, mediaDir, saveMedia, baseUrl})` launches Chromium (1280×800 unless a step's viewport says otherwise).

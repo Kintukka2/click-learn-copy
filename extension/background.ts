@@ -4,12 +4,13 @@
 // the page has not reacted yet), and posts CapturePayloads to /api/recordings/:token/events in order.
 // Also badges the toolbar icon with the number of guides recorded on the page in each tab.
 // Recording from a guide (build), it keeps the draft steps and the one shown, tells the page where
-// the server put each action, and records notes and "That was it" for the page. "Finalise the
-// guide" in the Studio starts it too: the Studio page asks through the content script.
+// the server put each action, and records notes and "That was it" for the page.
+// "Finalise the guide" in the Studio starts it too: the Studio page asks through the content script.
+// A paused recording records nothing while the author goes somewhere in the application.
 /// <reference path="./lib/chrome.d.ts" />
 import type { CaptureEvent, CapturePayload, ResolvedProcess, Target } from "../src/core/model.js";
 import { SAME_PAGE, type LookupRow } from "./lib/guide.js";
-import { api, authHeaders, getServerUrl, tabLoaded, type RecState } from "./lib/shared.js";
+import { api, authHeaders, getServerUrl, resumes, resumeUrl, saveResumeUrl, tabLoaded, type RecState } from "./lib/shared.js";
 
 let state: RecState | null = null;
 const ready: Promise<void> = chrome.storage.session
@@ -37,7 +38,7 @@ async function persist() {
 }
 
 function broadcast() {
-  const msg = { type: "steplight:count", stepCount: state?.stepCount ?? 0, recording: !!state, error: lastError };
+  const msg = { type: "steplight:count", stepCount: state?.stepCount ?? 0, recording: !!state, paused: !!state?.paused, error: lastError };
   chrome.runtime.sendMessage(msg).catch(() => undefined); // popup / side panel, if open
   if (state) chrome.tabs.sendMessage(state.tabId, msg).catch(() => undefined);
 }
@@ -70,7 +71,7 @@ async function screenshot(windowId: number): Promise<string | undefined> {
   return undefined;
 }
 
-async function startRecording(opts: { serverUrl: string; processId: string; processTitle?: string; projectId?: string; tabId: number; replace?: boolean; build?: boolean }): Promise<RecState> {
+async function startRecording(opts: { serverUrl: string; processId: string; processTitle?: string; projectId?: string; tabId: number; replace?: boolean; build?: boolean; paused?: boolean }): Promise<RecState> {
   await ready;
   if (state) await stopRecording();
   const session = await api<{ token: string; plan?: ResolvedProcess }>(opts.serverUrl, "/recordings", { method: "POST", body: JSON.stringify({ processId: opts.processId, replace: !!opts.replace && !opts.build, build: !!opts.build }) });
@@ -86,6 +87,8 @@ async function startRecording(opts: { serverUrl: string; processId: string; proc
     serverUrl: opts.serverUrl,
     stepCount: proc.steps.length,
     startedAt: Date.now(),
+    ...(opts.paused ? { paused: true } : {}),
+    lastUrl: tab.url,
   };
   if (session.plan) {
     state.build = { plan: session.plan, index: 0 };
@@ -98,7 +101,7 @@ async function startRecording(opts: { serverUrl: string; processId: string; proc
   focusShot = null;
   await persist();
   try {
-    await chrome.tabs.sendMessage(opts.tabId, { type: "steplight:start", stepCount: state.stepCount, build: state.build });
+    await chrome.tabs.sendMessage(opts.tabId, { type: "steplight:start", stepCount: state.stepCount, build: state.build, paused: !!state.paused });
   } catch {
     // the tab was open before the extension was installed: inject the content script now (it starts itself)
     await chrome.scripting.executeScript({ target: { tabId: opts.tabId }, files: ["content.js"] });
@@ -114,6 +117,11 @@ async function stopRecording(): Promise<unknown> {
   await chain.catch(() => undefined); // flush pending posts
   state = null;
   await persist();
+  if (s.build) {
+    // finalising again goes on from here
+    const url = ((await chrome.tabs.get(s.tabId).catch(() => null)) as { url?: string } | null)?.url ?? s.lastUrl;
+    if (url && /^https?:/.test(url)) await saveResumeUrl(s.processId, url).catch(() => undefined);
+  }
   await showBadge(s.tabId);
   chrome.tabs.sendMessage(s.tabId, { type: "steplight:stop" }).catch(() => undefined);
   broadcast();
@@ -131,7 +139,11 @@ async function studioServer(sender: { tab?: unknown; url?: string }): Promise<st
   return sender.tab && (url === `${server}/studio` || url.startsWith(`${server}/studio/`)) ? server : null;
 }
 
-/** "Finalise the guide" in the Studio: opens the process's start page in a new tab and records it from the guide there. */
+/**
+ * "Finalise the guide" in the Studio: opens the process's start page in a new tab and records it
+ * from the guide there. Going on with a process partly recorded, it opens the page where recording
+ * stopped and starts paused, for the author to get to the next step first.
+ */
 async function finalise(server: string, processId: string, from: { id: number; windowId: number; index: number }): Promise<{ ok?: boolean; error?: string }> {
   const proc = await api<{ title: string; projectId: string; startUrl?: string; steps: { draft?: unknown }[] }>(server, `/processes/${encodeURIComponent(processId)}`);
   if (!proc.steps.some((st) => st.draft)) return { error: "Every step of this guide is recorded already." };
@@ -142,10 +154,12 @@ async function finalise(server: string, processId: string, from: { id: number; w
     /* no address */
   }
   if (!url || !/^https?:$/.test(url.protocol)) return { error: "Add the application's address (Start URL) to the process first." };
-  const tab = await chrome.tabs.create({ url: url.href, windowId: from.windowId, index: from.index + 1, openerTabId: from.id, active: true });
+  const paused = resumes(proc.steps);
+  const open = (paused && (await resumeUrl(processId, url.href))) || url.href;
+  const tab = await chrome.tabs.create({ url: open, windowId: from.windowId, index: from.index + 1, openerTabId: from.id, active: true });
   await tabLoaded(tab.id);
   await chrome.storage.local.set({ lastProject: proc.projectId, lastProcess: processId });
-  await startRecording({ serverUrl: server, processId, processTitle: proc.title, projectId: proc.projectId, tabId: tab.id, build: true });
+  await startRecording({ serverUrl: server, processId, processTitle: proc.title, projectId: proc.projectId, tabId: tab.id, build: true, paused });
   return { ok: true };
 }
 
@@ -186,7 +200,7 @@ async function normalizeShot(dataUrl: string | undefined, ev: CaptureEvent): Pro
 /** Sends the event to the server in order; resolves once its screenshot is taken (the page then shows its overlay again). */
 function onCaptureEvent(ev: CaptureEvent, tab: { id: number; windowId: number }, build?: CapturePayload["build"]): Promise<unknown> {
   const s = state;
-  if (!s || tab.id !== s.tabId) return Promise.resolve();
+  if (!s || tab.id !== s.tabId || s.paused) return Promise.resolve();
   let shot: Promise<string | undefined>;
   if (ev.action === "type" && focusShot && focusShot.key === targetKey(ev.target) && Date.now() - focusShot.at < 300_000) {
     shot = Promise.resolve(focusShot.dataUrl);
@@ -209,6 +223,7 @@ function onCaptureEvent(ev: CaptureEvent, tab: { id: number; windowId: number },
       if (state && state.token === s.token) {
         state.stepCount = j.stepCount ?? state.stepCount;
         lastError = "";
+        if (state.build && j.draftId) placedFor(state.build, j.placed!, j.draftId, j.step?.title ?? "");
         await persist();
       }
       if (j.placed) chrome.tabs.sendMessage(s.tabId, { type: "steplight:placed", placed: j.placed, draftId: j.draftId, title: j.step?.title }).catch(() => undefined);
@@ -220,8 +235,20 @@ function onCaptureEvent(ev: CaptureEvent, tab: { id: number; windowId: number },
   return shot;
 }
 
+/**
+ * The card's state follows the server, also across page loads (an action can open another page): a
+ * recorded draft step moves it on, and an extra step recorded for the step shown keeps "That was it".
+ */
+function placedFor(b: NonNullable<RecState["build"]>, placed: string, draftId: string, title: string) {
+  const i = b.plan.steps.findIndex((st) => st.id === draftId);
+  if (placed === "replaced") {
+    if (i >= b.index) b.index = i + 1;
+    b.last = undefined;
+  } else if (placed === "inserted") b.last = { stepId: draftId, title };
+}
+
 /** A build request made after the actions before it reached the server (it refers to what they recorded). */
-async function buildCall(path: string, body: Record<string, unknown>): Promise<{ error?: string; stepCount?: number }> {
+async function buildCall(path: string, body: Record<string, unknown>, then?: (b: NonNullable<RecState["build"]>) => void): Promise<{ error?: string; stepCount?: number }> {
   const s = state;
   if (!s?.build) return { error: "Not recording from a guide." };
   await chain.catch(() => undefined);
@@ -229,6 +256,7 @@ async function buildCall(path: string, body: Record<string, unknown>): Promise<{
     const r = await api<{ stepCount?: number }>(s.serverUrl, `/recordings/${s.token}/${path}`, { method: "POST", body: JSON.stringify(body) });
     if (state?.token === s.token) {
       state.stepCount = r.stepCount ?? state.stepCount;
+      if (state.build) then?.(state.build);
       await persist();
     }
     broadcast();
@@ -244,8 +272,17 @@ chrome.runtime.onMessage.addListener((msg: { type: string; [k: string]: unknown 
     switch (msg.type) {
       case "steplight:hello": {
         const here = !!state && sender.tab?.id === state.tabId;
-        return { recording: here, stepCount: state?.stepCount ?? 0, title: state?.processTitle, build: here ? state?.build : undefined };
+        return { recording: here, stepCount: state?.stepCount ?? 0, title: state?.processTitle, build: here ? state?.build : undefined, paused: here && !!state?.paused };
       }
+      case "steplight:pause":
+        if (state && (!sender.tab || sender.tab.id === state.tabId)) {
+          state.paused = !!msg.paused;
+          focusShot = null;
+          await persist();
+          chrome.tabs.sendMessage(state.tabId, { type: "steplight:paused", paused: state.paused }).catch(() => undefined);
+          broadcast();
+        }
+        return { state };
       case "steplight:event":
         if (sender.tab) await onCaptureEvent(msg.event as CaptureEvent, sender.tab, msg.build as CapturePayload["build"]);
         return { ok: true };
@@ -256,15 +293,20 @@ chrome.runtime.onMessage.addListener((msg: { type: string; [k: string]: unknown 
         }
         return { ok: true };
       case "steplight:assign":
-        return buildCall("assign", { stepId: msg.stepId });
+        return buildCall("assign", { stepId: msg.stepId }, (b) => {
+          const i = b.plan.steps.findIndex((st) => st.id === msg.stepId);
+          if (i >= b.index) b.index = i + 1;
+          b.last = undefined;
+        });
       case "steplight:note": {
         if (!state?.build || !sender.tab || sender.tab.id !== state.tabId) return { error: "Not recording from a guide." };
+        if (state.paused) return { error: "The recording is paused." };
         const shot = { viewport: msg.viewport as { width: number; height: number } } as CaptureEvent;
         const dataUrl = await normalizeShot(await screenshot(sender.tab.windowId), shot);
         return buildCall("note", { stepId: msg.stepId, screenshotDataUrl: dataUrl, viewport: shot.viewport, url: msg.url, pageTitle: msg.pageTitle });
       }
       case "steplight:focus":
-        if (state && sender.tab && sender.tab.id === state.tabId) {
+        if (state && !state.paused && sender.tab && sender.tab.id === state.tabId) {
           const key = targetKey(msg.target as Target);
           const dataUrl = await screenshot(sender.tab.windowId);
           if (dataUrl) focusShot = { key, dataUrl, at: Date.now() };
@@ -357,6 +399,10 @@ function refreshGuides(tabId: number, url = "") {
 // tabs.onUpdated also reports in-page navigations (pushState), e.g. between D365 pages
 chrome.tabs.onUpdated.addListener((tabId: number, info: { url?: string; status?: string }, tab: { url?: string }) => {
   if (info.url || info.status === "complete") refreshGuides(tabId, tab.url ?? info.url);
+  if (info.url && state?.tabId === tabId) {
+    state.lastUrl = info.url;
+    void chrome.storage.session.set({ rec: state });
+  }
 });
 chrome.tabs.onActivated.addListener(({ tabId }: { tabId: number }) => {
   void chrome.tabs.get(tabId).then((t: { url?: string }) => refreshGuides(tabId, t.url)).catch(() => undefined);

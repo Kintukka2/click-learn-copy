@@ -15,6 +15,14 @@ import { pipelineRoutes } from "./pipeline.js";
 import { privacyPage } from "./privacy.js";
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+
+/** The size of a PNG image, from its header; undefined for anything else. */
+function pngSize(buf: unknown): { width: number; height: number } | undefined {
+  if (!Buffer.isBuffer(buf) || buf.length < 24 || buf.readUInt32BE(0) !== 0x89504e47 || buf.toString("ascii", 12, 16) !== "IHDR") return undefined;
+  const width = buf.readUInt32BE(16);
+  const height = buf.readUInt32BE(20);
+  return width && height ? { width, height } : undefined;
+}
 export const LIB_DIR = path.join(ROOT, "dist", "lib");
 
 export interface AppConfig {
@@ -170,10 +178,34 @@ export function createApp(config: AppConfig) {
     const patch = req.body ?? {};
     if (typeof patch.title === "string" && patch.title !== step.title) patch.titleEdited = true;
     Object.assign(step, patch, { id: step.id });
+    if (patch.draft === null) delete step.draft; // "Keep the current recording" of a step to record again
     // keep auto titles in sync with value / target edits
     if (!step.titleEdited && (patch.value !== undefined || patch.target || patch.action || patch.sensitive !== undefined || patch.learnerChooses !== undefined || patch.choiceHint !== undefined)) {
       step.title = instructionFor({ action: step.action, target: step.target, value: step.value, sensitive: step.sensitive, learnerChooses: step.learnerChooses, hint: step.choiceHint }, proc.lang);
     }
+    store.saveProcess(proc);
+    res.json(step);
+  });
+  /**
+   * Replace a step's screenshot with an image (a PNG body), e.g. one the author took. The highlight
+   * is scaled with it when the image has the same shape; otherwise the author places it again.
+   */
+  api.put("/processes/:id/steps/:stepId/screenshot", express.raw({ type: "image/png", limit: "20mb" }), (req, res) => {
+    const proc = store.getProcess(req.params.id);
+    const step = proc?.steps.find((s) => s.id === req.params.stepId);
+    if (!proc || !step) return res.status(404).json({ error: "not found" });
+    const size = pngSize(req.body);
+    if (!size) return res.status(400).json({ error: "Send the screenshot as a PNG image." });
+    const before = step.viewport;
+    const box = step.target?.bbox;
+    if (step.target && box) {
+      const k = before?.width ? size.width / before.width : 0;
+      if (before?.height && k && Math.abs(size.height / (before.height * k) - 1) < 0.03) {
+        step.target.bbox = { x: Math.round(box.x * k), y: Math.round(box.y * k), width: Math.round(box.width * k), height: Math.round(box.height * k) };
+      } else delete step.target.bbox;
+    }
+    step.screenshot = store.saveMedia(proc.projectId, req.body as Buffer);
+    step.viewport = size;
     store.saveProcess(proc);
     res.json(step);
   });
