@@ -1,4 +1,4 @@
-// Recording a process drafted from a guide ("Record from the guide"): every action recorded in the
+// Recording a process drafted from a guide ("Finalise the guide"): every action recorded in the
 // application becomes the draft step shown, or an extra step before it (src/server/recording.ts).
 import fs from "node:fs";
 import type { AddressInfo, Server } from "node:net";

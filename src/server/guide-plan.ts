@@ -56,7 +56,7 @@ How to write the plan:
 - value: the text to type, the option to select, "true"/"false" for check, the key for press; "" otherwise. When the value depends on the user (a name, a date, "your company") or is only an example, set learnerChooses and say what to enter in choiceHint (e.g. "a name for the pool"); value is then the guide's example, or "".
 - description: a short explanation from the guide that belongs to the step (a business rule, what happens next), or "". A warning, tip or explanation that should stand on its own becomes a "note" step whose text is in description.
 - source: the guide's own words for the step, copied exactly (the same line for every step split from it).
-- image: the number of the screenshot that shows the screen where the step happens (one image can serve several steps), or null.
+- image: the number of the screenshot that shows the screen where the step happens (one image can serve several steps), or null. Never a logo, an icon or another picture that isn't a screen of the application.
 - flag: when you can't tell which element or value the guide means, or the guide is vague ("fill in the details as required"), tell the author in one short sentence what to check; "" otherwise.
 - added: true only for a step the guide leaves out but the process clearly needs (for example saving the record); also flag it. Add nothing else.
 - Leave out the table of contents, revision history, sign-off tables and anything that isn't part of the process. Use the guide's introduction for the process description.
@@ -103,11 +103,11 @@ const PLAN_SCHEMA = {
 };
 
 /** The guide as numbered lines for Claude: headings, text, list items, table cells and images in order. */
-export function renderGuide(doc: WordDocument, fileName: string, attached: Set<number>): string {
+export function renderGuide(doc: WordDocument, fileName: string, attached: Set<number>, decorative: Set<number> = new Set()): string {
   const line = (b: DocBlock, i: number) => {
     const where = b.cell ? `table row ${b.cell.row}, cell ${b.cell.col}: ` : "";
     let what: string;
-    if (b.kind === "image") what = `Image ${b.image! + 1}${attached.has(b.image!) ? "" : " (not attached)"}`;
+    if (b.kind === "image") what = `Image ${b.image! + 1}${decorative.has(b.image!) ? " (a logo or icon, not a screenshot)" : attached.has(b.image!) ? "" : " (not attached)"}`;
     else if (b.kind === "heading") what = `${b.level ? `Heading ${b.level}` : "Title"}: ${b.text}`;
     else if (b.kind === "item") what = `${b.numbered ? "Numbered" : "Bulleted"} item${b.level ? `, level ${b.level + 1}` : ""}: ${b.text}`;
     else what = `Text: ${b.text}`;
@@ -117,13 +117,13 @@ export function renderGuide(doc: WordDocument, fileName: string, attached: Set<n
   return [...head.filter(Boolean), "", ...doc.blocks.map(line)].join("\n");
 }
 
-export async function planWithClaude(doc: WordDocument, fileName: string, vision: VisionImage[]): Promise<GuidePlan> {
+export async function planWithClaude(doc: WordDocument, fileName: string, vision: VisionImage[], decorative: Set<number> = new Set()): Promise<GuidePlan> {
   const content: Anthropic.Beta.BetaContentBlockParam[] = [];
   for (const v of vision) {
     content.push({ type: "text", text: `Image ${v.image + 1}:` });
     content.push({ type: "image", source: { type: "base64", media_type: v.mediaType, data: v.data } });
   }
-  content.push({ type: "text", text: renderGuide(doc, fileName, new Set(vision.map((v) => v.image))) });
+  content.push({ type: "text", text: renderGuide(doc, fileName, new Set(vision.map((v) => v.image)), decorative) });
   const message = await claude()
     .beta.messages.stream({
       model: MODEL,
@@ -264,9 +264,12 @@ function stepsForLine(text: string): PlanStep[] {
 
 const looksLikeStep = (text: string) => parts(text).some((p) => parseInstruction(p));
 
-export function planOffline(doc: WordDocument, fileName: string): GuidePlan {
+/** `skip`: pictures that are not screenshots (logos, icons), left out. */
+export function planOffline(doc: WordDocument, fileName: string, skip: Set<number> = new Set()): GuidePlan {
   const hasItems = doc.blocks.some((b) => b.kind === "item");
   const steps: PlanStep[] = [];
+  const sectionOf = new Map<PlanStep, number>();
+  let section = 0;
   const intro: string[] = [];
   let title = doc.title ?? "";
   let pendingImage: number | null = null;
@@ -275,9 +278,12 @@ export function planOffline(doc: WordDocument, fileName: string): GuidePlan {
     if (b.kind === "heading") {
       if (!title && (b.level ?? 9) <= 1) title = b.text;
       fromLast = [];
+      pendingImage = null;
+      section++;
       continue;
     }
     if (b.kind === "image") {
+      if (skip.has(b.image!)) continue;
       const open = fromLast.filter((st) => st.image === null);
       if (open.length) for (const st of open) st.image = b.image!;
       else pendingImage ??= b.image!;
@@ -297,11 +303,17 @@ export function planOffline(doc: WordDocument, fileName: string): GuidePlan {
     if (pendingImage !== null) for (const st of made) st.image = pendingImage;
     pendingImage = null;
     steps.push(...made);
+    for (const st of made) sectionOf.set(st, section);
     fromLast = made;
   }
-  // a guide's screenshot usually serves the steps after it too, until the next one
+  // a guide's screenshot usually serves the steps after it too, until the next one or the next heading
   let shown: number | null = null;
+  let at = -1;
   for (const st of steps) {
+    if (sectionOf.get(st) !== at) {
+      at = sectionOf.get(st)!;
+      shown = null;
+    }
     if (st.image === null) st.image = shown;
     else shown = st.image;
   }

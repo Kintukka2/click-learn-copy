@@ -17,7 +17,7 @@ export function solidPng(width: number, height: number, grey = 200): GuideImage 
   return { type: "png", data: PNG.sync.write(png), width, height };
 }
 
-export async function customerPoolGuide(shots: { list: GuideImage; form: GuideImage } = { list: solidPng(120, 60, 220), form: solidPng(64, 32) }): Promise<Buffer> {
+export async function customerPoolGuide(shots: { list: GuideImage; form: GuideImage } = { list: solidPng(400, 240, 220), form: solidPng(320, 200) }): Promise<Buffer> {
   const b = (t: string) => new TextRun({ text: t, bold: true });
   const t = (s: string) => new TextRun(s);
   const item = (...children: TextRun[]) => new Paragraph({ numbering: { reference: "steps", level: 0 }, children });
@@ -39,6 +39,40 @@ export async function customerPoolGuide(shots: { list: GuideImage; form: GuideIm
           item(t("Enter a description in the "), b("Description"), t(" field.")),
           item(t("Select the "), b("Active"), t(" check box, then click "), b("Save"), t(".")),
           item(t("Make sure the details are correct before you continue.")),
+        ],
+      },
+    ],
+  });
+  return Packer.toBuffer(doc);
+}
+
+/**
+ * A company template: a logo on the cover and again at the top of each part, a small icon in a
+ * sentence, and one real screenshot in part 1.
+ */
+export async function brandedGuide(): Promise<Buffer> {
+  const logo = solidPng(300, 90, 60);
+  const icon = solidPng(24, 24, 120);
+  const screen = solidPng(800, 450, 230);
+  const b = (t: string) => new TextRun({ text: t, bold: true });
+  const t = (s: string) => new TextRun(s);
+  const pic = (im: GuideImage) => new ImageRun({ type: "png", data: im.data, transformation: { width: im.width, height: im.height } });
+  const item = (...children: (TextRun | ImageRun)[]) => new Paragraph({ numbering: { reference: "steps", level: 0 }, children });
+  const doc = new Document({
+    numbering: { config: [{ reference: "steps", levels: [{ level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.START }] }] },
+    sections: [
+      {
+        children: [
+          new Paragraph({ children: [pic(logo)] }),
+          new Paragraph({ heading: HeadingLevel.TITLE, children: [t("Daily General Journal")] }),
+          new Paragraph({ heading: HeadingLevel.HEADING_1, children: [t("Part 1: Create the journal")] }),
+          new Paragraph({ children: [pic(screen)] }),
+          item(t("Click "), b("New"), t(".")),
+          item(t("Click "), pic(icon), t(" "), b("Attach"), t(".")),
+          new Paragraph({ heading: HeadingLevel.HEADING_1, children: [t("Part 2: Post it")] }),
+          new Paragraph({ children: [pic(logo)] }),
+          item(t("Click "), b("Post"), t(".")),
+          item(t("Click "), b("Close"), t(".")),
         ],
       },
     ],

@@ -111,7 +111,7 @@ export function StepInspector({
           viewport={s.viewport}
           editable={!!view.bbox && s.action !== "note" && (isSource || bboxIsLocalized || !loc?.screenshot)}
           onChange={(r) => onBBox(r, bboxIsLocalized)}
-          emptyLabel={s.draft ? "The guide has no screenshot for this step" : undefined}
+          emptyLabel={s.draft ? "Screenshot to come: it is taken when you finalise the guide" : undefined}
         />
         {view.bbox && s.action !== "note" && (
           <div className="stage-hint muted small">
@@ -421,7 +421,7 @@ function GuideSource({ step: s, onPatch }: { step: Step; onPatch: (p: Partial<St
         </div>
       ) : (
         <div className="muted small">
-          <Icon name="check" size={12} /> Nothing to check. Recording the process in the application replaces the guide's screenshots with real ones.
+          <Icon name="check" size={12} /> Nothing to check. Finalising the guide records each step in the application, with its screen and element.
         </div>
       )}
     </section>

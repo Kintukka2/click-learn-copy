@@ -10,8 +10,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { draftElementOf, draftTarget, ELEMENT_KINDS } from "../src/core/draft.js";
 import { createApp, type AppContext } from "../src/server/app.js";
 import { readDocx } from "../src/server/docx.js";
+import { decorativePictures, prepareImages } from "../src/server/guide-import.js";
 import { parseInstruction, planOffline } from "../src/server/guide-plan.js";
-import { customerPoolGuide, solidPng, type GuideImage } from "./guide-fixture.js";
+import { brandedGuide, customerPoolGuide, solidPng, type GuideImage } from "./guide-fixture.js";
 
 const STUDIO = path.resolve(__dirname, "../dist/studio/index.html");
 
@@ -103,6 +104,20 @@ describe("offline rules", () => {
   });
 });
 
+describe("the guide's pictures", () => {
+  it("leaves out logos and icons, and keeps a screenshot to its part of the guide", async () => {
+    const doc = await readDocx(await brandedGuide());
+    // the logo is one picture, however often it is shown
+    expect(doc.images).toHaveLength(3);
+    const [logo, screen, icon] = [0, 1, 2];
+    expect(doc.blocks.filter((b) => b.kind === "image").map((b) => b.image)).toEqual([logo, screen, icon, logo]);
+    const { prepared } = await prepareImages(doc.images, new Set());
+    expect([...decorativePictures(doc, prepared)].sort()).toEqual([logo, icon]);
+    const plan = planOffline(doc, "Daily General Journal.docx", decorativePictures(doc, prepared));
+    expect(plan.steps.map((st) => `${st.element.name}:${st.image}`)).toEqual([`New:${screen}`, `Attach:${screen}`, "Post:null", "Close:null"]);
+  });
+});
+
 describe("draft elements", () => {
   it("builds selectors from the name and reads the kind back", () => {
     expect(draftTarget("button", "**New**")).toEqual({ selectors: [{ kind: "role", value: "button|New" }, { kind: "text", value: "New" }], tag: "button", role: "button", name: "New", label: undefined, inputType: undefined });
@@ -140,7 +155,7 @@ describe("import route", () => {
     process.env.STEPLIGHT_AI = "off";
     const prj = ctx.store.createProject({ name: "D365" });
     const startUrl = "https://erp.example.com/?cmp=usmf&mi=DefaultDashboard";
-    const res = await post(prj.id, await customerPoolGuide({ list: await jpegShot(browser), form: solidPng(64, 32) }), `fileName=Customer%20pools.docx&startUrl=${encodeURIComponent(startUrl)}`);
+    const res = await post(prj.id, await customerPoolGuide({ list: await jpegShot(browser), form: solidPng(320, 200) }), `fileName=Customer%20pools.docx&startUrl=${encodeURIComponent(startUrl)}`);
     expect(res.status).toBe(201);
     const { process: proc, provider } = await res.json();
     expect(provider).toBe("offline");
@@ -151,7 +166,7 @@ describe("import route", () => {
     expect(first).toMatchObject({ action: "click", title: "Click the **Accounts receivable** link.", url: startUrl, viewport: { width: 300, height: 150 }, draft: { source: "Go to **Accounts receivable > Setup > Customer pools**." } });
     expect(first.target).toMatchObject({ role: "link", name: "Accounts receivable" });
     expect(first.target.bbox).toBeUndefined();
-    expect(clickNew).toMatchObject({ title: "Click **New**.", description: "A new pool row opens.", viewport: { width: 64, height: 32 } });
+    expect(clickNew).toMatchObject({ title: "Click **New**.", description: "A new pool row opens.", viewport: { width: 320, height: 200 } });
     expect(poolId).toMatchObject({ action: "type", value: "WHOLESALE", title: "In the **Pool ID** field, enter **WHOLESALE**." });
     expect(description).toMatchObject({ action: "type", learnerChooses: true, choiceHint: "a description" });
     // the JPEG was converted: every screenshot is a PNG file in the project's media folder
@@ -161,6 +176,16 @@ describe("import route", () => {
     const note = proc.steps[proc.steps.length - 1];
     expect(note).toMatchObject({ action: "note", title: "Make sure the details are correct before you continue.", titleEdited: true });
     expect(note.draft.flag).toBeTruthy();
+  });
+
+  it("uses no logos as screenshots, and no pictures at all when told so", async () => {
+    process.env.STEPLIGHT_AI = "off";
+    const prj = ctx.store.createProject({ name: "Branded" });
+    const withPictures = (await (await post(prj.id, await brandedGuide(), "fileName=Journal.docx")).json()).process;
+    expect(withPictures.steps.map((st: { viewport?: { width: number } }) => st.viewport?.width ?? null)).toEqual([800, 800, null, null]);
+    const without = (await (await post(prj.id, await brandedGuide(), "fileName=Journal.docx&pictures=0")).json()).process;
+    expect(without.steps.map((st: { screenshot?: string }) => st.screenshot ?? null)).toEqual([null, null, null, null]);
+    expect(without.steps.map((st: { title: string }) => st.title)).toEqual(withPictures.steps.map((st: { title: string }) => st.title));
   });
 
   it("refuses what it can't import", async () => {
@@ -215,7 +240,7 @@ describe("import route", () => {
       process.env.ANTHROPIC_API_KEY = "test-key";
       process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${(fake.address() as AddressInfo).port}`;
       const prj = ctx.store.createProject({ name: "With Claude" });
-      const guide = await customerPoolGuide({ list: await jpegShot(browser), form: solidPng(64, 32) });
+      const guide = await customerPoolGuide({ list: await jpegShot(browser), form: solidPng(320, 200) });
       const res = await post(prj.id, guide);
       expect(res.status).toBe(201);
       const { process: proc, provider, warning } = await res.json();
@@ -234,7 +259,7 @@ describe("import route", () => {
 
       expect(proc).toMatchObject({ title: "Create a customer pool", chapter: "Accounts receivable", appName: "Dynamics 365 Finance", importedFrom: { provider: "claude" } });
       const [clickNew, poolId, save, vague] = proc.steps;
-      expect(clickNew).toMatchObject({ title: "Click **New**.", viewport: { width: 64, height: 32 } }); // image 2 → the second picture
+      expect(clickNew).toMatchObject({ title: "Click **New**.", viewport: { width: 320, height: 200 } }); // image 2 → the second picture
       expect(poolId).toMatchObject({ learnerChooses: true, choiceHint: "an ID for the pool", title: "In the **Pool ID** field, enter **an ID for the pool**." });
       expect(save).toMatchObject({ title: "Click **Save**.", draft: { source: "Save", added: true, flag: "The guide doesn't say to save." } });
       expect(save.screenshot).toBeUndefined();
@@ -279,12 +304,17 @@ describe.skipIf(!fs.existsSync(STUDIO))("importing in the Studio", () => {
     await page.click("[data-testid=import-guide]");
     await page.setInputFiles("[data-testid=guide-file]", file);
     await page.fill("#imp-url", "https://erp.example.com/?cmp=usmf");
+    expect(await page.isChecked("[data-testid=pictures-toggle] input")).toBe(true);
     await page.click("[data-testid=run-import]");
     await page.waitForSelector("[data-testid=draft-banner]");
     const proc = ctx.store.listProcesses(prj.id)[0];
     expect(page.url()).toContain(`/processes/${proc.id}`);
     expect(await page.textContent("[data-testid=draft-banner]")).toContain("Customer pools.docx");
     expect(await page.locator("[data-testid=step-check]").count()).toBe(1);
+    // no extension in this browser: Finalise the guide says what it needs
+    await page.click("[data-testid=finalise]");
+    await page.waitForSelector("[data-testid=finalise-help]");
+    expect(await page.textContent("[data-testid=finalise-help]")).toContain(`connected to this server: ${origin}`);
 
     // jump to the flagged step, see what the guide says, and mark it as checked
     await page.click("[data-testid=next-to-check]");

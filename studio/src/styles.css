@@ -4103,6 +4103,9 @@ div.scenario {
 .draft-banner strong { overflow-wrap: anywhere; }
 .draft-banner { flex-wrap: wrap; }
 .draft-banner-how { margin-top: 4px; opacity: 0.9; }
+.draft-banner-help { margin-top: 6px; padding: 6px 8px; border-radius: 6px; background: var(--surface); color: var(--text-2); }
+.draft-banner-help code { overflow-wrap: anywhere; }
+.step-thumb.is-pending { border-style: dashed; background: transparent; }
 .draft-banner > .draft-banner-actions { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 0 100%; padding-left: 25px; }
 .step-flag.amber { gap: 3px; background: var(--warning-soft); color: var(--warning-text); }
 .callout-warning { align-items: center; background: var(--warning-soft); border-color: color-mix(in srgb, var(--warning) 25%, transparent); color: var(--warning-text); margin-top: 10px; }

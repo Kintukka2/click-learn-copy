@@ -1,7 +1,7 @@
 import { useEffect, useState, type DragEvent } from "react";
 import type { Process, Project } from "../../../src/core/model";
 import { Icon } from "../components/Icon";
-import { Button, Dialog, Field, Spinner, toast, useElapsed } from "../components/ui";
+import { Button, Dialog, Field, Spinner, toast, Toggle, useElapsed } from "../components/ui";
 import { api, type AiStatus, type ImportResult } from "../lib/api";
 import { cx, formatBytes } from "../lib/util";
 
@@ -37,6 +37,7 @@ export function ImportGuideDialog({ open, onClose, project, processes, chapters,
   const [startUrl, setStartUrl] = useState("");
   const [chapter, setChapter] = useState("");
   const [appName, setAppName] = useState("");
+  const [pictures, setPictures] = useState(true);
   const [state, setState] = useState<"idle" | "running" | "error">("idle");
   const [error, setError] = useState("");
   const [ai, setAi] = useState<AiStatus | null>(null);
@@ -50,6 +51,7 @@ export function ImportGuideDialog({ open, onClose, project, processes, chapters,
     setStartUrl(rememberedStartUrl(project.id, processes));
     setChapter("");
     setAppName("");
+    setPictures(true);
     api.aiStatus().then(setAi, () => setAi(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -75,7 +77,7 @@ export function ImportGuideDialog({ open, onClose, project, processes, chapters,
       /* storage unavailable */
     }
     try {
-      const r = await api.importGuide(project.id, file, { startUrl, chapter, appName });
+      const r = await api.importGuide(project.id, file, { startUrl, chapter, appName, pictures });
       onClose();
       onImported(r);
     } catch (e) {
@@ -190,6 +192,18 @@ export function ImportGuideDialog({ open, onClose, project, processes, chapters,
             <Field label="Application" htmlFor="imp-app" hint="Empty: the application the guide names.">
               <input id="imp-app" className="input" value={appName} onChange={(e) => setAppName(e.target.value)} placeholder="Dynamics 365" />
             </Field>
+          </div>
+          <div data-testid="pictures-toggle">
+            <Toggle
+              checked={pictures}
+              onChange={setPictures}
+              label={
+                <span>
+                  <strong>Use the guide's pictures as screenshots</strong>
+                  <span className="muted small block">Until you record the process, its steps show the guide's screenshots. Turn this off when the guide's pictures aren't screens of the application. Logos and icons are always left out.</span>
+                </span>
+              }
+            />
           </div>
           {ai &&
             (ai.provider === "claude" ? (

@@ -234,6 +234,22 @@ if (!window.__steplightContent && window.top === window) {
       else updatePill(msg.stepCount ?? 0);
     }
   });
+  // the Studio asks for the extension and for "Finalise the guide" with window messages; the
+  // background answers only Studio pages of the server it is connected to
+  window.addEventListener("message", (e: MessageEvent) => {
+    const m = e.data as { source?: string; id?: string; type?: string; processId?: string } | null;
+    if (e.source !== window || m?.source !== "steplight-studio" || (m.type !== "ping" && m.type !== "finalise")) return;
+    try {
+      chrome.runtime
+        .sendMessage({ type: m.type === "ping" ? "steplight:studio-ping" : "steplight:finalise", processId: m.processId })
+        .then((r: Record<string, unknown> | undefined) => {
+          if (r) window.postMessage({ ...r, source: "steplight-extension", id: m.id }, location.origin);
+        })
+        .catch(() => undefined);
+    } catch {
+      /* the extension was reloaded since this page was opened: the page has to be reloaded too */
+    }
+  });
   // after a navigation the new page asks whether this tab is still being recorded
   chrome.runtime
     .sendMessage({ type: "steplight:hello" })

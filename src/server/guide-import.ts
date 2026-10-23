@@ -2,6 +2,7 @@
 // when Claude isn't configured), keeps the guide's screenshots as placeholder screenshots and flags
 // what the author should check. The author reviews the draft in the Studio, then records it in the
 // application to replace the placeholders with real steps.
+import { createHash } from "node:crypto";
 import express, { type Router } from "express";
 import { chromium } from "playwright";
 import { canLearnerChoose } from "../core/choice.js";
@@ -11,7 +12,7 @@ import { instructionFor } from "../core/instructions.js";
 import type { Lang, Process, Project, Step, StepDraft } from "../core/model.js";
 import { claudeEnabled } from "./ai.js";
 import { wrap, type AppContext } from "./app.js";
-import { NotAWordDocument, readDocx, type DocImage } from "./docx.js";
+import { NotAWordDocument, readDocx, type DocImage, type WordDocument } from "./docx.js";
 import { planOffline, planWithClaude, type GuidePlan, type PlanStep, type VisionImage } from "./guide-plan.js";
 import { serial } from "./queue.js";
 import type { Store } from "./store.js";
@@ -30,6 +31,28 @@ export interface PreparedImage {
   png: Buffer;
   width: number;
   height: number;
+}
+
+/**
+ * Pictures that are not screenshots: logos and icons. A picture shown more than once (a logo on every
+ * part of the guide, the same file or the same bytes), one before the guide's first words (a cover),
+ * or one too small to show a screen (an icon in a sentence).
+ */
+export function decorativePictures(doc: WordDocument, prepared: (PreparedImage | undefined)[]): Set<number> {
+  const out = new Set<number>();
+  const shown = new Map<string, number[]>();
+  const firstText = doc.blocks.findIndex((b) => b.kind !== "image");
+  doc.blocks.forEach((b, i) => {
+    if (b.kind !== "image") return;
+    const key = createHash("sha1").update(doc.images[b.image!].data).digest("hex");
+    shown.set(key, [...(shown.get(key) ?? []), b.image!]);
+    if (firstText < 0 || i < firstText) out.add(b.image!);
+  });
+  for (const pics of shown.values()) if (pics.length > 1) for (const i of pics) out.add(i);
+  prepared.forEach((p, i) => {
+    if (p && (Math.max(p.width, p.height) < 160 || Math.min(p.width, p.height) < 40)) out.add(i);
+  });
+  return out;
 }
 
 function pngSize(buf: Buffer): { width: number; height: number } | undefined {
@@ -142,6 +165,8 @@ export interface ImportOptions {
   /** Override the chapter / application the guide suggests. */
   chapter?: string;
   appName?: string;
+  /** Use the guide's pictures as placeholder screenshots (default true). Logos and icons never are. */
+  pictures?: boolean;
 }
 
 export interface ImportResult {
@@ -155,16 +180,21 @@ export async function importGuide(store: Store, project: Project, docx: Buffer, 
   const doc = await readDocx(docx);
   if (!doc.blocks.some((b) => b.kind !== "image")) throw new ImportError("This document has no text to import.");
   const useClaude = claudeEnabled();
-  const pictures = [...new Set(doc.blocks.filter((b) => b.kind === "image").map((b) => b.image!))];
-  const forVision = new Set(useClaude ? pictures.slice(0, MAX_VISION) : []);
-  const { prepared, vision } = await prepareImages(doc.images, forVision, serial);
+  const usePictures = opts.pictures !== false;
+  const shownPictures = [...new Set(doc.blocks.filter((b) => b.kind === "image").map((b) => b.image!))];
+  const forVision = new Set(useClaude ? shownPictures.slice(0, MAX_VISION) : []);
+  // without screenshots and without Claude, the pictures are not needed at all
+  const { prepared, vision: seen } = useClaude || usePictures ? await prepareImages(doc.images, forVision, serial) : { prepared: [], vision: [] };
+  const decorative = decorativePictures(doc, prepared);
+  const vision = seen.filter((v) => !decorative.has(v.image));
+  const pictures = shownPictures.filter((i) => !decorative.has(i));
 
   let plan: GuidePlan | undefined;
   let provider: ImportResult["provider"] = "offline";
   let warning: string | undefined;
   if (useClaude) {
     try {
-      plan = await planWithClaude(doc, opts.fileName, vision);
+      plan = await planWithClaude(doc, opts.fileName, vision, decorative);
       provider = "claude";
       if (pictures.length > MAX_VISION) warning = `Claude looked at the first ${MAX_VISION} of the guide's ${pictures.length} screenshots.`;
     } catch (err) {
@@ -172,14 +202,14 @@ export async function importGuide(store: Store, project: Project, docx: Buffer, 
       warning = `Claude couldn't read the guide (${(err as Error).message}), so Steplight used its simple rules. Check every step.`;
     }
   }
-  plan ??= planOffline(doc, opts.fileName);
+  plan ??= planOffline(doc, opts.fileName, decorative);
   if (!plan.steps.length) throw new ImportError("Steplight found no steps in this guide.");
 
   const lang = project.languages[0] ?? "en";
   const startUrl = opts.startUrl?.trim() ?? "";
   const media = new Map<number, string>();
   const shot = (i: number | null) => {
-    const p = i === null ? undefined : prepared[i];
+    const p = i === null || !usePictures || decorative.has(i) ? undefined : prepared[i];
     if (i === null || !p) return undefined;
     if (!media.has(i)) media.set(i, store.saveMedia(project.id, p.png, "guide"));
     return { screenshot: media.get(i)!, viewport: { width: p.width, height: p.height } };
@@ -198,7 +228,7 @@ export async function importGuide(store: Store, project: Project, docx: Buffer, 
 }
 
 export function importRoutes(api: Router, ctx: AppContext) {
-  /** Body: the .docx file. Query: fileName, startUrl?, chapter?, appName? → { process, provider, warning? } */
+  /** Body: the .docx file. Query: fileName, startUrl?, chapter?, appName?, pictures? ("0": no screenshots) → { process, provider, warning? } */
   api.post(
     "/projects/:pid/import-guide",
     express.raw({ type: () => true, limit: "60mb" }),
@@ -208,7 +238,7 @@ export function importRoutes(api: Router, ctx: AppContext) {
       if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ error: "Send the .docx file as the request body." });
       const q = (k: string) => (typeof req.query[k] === "string" ? (req.query[k] as string) : undefined);
       try {
-        const result = await importGuide(ctx.store, project, req.body, { fileName: q("fileName") || "guide.docx", startUrl: q("startUrl"), chapter: q("chapter"), appName: q("appName") });
+        const result = await importGuide(ctx.store, project, req.body, { fileName: q("fileName") || "guide.docx", startUrl: q("startUrl"), chapter: q("chapter"), appName: q("appName"), pictures: q("pictures") !== "0" });
         res.status(201).json(result);
       } catch (err) {
         if (err instanceof NotAWordDocument || err instanceof ImportError) return res.status(400).json({ error: err.message });

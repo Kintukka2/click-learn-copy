@@ -1,10 +1,10 @@
 // Steplight popup: guides recorded on the current page ("Guide me") and the server setting for
 // everyone; for authors (the server accepts their access key, or needs none) also the recorder:
 // project/process choice (or a new process), Start/Stop recording with a live step counter, and
-// "Record from the guide" for a process drafted from a written guide.
+// "Finalise the guide" for a process drafted from a written guide.
 /// <reference path="./lib/chrome.d.ts" />
 import { SAME_PAGE, startGuide, type LookupRow } from "./lib/guide.js";
-import { $, api, ApiError, esc, getAccessKey, getServerUrl, isConfigured, send, setAccessKey, setServerUrl, type RecState } from "./lib/shared.js";
+import { $, api, ApiError, esc, getAccessKey, getServerUrl, isConfigured, send, setAccessKey, setServerUrl, tabLoaded, type RecState } from "./lib/shared.js";
 
 interface ProjectRow { id: string; name: string; processCount: number; languages: string[] }
 interface ProcessRow { id: string; title: string; chapter?: string; startUrl?: string; steps: { draft?: unknown }[] }
@@ -79,19 +79,9 @@ async function openStartPage(tab: { id: number; url?: string }, startUrl?: strin
     return;
   }
   if (!/^https?:$/.test(want.protocol) || (tab.url && new URL(tab.url).host === want.host)) return;
+  const loaded = tabLoaded(tab.id);
   await chrome.tabs.update(tab.id, { url: want.href });
-  await new Promise<void>((resolve) => {
-    const done = () => {
-      chrome.tabs.onUpdated.removeListener(on);
-      clearTimeout(timer);
-      resolve();
-    };
-    const on = (id: number, info: { status?: string }) => {
-      if (id === tab.id && info.status === "complete") done();
-    };
-    const timer = setTimeout(done, 30_000);
-    chrome.tabs.onUpdated.addListener(on);
-  });
+  await loaded;
 }
 
 async function buildFromGuide() {

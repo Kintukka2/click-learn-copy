@@ -4,11 +4,12 @@
 // the page has not reacted yet), and posts CapturePayloads to /api/recordings/:token/events in order.
 // Also badges the toolbar icon with the number of guides recorded on the page in each tab.
 // Recording from a guide (build), it keeps the draft steps and the one shown, tells the page where
-// the server put each action, and records notes and "That was it" for the page.
+// the server put each action, and records notes and "That was it" for the page. "Finalise the
+// guide" in the Studio starts it too: the Studio page asks through the content script.
 /// <reference path="./lib/chrome.d.ts" />
 import type { CaptureEvent, CapturePayload, ResolvedProcess, Target } from "../src/core/model.js";
 import { SAME_PAGE, type LookupRow } from "./lib/guide.js";
-import { api, authHeaders, getServerUrl, type RecState } from "./lib/shared.js";
+import { api, authHeaders, getServerUrl, tabLoaded, type RecState } from "./lib/shared.js";
 
 let state: RecState | null = null;
 const ready: Promise<void> = chrome.storage.session
@@ -123,6 +124,31 @@ async function stopRecording(): Promise<unknown> {
   }
 }
 
+/** The server, when the message comes from a Studio page of the server this extension is connected to. */
+async function studioServer(sender: { tab?: unknown; url?: string }): Promise<string | null> {
+  const server = await getServerUrl();
+  const url = sender.url ?? "";
+  return sender.tab && (url === `${server}/studio` || url.startsWith(`${server}/studio/`)) ? server : null;
+}
+
+/** "Finalise the guide" in the Studio: opens the process's start page in a new tab and records it from the guide there. */
+async function finalise(server: string, processId: string, from: { id: number; windowId: number; index: number }): Promise<{ ok?: boolean; error?: string }> {
+  const proc = await api<{ title: string; projectId: string; startUrl?: string; steps: { draft?: unknown }[] }>(server, `/processes/${encodeURIComponent(processId)}`);
+  if (!proc.steps.some((st) => st.draft)) return { error: "Every step of this guide is recorded already." };
+  let url: URL | null = null;
+  try {
+    url = new URL(proc.startUrl ?? "");
+  } catch {
+    /* no address */
+  }
+  if (!url || !/^https?:$/.test(url.protocol)) return { error: "Add the application's address (Start URL) to the process first." };
+  const tab = await chrome.tabs.create({ url: url.href, windowId: from.windowId, index: from.index + 1, openerTabId: from.id, active: true });
+  await tabLoaded(tab.id);
+  await chrome.storage.local.set({ lastProject: proc.projectId, lastProcess: processId });
+  await startRecording({ serverUrl: server, processId, processTitle: proc.title, projectId: proc.projectId, tabId: tab.id, build: true });
+  return { ok: true };
+}
+
 function toBase64(buf: ArrayBuffer): string {
   const bytes = new Uint8Array(buf);
   let bin = "";
@@ -212,7 +238,7 @@ async function buildCall(path: string, body: Record<string, unknown>): Promise<{
   }
 }
 
-chrome.runtime.onMessage.addListener((msg: { type: string; [k: string]: unknown }, sender: { tab?: { id: number; windowId: number } }, sendResponse: (r: unknown) => void) => {
+chrome.runtime.onMessage.addListener((msg: { type: string; [k: string]: unknown }, sender: { tab?: { id: number; windowId: number; index: number }; url?: string }, sendResponse: (r: unknown) => void) => {
   (async () => {
     await ready;
     switch (msg.type) {
@@ -250,6 +276,13 @@ chrome.runtime.onMessage.addListener((msg: { type: string; [k: string]: unknown 
         return { process: await stopRecording() };
       case "steplight:state":
         return { state, error: lastError };
+      // from the Studio, through the content script; any other page gets no answer
+      case "steplight:studio-ping":
+        return (await studioServer(sender)) ? { extension: chrome.runtime.getManifest().version } : undefined;
+      case "steplight:finalise": {
+        const server = await studioServer(sender);
+        return server ? finalise(server, String(msg.processId), sender.tab!) : undefined;
+      }
     }
     return undefined;
   })()

@@ -129,7 +129,7 @@ export function StepList({
                 />
               )}
               <div className="step-num">{i + 1}</div>
-              <div className="step-thumb">
+              <div className={cx("step-thumb", !v.screenshot && s.draft && "is-pending")} title={!v.screenshot && s.draft ? "Screenshot to come: it is taken when you finalise the guide" : undefined}>
                 {v.screenshot ? (
                   <>
                     <img src={v.screenshot} alt="" loading="lazy" draggable={false} />

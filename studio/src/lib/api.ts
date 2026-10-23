@@ -121,9 +121,10 @@ export interface ImportResult {
 const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 /** Upload a Word guide (sent as the request body); the server drafts a process from it. */
-async function importGuide(pid: string, file: File, opts: { startUrl?: string; chapter?: string; appName?: string }): Promise<ImportResult> {
+async function importGuide(pid: string, file: File, opts: { startUrl?: string; chapter?: string; appName?: string; pictures?: boolean }): Promise<ImportResult> {
   const q = new URLSearchParams({ fileName: file.name });
-  for (const [k, v] of Object.entries(opts)) if (v?.trim()) q.set(k, v.trim());
+  for (const k of ["startUrl", "chapter", "appName"] as const) if (opts[k]?.trim()) q.set(k, opts[k]!.trim());
+  if (opts.pictures === false) q.set("pictures", "0");
   let res: Response;
   try {
     res = await fetch(`${ROOT}/api/projects/${pid}/import-guide?${q}`, { method: "POST", headers: { "Content-Type": file.type || DOCX }, body: file });
