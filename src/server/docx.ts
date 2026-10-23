@@ -260,17 +260,18 @@ export async function readDocx(buf: Buffer): Promise<WordDocument> {
 
   const blocks: DocBlock[] = [];
   const images: DocImage[] = [];
-  const imageByRel = new Map<string, number>();
+  // one picture per media file, however many times (and through however many relationships) it is shown
+  const imageByFile = new Map<string, number>();
   const addImage = (relId: string | undefined): number | undefined => {
-    if (!relId) return undefined;
-    if (imageByRel.has(relId)) return imageByRel.get(relId);
-    const target = rels.get(relId);
-    const file = target ? zip.file(target) : null;
-    if (!target || !file) return undefined;
+    const target = relId ? rels.get(relId) : undefined;
+    if (!target) return undefined;
+    if (imageByFile.has(target)) return imageByFile.get(target);
+    const file = zip.file(target);
+    if (!file) return undefined;
     const name = target.split("/").pop()!;
     const ext = name.split(".").pop()!.toLowerCase();
     images.push({ name, contentType: IMAGE_TYPES[ext] ?? "application/octet-stream", data: Buffer.alloc(0) });
-    imageByRel.set(relId, images.length - 1);
+    imageByFile.set(target, images.length - 1);
     return images.length - 1;
   };
 
@@ -385,8 +386,8 @@ export async function readDocx(buf: Buffer): Promise<WordDocument> {
   }
 
   await Promise.all(
-    [...imageByRel.entries()].map(async ([rel, i]) => {
-      images[i].data = await zip.file(rels.get(rel)!)!.async("nodebuffer");
+    [...imageByFile.entries()].map(async ([target, i]) => {
+      images[i].data = await zip.file(target)!.async("nodebuffer");
     }),
   );
 

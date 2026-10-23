@@ -120,7 +120,7 @@ Portal search and the AI chat widget.
 | POST | `/recordings/:token/assign` | build session: `{stepId}`, the extra step recorded just before draft `stepId` becomes that step ("That was it") |
 | POST | `/recordings/:token/note` | build session: `{stepId, screenshotDataUrl, url, pageTitle, viewport}`, a draft note gets a screenshot of the page |
 | POST | `/processes/:id/demo-record` | `{scenarioId}`: scripted headless recording of a demo scenario |
-| POST | `/projects/:pid/import-guide?fileName=&startUrl=&chapter=&appName=` | body: a Word `.docx` (up to 60 MB) → `201 {process, provider, warning?}`: a new draft process (see "Importing a written guide") |
+| POST | `/projects/:pid/import-guide?fileName=&startUrl=&chapter=&appName=&pictures=` | body: a Word `.docx` (up to 60 MB) → `201 {process, provider, warning?}`: a new draft process (see "Importing a written guide") |
 | POST | `/demo-project` | `{name?, languages?}`: creates a project with every demo scenario recorded |
 | POST | `/processes/:id/replay` | `{mode: "update"\|"test", lang?}` → `{report, process}` |
 | POST | `/processes/:id/translate` | `{lang, replayUi?}` → process (localized replay plus text translation) |
@@ -144,8 +144,8 @@ Static mounts:
 
 ## Importing a written guide (`src/server/guide-import.ts`)
 1. **Read** (`docx.ts`): `word/document.xml` with its styles, numbering and relationships, into blocks in reading order: headings, paragraphs, numbered/bulleted items and table cells as text with `**bold**` runs, and the pictures between them.
-2. **Pictures:** PNGs are kept as they are; JPEG, GIF, BMP, WebP and SVG are converted to PNG by Chromium (EMF, WMF and TIFF are skipped). Up to 20 are downscaled (1568 px long side) for Claude.
-3. **Plan** (`guide-plan.ts`): with Claude configured, one structured-output request (`output_config.format` JSON schema, streamed) gets the guide as numbered lines plus its screenshots and returns the steps: action, element kind and name, value, learner choice, the guide's words, the screenshot that shows the step, a flag and whether the step was added. Without Claude (or when the request fails, with a warning) rules read the common phrasings: Steplight's own instruction templates, "Enter X in the Y field", "Set X to Yes", menu paths "A > B > C" (one click per entry). Lines no rule reads become flagged notes.
+2. **Pictures:** PNGs are kept as they are; JPEG, GIF, BMP, WebP and SVG are converted to PNG by Chromium (EMF, WMF and TIFF are skipped). Up to 20 are downscaled (1568 px long side) for Claude. Logos and icons are never screenshots (`decorativePictures`): a picture shown more than once, one before the guide's first words, or one too small to show a screen. With `pictures=0` (the import dialog's switch) no picture becomes a screenshot.
+3. **Plan** (`guide-plan.ts`): with Claude configured, one structured-output request (`output_config.format` JSON schema, streamed) gets the guide as numbered lines plus its screenshots and returns the steps: action, element kind and name, value, learner choice, the guide's words, the screenshot that shows the step, a flag and whether the step was added. Without Claude (or when the request fails, with a warning) rules read the common phrasings: Steplight's own instruction templates, "Enter X in the Y field", "Set X to Yes", menu paths "A > B > C" (one click per entry). Lines no rule reads become flagged notes. A screenshot serves the steps after it until the next screenshot or heading.
 4. **Draft:** a new process with `draft` steps (see the data model), the guide's screenshots as placeholder screenshots, the start URL given at import (the test environment) and `importedFrom`. The Studio shows the draft banner, flags steps to check and lets the author fix the element, convert notes and draw highlights.
 
 ## Recording from a guide (extension "Record from the guide")
