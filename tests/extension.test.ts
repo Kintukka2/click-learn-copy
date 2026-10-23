@@ -35,9 +35,10 @@ const step = (id: string, url: string): Step => ({ id, action: "click", target: 
 const appPage = `<!doctype html><html><body><h1>ERP</h1><button>Save</button>
 <script>window.go = function (mi) { history.pushState({}, "", "/?cmp=101a&mi=" + mi); };</script></body></html>`;
 
+/** The page's tab: the newest one on its URL, should an earlier test have left one open. */
 async function tabId(page: Page): Promise<number> {
   const url = page.url();
-  return sw.evaluate(async (u) => ((await chrome.tabs.query({})) as { id: number; url?: string }[]).find((t) => t.url === u)!.id, url);
+  return sw.evaluate(async (u) => Math.max(...((await chrome.tabs.query({})) as { id: number; url?: string }[]).filter((t) => t.url === u).map((t) => t.id)), url);
 }
 
 const badge = (id: number) => sw.evaluate((t) => chrome.action.getBadgeText({ tabId: t }), id);
@@ -91,7 +92,8 @@ describe("extension: guides for the page", () => {
     await page.goto(DASH);
     const id = await tabId(page);
     await expect.poll(() => badge(id), { timeout: 5000 }).toBe("1");
-    expect(await sw.evaluate((t) => chrome.action.getTitle({ tabId: t }), id)).toBe("Steplight: 1 guide for this page");
+    // the title is set after the badge text
+    await expect.poll(() => sw.evaluate((t) => chrome.action.getTitle({ tabId: t }), id), { timeout: 5000 }).toBe("Steplight: 1 guide for this page");
     await page.evaluate(() => (window as unknown as { go(mi: string): void }).go("VendTableListPage"));
     await expect.poll(() => badge(id), { timeout: 5000 }).toBe("");
     await page.evaluate(() => (window as unknown as { go(mi: string): void }).go("PurchReqTableListPage"));
