@@ -1,0 +1,120 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #cp-title {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 440px;
+      text-align: center;
+      font: 800 150px/1 "Inter", sans-serif;
+      letter-spacing: -0.045em;
+      z-index: 5;
+    }
+    #cp-title .w {
+      display: inline-block;
+    }
+    #cp-light {
+      left: 1592px;
+      top: 582px;
+      width: 544px;
+      height: 80px;
+      border-width: 6px;
+    }
+    #cp-card {
+      position: absolute;
+      left: 420px;
+      top: 720px;
+      width: 1080px;
+      background: #fff;
+      border-radius: 28px;
+      box-shadow: var(--shadow-xl);
+      padding: 34px 44px 38px;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+      z-index: 4;
+    }
+    #cp-card .h {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+      font-size: 34px;
+      font-weight: 700;
+    }
+    #cp-card .h .sub {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--teal-text);
+    }
+    #cp-card .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 40px;
+      margin-top: 24px;
+    }
+    #cp-card .r {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+      font-size: 32px;
+    }
+    #cp-card .r .k {
+      width: 110px;
+      color: var(--ink-3);
+      font-weight: 600;
+    }
+    #cp-card .r .v {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 500;
+      color: var(--ink);
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="capture" data-width="1920" data-height="1080">
+    <div id="cp-plate" class="plate">
+      <img src="assets/img/erp-new.webp" alt="" />
+      <div id="cp-light" class="light"></div>
+    </div>
+    <div id="cp-cur" class="cursor" style="z-index: 6">
+      <svg viewBox="0 0 28 28"><path d="M5 2.8v19.6l5.1-4.9 3.3 7.6 3.6-1.6-3.3-7.4h7z" fill="#111827" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" /></svg>
+    </div>
+    <div id="cp-card">
+      <div class="h">Target element <span class="sub" id="cp-sub">Selectors, tried in order</span></div>
+      <div class="grid">
+        <div class="r"><span class="k">Tag</span><span class="v">input</span></div>
+        <div class="r"><span class="k">Role</span><span class="v">textbox</span></div>
+        <div class="r"><span class="k">Name</span><span class="v">Name</span></div>
+        <div class="r"><span class="k">Label</span><span class="v">Name</span></div>
+      </div>
+    </div>
+    <div id="cp-title"><span class="w">How</span> <span class="w">it</span> <span class="w">works</span></div>
+    <audio id="cp-click" class="clip" data-start="1.62" data-duration="0.06" data-volume="0.65" src="assets/sfx/click2.ogg"></audio>
+    <audio id="cp-pop" class="clip" data-start="3.46" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // chapter: How it works
+      tl.fromTo("#cp-title .w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, stagger: 0.08, ease: "power2.out" }, 0.0);
+      tl.to("#cp-title", { opacity: 0, filter: "blur(10px)", duration: 0.2, ease: "power2.in" }, 1.1);
+      // the customer card; the author clicks into Name
+      const cam = { x: -904, y: 0, scale: 1 };
+      gsap.set("#cp-plate", cam);
+      gsap.set(["#cp-light", "#cp-card", "#cp-plate", "#cp-sub"], { opacity: 0 });
+      tl.fromTo("#cp-plate", { opacity: 0, scale: 1.04 }, { opacity: 1, scale: 1, duration: 0.4, ease: "expo.out" }, 1.1);
+      const p = SL.toFrame(cam, 930, 311);
+      tl.fromTo("#cp-cur", { x: 1300, y: 1100 }, { x: p.x, y: p.y, duration: 0.5, ease: "expo.out" }, 1.1);
+      tl.to("#cp-cur", { scale: 0.84, duration: 0.06 }, 1.62);
+      tl.to("#cp-cur", { scale: 1, opacity: 0, duration: 0.25 }, 1.7);
+      // the extension describes the element
+      tl.fromTo("#cp-light", { opacity: 0, scale: 1.25, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.4, ease: "expo.out" }, 2.3);
+      tl.fromTo("#cp-card", { opacity: 0, y: 30, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 3.46);
+      tl.fromTo("#cp-card .r", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.3, ease: "expo.out", stagger: 0.12 }, 3.6);
+      tl.fromTo("#cp-sub", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 5.86);
+      tl.to(["#cp-card", "#cp-plate"], { opacity: 0, filter: "blur(8px)", duration: 0.22, ease: "power2.in" }, 7.38);
+      window.__timelines["capture"] = tl;
+    })();
+  </script>
+</template>

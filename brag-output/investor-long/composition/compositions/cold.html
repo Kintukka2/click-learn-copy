@@ -1,0 +1,100 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #co-app {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+    }
+    #co-page {
+      left: 0;
+      top: 0;
+      width: 1819px;
+      height: 2573px;
+      transform-origin: 0 0;
+    }
+    #co-grow {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+      transform-origin: 0 0;
+      overflow: hidden;
+      border-radius: 4px;
+    }
+    #co-docshot {
+      position: absolute;
+      inset: 0;
+      background-image: url("assets/img/word-p2.webp");
+      background-size: 2652px 3752px;
+      background-position: -466px -1748px;
+    }
+    #co-live {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+    }
+    #co-light {
+      left: 49px;
+      top: 244px;
+      width: 122px;
+      height: 52px;
+      z-index: 2;
+    }
+    #co-chip {
+      position: absolute;
+      left: 196px;
+      top: 244px;
+      z-index: 3;
+      font-size: 28px;
+      transform-origin: 0 50%;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="cold" data-width="1920" data-height="1080">
+    <img id="co-app" src="assets/img/erp-v1.webp" alt="" />
+    <div id="co-cur" class="cursor" style="z-index: 2">
+      <svg viewBox="0 0 28 28"><path d="M5 2.8v19.6l5.1-4.9 3.3 7.6 3.6-1.6-3.3-7.4h7z" fill="#111827" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" /></svg>
+    </div>
+    <div id="co-page" class="paper"><img src="assets/img/word-p2.webp" alt="" /></div>
+    <div id="co-grow">
+      <div id="co-docshot"></div>
+      <img id="co-live" src="assets/img/erp-v2.webp" alt="" />
+      <div id="co-light" class="light"></div>
+      <div id="co-chip" class="chip bad">Out of date</div>
+    </div>
+    <audio id="co-slide" class="clip" data-start="2.62" data-duration="0.6" data-volume="0.3" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="co-grow-s" class="clip" data-start="4.8" data-duration="0.6" data-volume="0.35" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="co-stamp" class="clip" data-start="7.36" data-duration="0.18" data-volume="0.55" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // "Every company runs on processes": the app at work
+      tl.fromTo("#co-cur", { x: 1300, y: 900 }, { x: 600, y: 470, duration: 1.4, ease: "power2.inOut" }, 0.3);
+      tl.to("#co-cur", { x: 128, y: 246, duration: 0.7, ease: "power3.inOut" }, 1.9);
+      // "and on the guides that explain them": the Word guide slides in over it
+      tl.fromTo("#co-page", { x: 141, y: 240, scale: 0.9, opacity: 0, filter: "blur(6px)" }, { y: -856, opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, 2.72);
+      tl.set("#co-cur", { opacity: 0 }, 3.2);
+      // "The day the software updates": the guide's screenshot becomes today's app
+      const r0 = { x: 141 + 320 * 0.9, y: -856 + 1200 * 0.9, scale: (1317 * 0.9) / 1920 };
+      tl.fromTo("#co-grow", { x: r0.x, y: r0.y, scale: r0.scale, opacity: 0 }, { opacity: 1, duration: 0.01 }, 4.93);
+      tl.to("#co-grow", { x: 0, y: 0, scale: 1, duration: 0.65, ease: "power2.inOut" }, 4.95);
+      tl.to("#co-page", { filter: "blur(14px)", opacity: 0, scale: 0.94, duration: 0.3, ease: "power2.in" }, 5.0);
+      tl.fromTo("#co-live", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power1.inOut" }, 5.15);
+      tl.fromTo("#co-light", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, 5.35);
+      tl.fromTo("#co-grow", { scale: 1 }, { scale: 1.32, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 5.9);
+      // "those guides go out of date"
+      tl.to("#co-light", { borderColor: "#e5484d", boxShadow: "0 0 0 12px rgba(229,72,77,0.25), 0 0 0 4000px rgba(16,24,40,0.30)", duration: 0.12, ease: "none" }, 6.64);
+      tl.fromTo("#co-chip", { opacity: 0, scale: 0.6, filter: "blur(6px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "back.out(1.6)" }, 7.36);
+      window.__timelines["cold"] = tl;
+    })();
+  </script>
+</template>

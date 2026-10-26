@@ -1,0 +1,74 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    .mk-g {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1100px;
+      text-align: center;
+      font-family: "Inter", sans-serif;
+      transform-origin: 50% 50%;
+    }
+    .mk-g .lbl {
+      font-size: 44px;
+      font-weight: 650;
+      color: var(--ink-2);
+      letter-spacing: -0.01em;
+    }
+    .mk-g .num {
+      margin-top: 6px;
+      font-size: 260px;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+    .mk-g .src {
+      margin-top: 22px;
+      font-size: 40px;
+      color: var(--ink-3);
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="market" data-width="1920" data-height="1080">
+    <div id="mk-g1" class="mk-g">
+      <div class="lbl">Digital adoption platforms · 2024</div>
+      <div class="num" id="mk-n1">$0.00B</div>
+      <div class="src">Gartner estimate, as cited by Whatfix</div>
+    </div>
+    <div id="mk-g2" class="mk-g">
+      <div class="lbl">SAP acquires WalkMe · 2024</div>
+      <div class="num" id="mk-n2">$0.0B</div>
+      <div class="src">Reported price, September 2024</div>
+    </div>
+    <audio id="mk-p1" class="clip" data-start="3.9" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="mk-p2" class="clip" data-start="7.9" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#mk-g1", { x: 410, y: 330 });
+      gsap.set("#mk-g2", { x: 850, y: 330, scale: 0.72 });
+      tl.fromTo("#mk-g1 .lbl", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power2.out" }, 0.1);
+      tl.fromTo("#mk-g1 .num", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25, ease: "power2.out" }, 0.4);
+      tl.fromTo("#mk-g1 .src", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 4.1);
+      // the first number steps aside for the second
+      tl.to("#mk-g1", { x: -30, scale: 0.72, duration: 0.6, ease: "power3.inOut" }, 5.5);
+      tl.fromTo("#mk-g2", { opacity: 0 }, { opacity: 1, duration: 0.01 }, 5.6);
+      gsap.set("#mk-g2 > div", { opacity: 0 });
+      tl.fromTo("#mk-g2 .num", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25, ease: "power2.out" }, 6.95);
+      tl.fromTo("#mk-g2 .lbl", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power2.out" }, 6.0);
+      tl.fromTo("#mk-g2 .src", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 7.85);
+      tl.to(["#mk-g1", "#mk-g2"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 9.3);
+      SL.drive(tl, [
+        SL.counter(document.getElementById("mk-n1"), 0, 1.04, 2.9, 1.0, (v) => "$" + v.toFixed(2) + "B"),
+        SL.counter(document.getElementById("mk-n2"), 0, 1.5, 7.0, 0.9, (v) => "$" + v.toFixed(1) + "B"),
+      ]);
+      window.__timelines["market"] = tl;
+    })();
+  </script>
+</template>

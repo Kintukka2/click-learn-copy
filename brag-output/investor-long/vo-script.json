@@ -1,0 +1,472 @@
+{
+  "voice": "af_heart",
+  "speed": 0.94,
+  "scenes": [
+    {
+      "id": "cold",
+      "lead": 0.6,
+      "tail": 0.6,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Every company runs on processes,",
+          "gap": 0.1
+        },
+        {
+          "id": "b",
+          "text": "and on the guides that explain them.",
+          "gap": 0.4
+        },
+        {
+          "id": "c",
+          "text": "The day the software updates,",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "those guides go out of date.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "problem",
+      "lead": 0.3,
+      "tail": 0.6,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Platforms like Dynamics three sixty-five ship two release waves every year.",
+          "gap": 0.35
+        },
+        {
+          "id": "b",
+          "text": "Each one sends training teams back to re-shoot,",
+          "gap": 0.08
+        },
+        {
+          "id": "c",
+          "text": "rewrite,",
+          "gap": 0.08
+        },
+        {
+          "id": "d",
+          "text": "and re-translate, by hand.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "market",
+      "lead": 0.3,
+      "tail": 0.6,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Gartner sized digital adoption at about a billion dollars in twenty twenty-four,",
+          "gap": 0.15
+        },
+        {
+          "id": "b",
+          "text": "and S A P paid around one and a half billion for Walk Me.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "incumbent",
+      "lead": 0.3,
+      "tail": 0.6,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "The record-once incumbent, Click Learn,",
+          "gap": 0.1
+        },
+        {
+          "id": "b",
+          "text": "made close to eight million euros in twenty twenty-four,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "from more than eight hundred customers,",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "with a Windows desktop client.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "whynow",
+      "lead": 0.3,
+      "tail": 0.7,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "There is an opening, too.",
+          "gap": 0.25
+        },
+        {
+          "id": "b",
+          "text": "S A P's own training tool, Enable Now, takes no new cloud renewals after April twenty twenty-seven,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "so its customers need somewhere to go.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "versus",
+      "lead": 0.3,
+      "tail": 0.7,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Steplight does the same job from the browser,",
+          "gap": 0.1
+        },
+        {
+          "id": "b",
+          "text": "with no desktop client and no sixteen-gigabyte workstation.",
+          "gap": 0.3
+        },
+        {
+          "id": "c",
+          "text": "Automated process testing is built in.",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "The incumbent keeps it for its top tier.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "capture",
+      "lead": 0.4,
+      "tail": 0.5,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "As an author clicks through a task,",
+          "gap": 0.1
+        },
+        {
+          "id": "b",
+          "text": "the browser extension describes each element several ways, most robust first:",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "selectors",
+      "lead": 0.2,
+      "tail": 0.7,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "a stable I D,",
+          "gap": 0.08
+        },
+        {
+          "id": "b",
+          "text": "its role and name,",
+          "gap": 0.08
+        },
+        {
+          "id": "c",
+          "text": "its label,",
+          "gap": 0.08
+        },
+        {
+          "id": "d",
+          "text": "and its place on the page.",
+          "gap": 0.3
+        },
+        {
+          "id": "e",
+          "text": "It keeps only the ones that match exactly one element.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "steps",
+      "lead": 0.3,
+      "tail": 0.7,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Clicks and keystrokes collapse into clean steps.",
+          "gap": 0.2
+        },
+        {
+          "id": "b",
+          "text": "Each one gets its instruction written automatically,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "and sensitive values are masked in every output.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "model",
+      "lead": 0.3,
+      "tail": 0.8,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Every step is stored as structured data, with its screenshot.",
+          "gap": 0.25
+        },
+        {
+          "id": "b",
+          "text": "Resolve it for a language,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "and the same process feeds every output:",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "documents, players, the portal, and live guidance.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "replay",
+      "lead": 0.3,
+      "tail": 0.6,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Replay drives the real application again in a headless browser, step by step.",
+          "gap": 0.3
+        },
+        {
+          "id": "b",
+          "text": "When an element has changed,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "Steplight finds it by the next selector,",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "marks the step as healed,",
+          "gap": 0.1
+        },
+        {
+          "id": "e",
+          "text": "and refreshes the screenshot.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "testing",
+      "lead": 0.3,
+      "tail": 0.8,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Run it in test mode,",
+          "gap": 0.1
+        },
+        {
+          "id": "b",
+          "text": "and it becomes regression testing for business processes.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "localize",
+      "lead": 0.3,
+      "tail": 0.7,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Localization uses the same engine.",
+          "gap": 0.25
+        },
+        {
+          "id": "b",
+          "text": "Replay runs the app in Danish or German,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "captures the real translated screens and labels,",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "and rebuilds every instruction from them, with no machine translation.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "ai",
+      "lead": 0.3,
+      "tail": 0.7,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Claude handles the language work.",
+          "gap": 0.25
+        },
+        {
+          "id": "b",
+          "text": "It answers learners' questions from your own documented processes,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "translates what authors write,",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "and turns an existing Word guide into a draft you finish in the app.",
+          "gap": 0.3
+        },
+        {
+          "id": "e",
+          "text": "Without AI, everything still works offline.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "deploy",
+      "lead": 0.3,
+      "tail": 0.7,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Steplight ships as a single container on a dedicated server.",
+          "gap": 0.25
+        },
+        {
+          "id": "b",
+          "text": "Authoring sits behind an access key,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "analytics are anonymous,",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "and the extension only talks to your own server.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "proof",
+      "lead": 0.3,
+      "tail": 0.8,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "All of this runs today.",
+          "gap": 0.25
+        },
+        {
+          "id": "b",
+          "text": "About a hundred and forty automated tests,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "and a thirty-nine check end-to-end run that records, replays, heals, translates, exports and publishes,",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "pass on every change.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "roadmap",
+      "lead": 0.3,
+      "tail": 0.8,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Next on the roadmap:",
+          "gap": 0.2
+        },
+        {
+          "id": "b",
+          "text": "one-click setup for whole organizations,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "hosting with backups,",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "an Edge add-on listing,",
+          "gap": 0.1
+        },
+        {
+          "id": "e",
+          "text": "PDF import,",
+          "gap": 0.1
+        },
+        {
+          "id": "f",
+          "text": "and redaction inside the recorder.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "close",
+      "lead": 0.6,
+      "tail": 3.4,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Steplight.",
+          "gap": 0.35
+        },
+        {
+          "id": "b",
+          "text": "Every process documented, trained and guided,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "and never out of date.",
+          "gap": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #md-json {
+      position: absolute;
+      left: 110px;
+      top: 150px;
+      width: 690px;
+      height: 780px;
+      box-sizing: border-box;
+      background: #101828;
+      border-radius: 28px;
+      box-shadow: var(--shadow-xl);
+      padding: 40px 40px;
+      font: 500 27px/1.62 "JetBrains Mono", monospace;
+      color: #d0d5dd;
+      white-space: pre;
+    }
+    #md-json .l {
+      display: block;
+    }
+    #md-json .k {
+      color: #8fb1ff;
+    }
+    #md-json .s {
+      color: #5eead4;
+    }
+    #md-shot {
+      position: absolute;
+      left: 500px;
+      top: 700px;
+      width: 330px;
+      height: 206px;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+      border: 4px solid #fff;
+    }
+    #md-shot img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #md-shot .hl {
+      position: absolute;
+      left: 176px;
+      top: 74px;
+      width: 62px;
+      height: 13px;
+      border: 3px solid var(--teal);
+      border-radius: 4px;
+      box-shadow: 0 0 0 999px rgba(16, 24, 40, 0.2);
+    }
+    #md-node {
+      position: absolute;
+      left: 860px;
+      top: 470px;
+      width: 330px;
+      box-sizing: border-box;
+      padding: 26px 26px 24px;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: var(--shadow-xl);
+      text-align: center;
+      font-family: "Inter", sans-serif;
+    }
+    #md-node .f {
+      font: 600 28px/1.2 "JetBrains Mono", monospace;
+      color: var(--ink);
+    }
+    #md-node .langs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    #md-node .lg {
+      padding: 6px 14px;
+      border-radius: 10px;
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--teal-soft);
+      color: var(--teal-text);
+    }
+    #md-node .lg.src {
+      background: var(--brand-soft);
+      color: var(--brand-text);
+    }
+    .md-out {
+      position: absolute;
+      left: 1330px;
+      width: 470px;
+      height: 190px;
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      font-family: "Inter", sans-serif;
+    }
+    .md-out .th {
+      width: 250px;
+      height: 158px;
+      border-radius: 12px;
+      flex: none;
+      background-color: #fff;
+      background-repeat: no-repeat;
+      box-shadow: var(--shadow-lg);
+      border: 2px solid var(--border);
+    }
+    .md-out .lb {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    #md-lines {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: visible;
+    }
+    #md-lines path {
+      fill: none;
+      stroke: var(--brand);
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="model" data-width="1920" data-height="1080">
+    <svg id="md-lines" viewBox="0 0 1920 1080">
+      <path id="md-l0" d="M800 540 L860 540" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+      <path id="md-l1" d="M1190 540 C1260 540 1260 215 1330 215" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+      <path id="md-l2" d="M1190 540 C1260 540 1260 435 1330 435" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+      <path id="md-l3" d="M1190 540 C1260 540 1260 655 1330 655" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+      <path id="md-l4" d="M1190 540 C1260 540 1260 875 1330 875" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+    </svg>
+    <div id="md-json"><span class="l">{</span><span class="l">  <span class="k">"action"</span>: <span class="s">"type"</span>,</span><span class="l">  <span class="k">"target"</span>: {</span><span class="l">    <span class="k">"role"</span>: <span class="s">"textbox"</span>,</span><span class="l">    <span class="k">"name"</span>: <span class="s">"Name"</span>,</span><span class="l">    <span class="k">"selectors"</span>: [<span class="s">"id"</span>, <span class="s">"role"</span>,</span><span class="l">                  <span class="s">"label"</span>, <span class="s">"css"</span>]</span><span class="l">  },</span><span class="l">  <span class="k">"value"</span>: <span class="s">"Fjord Kontormøbler ApS"</span>,</span><span class="l">  <span class="k">"title"</span>: <span class="s">"In the **Name** field…"</span>,</span><span class="l">  <span class="k">"screenshot"</span>: <span class="s">"shot_xkf0….png"</span></span><span class="l">}</span></div>
+    <div id="md-shot"><img src="assets/img/s2.webp" alt="" /><div class="hl"></div></div>
+    <div id="md-node">
+      <div class="f">resolve(lang)</div>
+      <div class="langs"><span class="lg src">EN</span><span class="lg">DA</span><span class="lg">DE</span></div>
+    </div>
+    <div class="md-out" id="md-o1" style="top: 120px"><div class="th" style="background-image: url('assets/img/word-p2.webp'); background-size: 250px 354px; background-position: 0 -150px"></div><div class="lb">Documents</div></div>
+    <div class="md-out" id="md-o2" style="top: 340px"><div class="th" style="background-image: url('assets/img/player-show.webp'); background-size: 455px 284px; background-position: -54px -117px"></div><div class="lb">Players</div></div>
+    <div class="md-out" id="md-o3" style="top: 560px"><div class="th" style="background-image: url('assets/img/portal-home.webp'); background-size: 253px 158px; background-position: 0 0"></div><div class="lb">Portal</div></div>
+    <div class="md-out" id="md-o4" style="top: 780px"><div class="th" style="background-image: url('assets/img/assist-1.webp'); background-size: 506px 316px; background-position: 0 -28px"></div><div class="lb">Live guidance</div></div>
+    <audio id="md-p1" class="clip" data-start="2.68" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="md-p2" class="clip" data-start="4.04" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="md-p3" class="clip" data-start="8.04" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="md-p4" class="clip" data-start="9.96" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(["#md-shot", "#md-node", ".md-out", "#md-node .lg"], { opacity: 0 });
+      // "stored as structured data"
+      tl.fromTo("#md-json", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.0);
+      tl.fromTo("#md-json .l", { opacity: 0 }, { opacity: 1, duration: 0.12, stagger: 0.11 }, 0.15);
+      // "with its screenshot"
+      tl.fromTo("#md-shot", { opacity: 0, scale: 0.85, transformOrigin: "0% 0%" }, { opacity: 1, scale: 1, duration: 0.4, ease: "expo.out" }, 2.68);
+      // "Resolve it for a language"
+      tl.fromTo("#md-l0", { strokeDashoffset: 110 }, { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, 3.95);
+      tl.fromTo("#md-node", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.4, ease: "expo.out" }, 4.04);
+      tl.fromTo("#md-node .lg", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.25, stagger: 0.12 }, 4.6);
+      // "feeds every output": documents, players, the portal and live guidance
+      [["#md-l1", "#md-o1", 8.0], ["#md-l2", "#md-o2", 8.7], ["#md-l3", "#md-o3", 9.3], ["#md-l4", "#md-o4", 9.95]].forEach(([l, o, t]) => {
+        tl.fromTo(l, { strokeDashoffset: 110 }, { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, t - 0.2);
+        tl.fromTo(o, { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }, t);
+      });
+      tl.fromTo("#md-lines", { opacity: 1 }, { opacity: 1, duration: 0.01 }, 0);
+      tl.to(["#md-json", "#md-shot", "#md-node", ".md-out", "#md-lines"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 11.55);
+      window.__timelines["model"] = tl;
+    })();
+  </script>
+</template>

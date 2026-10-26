@@ -1,0 +1,199 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #rp-status {
+      position: absolute;
+      left: 1372px;
+      top: 322px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      height: 72px;
+      padding: 0 26px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: var(--brand-text);
+      font: 600 28px/1 "Inter", sans-serif;
+      overflow: hidden;
+    }
+    #rp-status .bar {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 6px;
+      width: 100%;
+      background: var(--brand);
+      transform-origin: 0 50%;
+    }
+    #rp-light {
+      left: 98px;
+      top: 318px;
+      width: 178px;
+      height: 84px;
+      border-width: 7px;
+    }
+    #rp-light2 {
+      left: 522px;
+      top: 234px;
+      width: 160px;
+      height: 132px;
+      border-width: 7px;
+    }
+    #rp-list {
+      position: absolute;
+      left: 120px;
+      top: 70px;
+    }
+    #rp-list .steprow {
+      margin-top: 4px;
+    }
+    #rp-list .thumb .flash {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      opacity: 0;
+    }
+    #rp-list .st {
+      opacity: 0;
+    }
+    #rp-report {
+      position: absolute;
+      left: 960px;
+      top: 200px;
+      width: 840px;
+      background: #fff;
+      border-radius: 28px;
+      box-shadow: var(--shadow-xl);
+      padding: 48px 56px 54px;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+    #rp-report .k {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    #rp-report .h {
+      margin-top: 12px;
+      font-size: 60px;
+      font-weight: 750;
+      letter-spacing: -0.03em;
+    }
+    #rp-report .counts {
+      display: flex;
+      gap: 26px;
+      margin-top: 40px;
+    }
+    #rp-report .c {
+      flex: 1;
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 24px 28px;
+    }
+    #rp-report .c .n {
+      font-size: 88px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    #rp-report .c .l {
+      margin-top: 10px;
+      font-size: 26px;
+      font-weight: 600;
+    }
+    #rp-chip {
+      margin-top: 34px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="replay" data-width="1920" data-height="1080">
+    <div id="rp-studio" class="plate">
+      <img src="assets/img/studio-en.webp" alt="" />
+      <div id="rp-status"><span>↻</span><span id="rp-sec">Replay… 1s</span><div class="bar"></div></div>
+    </div>
+    <div id="rp-app" class="plate">
+      <img id="rp-v1" src="assets/img/erp-v1.webp" alt="" />
+      <img id="rp-v2" src="assets/img/erp-v2.webp" alt="" />
+      <div id="rp-light" class="light"></div>
+      <div id="rp-light2" class="light"></div>
+    </div>
+    <div id="rp-world" style="position: absolute; inset: 0; background: var(--ground)">
+      <div id="rp-list" class="steplist">
+        <div class="head">Steps <span>10</span></div>
+        <div class="steprow"><div class="num">5</div><div class="thumb"><img src="assets/img/s5.webp" alt="" /><div class="hl" style="left: 26px; top: 43px; width: 30px; height: 7px"></div><div class="flash"></div></div><div><div class="t">In the <b>City</b> field, enter <b>Hellerup</b>.</div><div class="m">Type</div></div><div class="st"></div></div>
+        <div class="steprow"><div class="num">6</div><div class="thumb"><img src="assets/img/s6.webp" alt="" /><div class="hl" style="left: 81px; top: 43px; width: 30px; height: 7px"></div><div class="flash"></div></div><div><div class="t">In <b>Country/Region</b>, select <b>Denmark</b>.</div><div class="m">Select</div></div><div class="st"></div></div>
+        <div class="steprow"><div class="num">7</div><div class="thumb"><img src="assets/img/s7.webp" alt="" /><div class="hl" style="left: 81px; top: 64px; width: 30px; height: 7px"></div><div class="flash"></div></div><div><div class="t">In the <b>E-mail</b> field, enter <b>orders@example.com</b>.</div><div class="m">Type</div></div><div class="st healed"></div></div>
+        <div class="steprow"><div class="num">8</div><div class="thumb"><img src="assets/img/s8.webp" alt="" /><div class="hl" style="left: 81px; top: 89px; width: 30px; height: 6px"></div><div class="flash"></div></div><div><div class="t">In the <b>Credit Limit (LCY)</b> field, enter <b>75000</b>.</div><div class="m">Type</div></div><div class="st healed"></div></div>
+        <div class="steprow"><div class="num">9</div><div class="thumb"><img src="assets/img/s9.webp" alt="" /><div class="hl" style="left: 26px; top: 82px; width: 7px; height: 5px"></div><div class="flash"></div></div><div><div class="t">Select the <b>Tax Liable</b> check box.</div><div class="m">Check</div></div><div class="st"></div></div>
+        <div class="steprow"><div class="num">10</div><div class="thumb"><img src="assets/img/s10.webp" alt="" /><div class="hl" style="left: 3px; top: 5px; width: 12px; height: 6px"></div><div class="flash"></div></div><div><div class="t">Click <b>Save</b>.</div><div class="m">Click</div></div><div class="st healed"></div></div>
+      </div>
+      <div id="rp-report">
+        <div class="k">Screenshot update · EN</div>
+        <div class="h">Replay completed</div>
+        <div class="counts">
+          <div class="c"><div class="n" id="rp-ok" style="color: var(--ok-text)">0</div><div class="l" style="color: var(--ok-text)">OK</div></div>
+          <div class="c"><div class="n" id="rp-heal" style="color: var(--warn-text)">0</div><div class="l" style="color: var(--warn-text)">Healed</div></div>
+          <div class="c"><div class="n" style="color: var(--bad-text)">0</div><div class="l" style="color: var(--bad-text)">Failed</div></div>
+        </div>
+        <div id="rp-chip" class="chip warn">Updated · 3 healed</div>
+      </div>
+    </div>
+    <div id="rp-cur" class="cursor" style="z-index: 6">
+      <svg viewBox="0 0 28 28"><path d="M5 2.8v19.6l5.1-4.9 3.3 7.6 3.6-1.6-3.3-7.4h7z" fill="#111827" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" /></svg>
+    </div>
+    <audio id="rp-click" class="clip" data-start="2.09" data-duration="0.2" data-volume="0.7" src="assets/sfx/click2.ogg"></audio>
+    <audio id="rp-cut" class="clip" data-start="2.72" data-duration="0.2" data-volume="0.35" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
+    <audio id="rp-glide" class="clip" data-start="4.66" data-duration="0.6" data-volume="0.35" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="rp-land" class="clip" data-start="5.36" data-duration="0.2" data-volume="0.45" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="rp-chipsfx" class="clip" data-start="7.6" data-duration="0.2" data-volume="0.45" src="assets/sfx/drop_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // A: the Studio toolbar, "press Replay"
+      const camS = { x: 0, y: 0, scale: 1 };
+      tl.set("#rp-studio", camS, 0);
+      gsap.set(["#rp-app", "#rp-world", "#rp-status", "#rp-v2"], { opacity: 0 });
+      const pRe = SL.toFrame(camS, 422, 177);
+      tl.fromTo("#rp-cur", { x: 1300, y: 1150 }, { x: pRe.x - 6, y: pRe.y - 4, duration: 0.7, ease: "expo.out" }, 0.35);
+      tl.to("#rp-cur", { scale: 0.84, duration: 0.06 }, 2.09);
+      tl.to("#rp-cur", { scale: 1, duration: 0.12 }, 2.15);
+      tl.fromTo("#rp-status", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.25, ease: "expo.out" }, 2.15);
+      tl.fromTo("#rp-status .bar", { scaleX: 0.05 }, { scaleX: 0.35, duration: 0.6, ease: "none" }, 2.15);
+      tl.set("#rp-cur", { opacity: 0 }, 2.7);
+      // B: Steplight drives the app; the app has changed; the light finds New again
+      gsap.set("#rp-app", { x: 0, y: 0, scale: 0.6667 });
+      tl.fromTo("#rp-app", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 2.72);
+      tl.set("#rp-studio", { opacity: 0 }, 2.9);
+      tl.fromTo("#rp-light", { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 2.81);
+      tl.fromTo("#rp-v2", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, 4.15);
+      // "finds what moved": the light travels to New in the ribbon
+      const dx = 522 - 98, dy = 234 - 318, sx = 160 / 178, sy = 132 / 84;
+      gsap.set("#rp-light2", { opacity: 0 });
+      tl.to("#rp-light", { x: dx, y: dy, scaleX: sx, scaleY: sy, transformOrigin: "0 0", opacity: 0, duration: 0.55, ease: "power3.inOut" }, 4.81);
+      tl.fromTo("#rp-light2", { x: -dx, y: -dy, scaleX: 1 / sx, scaleY: 1 / sy, transformOrigin: "0 0", opacity: 0 }, { x: 0, y: 0, scaleX: 1, scaleY: 1, opacity: 1, duration: 0.55, ease: "power3.inOut" }, 4.81);
+      // C: every step re-run, screenshots refreshed
+      tl.fromTo("#rp-world", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power1.inOut" }, 5.9);
+      tl.fromTo("#rp-list", { x: -30, filter: "blur(8px)" }, { x: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 5.92);
+      tl.fromTo("#rp-report", { x: 40, opacity: 0, filter: "blur(8px)" }, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 6.05);
+      gsap.utils.toArray("#rp-list .steprow").forEach((row, i) => {
+        const t = 6.25 + i * 0.12;
+        tl.fromTo(row.querySelector(".flash"), { opacity: 0 }, { opacity: 0.9, duration: 0.05 }, t);
+        tl.to(row.querySelector(".flash"), { opacity: 0, duration: 0.25, ease: "power2.out" }, t + 0.06);
+        tl.fromTo(row.querySelector(".st"), { opacity: 0, scale: 0.2 }, { opacity: 1, scale: 1, duration: 0.25, ease: "back.out(2)" }, t + 0.05);
+      });
+      tl.to(["#rp-list", "#rp-report"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 8.74);
+      tl.fromTo("#rp-chip", { opacity: 0, scale: 0.7, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, 7.6);
+      SL.drive(tl, [
+        SL.roller(document.getElementById("rp-sec"), ["Replay… 1s", "Replay… 2s"], [[0, 0], [2.6, 1]]),
+        SL.counter(document.getElementById("rp-ok"), 0, 7, 6.97, 0.6),
+        SL.counter(document.getElementById("rp-heal"), 0, 3, 6.97, 0.6),
+      ]);
+      window.__timelines["replay"] = tl;
+    })();
+  </script>
+</template>

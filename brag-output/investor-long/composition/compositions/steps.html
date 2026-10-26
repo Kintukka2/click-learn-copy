@@ -1,0 +1,192 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #sp-lab {
+      position: absolute;
+      left: 140px;
+      top: 140px;
+      font: 600 30px/1 "Inter", sans-serif;
+      color: var(--ink-3);
+    }
+    .sp-ev {
+      position: absolute;
+      left: 140px;
+      display: inline-flex;
+      gap: 18px;
+      padding: 10px 18px;
+      border-radius: 12px;
+      background: #fff;
+      border: 2px solid var(--border);
+      font: 500 28px/1.1 "JetBrains Mono", monospace;
+      color: var(--ink);
+      white-space: nowrap;
+      transform-origin: 0 50%;
+    }
+    .sp-ev b {
+      color: var(--brand-text);
+      font-weight: 600;
+    }
+    #sp-row {
+      position: absolute;
+      left: 860px;
+      top: 230px;
+      width: 920px;
+      box-sizing: border-box;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: var(--shadow-xl);
+      padding: 20px;
+    }
+    #sp-row .steprow {
+      grid-template-columns: 44px 190px 1fr;
+    }
+    #sp-row .thumb {
+      width: 190px;
+      height: 119px;
+    }
+    #sp-ins {
+      position: absolute;
+      left: 860px;
+      top: 520px;
+      width: 920px;
+      box-sizing: border-box;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg);
+      padding: 30px 36px 34px;
+      font-family: "Inter", sans-serif;
+    }
+    #sp-ins .h {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 32px;
+      font-weight: 700;
+    }
+    #sp-auto {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      height: 50px;
+      padding: 0 20px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: var(--brand-text);
+      font-size: 26px;
+      font-weight: 600;
+    }
+    #sp-field {
+      margin-top: 22px;
+      min-height: 92px;
+      padding: 20px 22px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      font: 500 28px/1.4 "JetBrains Mono", monospace;
+      color: var(--ink);
+      white-space: pre-wrap;
+    }
+    #sp-sens {
+      position: absolute;
+      left: 140px;
+      top: 560px;
+      width: 640px;
+      box-sizing: border-box;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg);
+      padding: 30px 34px 32px;
+      font-family: "Inter", sans-serif;
+    }
+    #sp-sens .t {
+      font-size: 32px;
+      line-height: 1.35;
+    }
+    #sp-sens .t b {
+      font-weight: 650;
+    }
+    #sp-sens .tg {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-top: 22px;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--ink-2);
+    }
+    #sp-sens .sw {
+      position: relative;
+      width: 76px;
+      height: 42px;
+      border-radius: 999px;
+      background: var(--brand);
+    }
+    #sp-sens .sw::after {
+      content: "";
+      position: absolute;
+      right: 5px;
+      top: 5px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #fff;
+    }
+    #sp-dots {
+      display: inline-block;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="steps" data-width="1920" data-height="1080">
+    <div id="sp-lab">Browser events</div>
+    <div class="sp-ev" style="top: 196px"><b>pointerdown</b>#customer-name</div>
+    <div class="sp-ev" style="top: 262px"><b>focus</b>#customer-name</div>
+    <div class="sp-ev" style="top: 328px"><b>keydown</b>F</div>
+    <div class="sp-ev" style="top: 394px"><b>keydown</b>j</div>
+    <div class="sp-ev" style="top: 460px"><b>keydown</b>o</div>
+    <div class="sp-ev" style="top: 526px"><b>keydown</b>r</div>
+    <div class="sp-ev" style="top: 592px"><b>keydown</b>d</div>
+    <div class="sp-ev" style="top: 658px"><b>keydown</b>… 17 more</div>
+    <div class="sp-ev" style="top: 724px"><b>change</b>"Fjord Kontormøbler ApS"</div>
+    <div class="sp-ev" style="top: 790px"><b>blur</b>#customer-name</div>
+    <div id="sp-row">
+      <div class="steprow sel">
+        <div class="num">2</div>
+        <div class="thumb"><img src="assets/img/s2.webp" alt="" /><div class="hl" style="left: 102px; top: 43px; width: 36px; height: 8px"></div></div>
+        <div><div class="t">In the <b>Name</b> field, enter <b>Fjord Kontormøbler ApS</b>.</div><div class="m">Type</div></div>
+      </div>
+    </div>
+    <div id="sp-ins">
+      <div class="h">Instruction <span id="sp-auto">⚡ Automatic</span></div>
+      <div id="sp-field"></div>
+    </div>
+    <div id="sp-sens">
+      <div class="t">In the <b>Password</b> field, enter <b id="sp-dots">••••••</b>.</div>
+      <div class="tg"><span class="sw"></span>Sensitive value</div>
+    </div>
+    <audio id="sp-s1" class="clip" data-start="1.36" data-duration="0.6" data-volume="0.3" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="sp-s2" class="clip" data-start="5.04" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="sp-s3" class="clip" data-start="7.36" data-duration="0.06" data-volume="0.45" src="assets/sfx/click2.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(["#sp-row", "#sp-ins", "#sp-sens", "#sp-auto"], { opacity: 0 });
+      tl.fromTo("#sp-lab", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.0);
+      tl.fromTo(".sp-ev", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.25, ease: "expo.out", stagger: 0.1 }, 0.05);
+      // "collapse into clean steps"
+      tl.to(".sp-ev", { x: 760, y: (i) => 120 - i * 52, scale: 0.4, opacity: 0, filter: "blur(4px)", duration: 0.5, ease: "power3.in", stagger: 0.03 }, 1.36);
+      tl.to("#sp-lab", { opacity: 0, duration: 0.2 }, 1.4);
+      tl.fromTo("#sp-row", { opacity: 0, scale: 0.92, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.45, ease: "expo.out" }, 1.85);
+      // "its instruction written automatically"
+      tl.fromTo("#sp-ins", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 2.96);
+      tl.fromTo("#sp-auto", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 5.04);
+      // "sensitive values are masked in every output"
+      tl.fromTo("#sp-sens", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 6.0);
+      tl.fromTo("#sp-dots", { scale: 1.5, color: "#2f6fed" }, { scale: 1, color: "#101828", duration: 0.35, ease: "back.out(1.6)" }, 7.36);
+      tl.to(["#sp-row", "#sp-ins", "#sp-sens"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 9.3);
+      SL.drive(tl, [SL.typer(document.getElementById("sp-field"), "In the **Name** field, enter **Fjord Kontormøbler ApS**.", 3.35, 42, true)]);
+      window.__timelines["steps"] = tl;
+    })();
+  </script>
+</template>

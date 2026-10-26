@@ -1,0 +1,199 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #rl-plate .light {
+      border-width: 7px;
+    }
+    #rl-status {
+      position: absolute;
+      left: 960px;
+      top: 950px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      height: 76px;
+      padding: 0 30px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: var(--brand-text);
+      font: 650 30px/1 "Inter", sans-serif;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      z-index: 5;
+    }
+    #rl-status .bar {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 6px;
+      width: 100%;
+      background: var(--brand);
+      transform-origin: 0 50%;
+    }
+    #rl-card {
+      position: absolute;
+      left: 1060px;
+      top: 330px;
+      width: 760px;
+      box-sizing: border-box;
+      background: #fff;
+      border-radius: 28px;
+      box-shadow: var(--shadow-xl);
+      padding: 34px 40px 18px;
+      font-family: "Inter", sans-serif;
+      z-index: 5;
+    }
+    #rl-card .h {
+      font-size: 34px;
+      font-weight: 750;
+    }
+    #rl-card .h span {
+      color: var(--ink-3);
+      font-weight: 500;
+    }
+    .rl-row {
+      display: grid;
+      grid-template-columns: 52px 120px 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: 22px 0;
+      border-top: 2px solid var(--border);
+      margin-top: 18px;
+    }
+    .rl-row .n {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--brand-soft);
+      color: var(--brand-text);
+      font-size: 24px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .rl-row .k {
+      justify-self: start;
+      padding: 6px 14px;
+      border-radius: 10px;
+      background: var(--ground);
+      border: 2px solid var(--border);
+      font: 600 26px/1 "JetBrains Mono", monospace;
+      color: var(--ink-2);
+    }
+    .rl-row .v {
+      font: 500 30px/1.2 "JetBrains Mono", monospace;
+    }
+    .rl-row .chip {
+      height: 50px;
+      font-size: 28px;
+      padding: 0 18px;
+    }
+    #rl-x1 .v {
+      text-decoration: line-through;
+      text-decoration-thickness: 3px;
+      color: var(--ink-3);
+    }
+    #rl-step {
+      position: absolute;
+      left: 100px;
+      top: 770px;
+      width: 900px;
+      box-sizing: border-box;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: var(--shadow-xl);
+      padding: 18px 20px 22px;
+      z-index: 5;
+      font-family: "Inter", sans-serif;
+    }
+    #rl-step .steprow {
+      padding-right: 20px;
+    }
+    #rl-step .msg {
+      margin: 6px 14px 0;
+      font: 500 28px/1.35 "JetBrains Mono", monospace;
+      color: var(--warn-text);
+    }
+    #rl-step .thumb .flash {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      opacity: 0;
+    }
+    #rl-step .thumb .v2 {
+      position: absolute;
+      inset: 0;
+      background: url("assets/img/erp-form-v2.webp") 0 0 / 152px 95px no-repeat;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="replay" data-width="1920" data-height="1080">
+    <div id="rl-plate" class="plate">
+      <img id="rl-v1" src="assets/img/erp-form-v1.webp" alt="" />
+      <img id="rl-v2" src="assets/img/erp-form-v2.webp" alt="" />
+      <div id="rl-a" class="light" style="left: 1592px; top: 582px; width: 544px; height: 80px"></div>
+      <div id="rl-b" class="light" style="left: 552px; top: 666px; width: 544px; height: 80px"></div>
+      <div id="rl-c" class="light" style="left: 98px; top: 340px; width: 184px; height: 84px"></div>
+      <div id="rl-d" class="light" style="left: 522px; top: 256px; width: 160px; height: 132px"></div>
+    </div>
+    <div id="rl-status"><span>↻</span><span id="rl-sec">Replay… 1s</span><div class="bar"></div></div>
+    <div id="rl-card">
+      <div class="h">Click Save <span>· selectors</span></div>
+      <div class="rl-row" id="rl-x1"><div class="n">1</div><div class="k">id</div><div class="v">customer-save</div><div class="chip bad" id="rl-c1">not found</div></div>
+      <div class="rl-row" id="rl-x2" style="margin-top: 0"><div class="n">2</div><div class="k">role</div><div class="v">button · Save</div><div class="chip warn" id="rl-c2">healed</div></div>
+    </div>
+    <div id="rl-step">
+      <div class="steprow">
+        <div class="num">10</div>
+        <div class="thumb"><img src="assets/img/s10.webp" alt="" /><div class="v2" id="rl-th2"></div><div class="flash" id="rl-flash"></div></div>
+        <div><div class="t">Click <b>Save</b>.</div><div class="m">Click · healed</div></div>
+        <div class="st healed"></div>
+      </div>
+      <div class="msg">healed: matched by role "button|Save" instead of id "customer-save"</div>
+    </div>
+    <audio id="rl-cut" class="clip" data-start="5.36" data-duration="0.14" data-volume="0.35" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
+    <audio id="rl-p1" class="clip" data-start="7.68" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="rl-glide" class="clip" data-start="8.16" data-duration="0.6" data-volume="0.3" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="rl-p2" class="clip" data-start="9.28" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="rl-shot" class="clip" data-start="10.96" data-duration="0.01" data-volume="0.5" src="assets/sfx/click_003.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#rl-plate", { x: 0, y: 0, scale: 0.6667 });
+      gsap.set(["#rl-v2", "#rl-a", "#rl-b", "#rl-c", "#rl-d", "#rl-card", "#rl-step", "#rl-c1", "#rl-c2", "#rl-th2"], { opacity: 0 });
+      gsap.set("#rl-status", { xPercent: -50 });
+      tl.fromTo("#rl-status", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 0.1);
+      tl.fromTo("#rl-status .bar", { scaleX: 0.05 }, { scaleX: 0.8, duration: 5.0, ease: "none" }, 0.1);
+      // step by step through the real application
+      tl.fromTo("#rl-a", { opacity: 0, scale: 1.25, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 0.9);
+      tl.to("#rl-a", { opacity: 0, duration: 0.15 }, 2.25);
+      tl.fromTo("#rl-b", { opacity: 0, scale: 1.25, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 2.3);
+      tl.to("#rl-b", { opacity: 0, duration: 0.15 }, 4.1);
+      tl.fromTo("#rl-c", { opacity: 0, scale: 1.25, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 4.16);
+      // "When an element has changed": the new layout; Save is not where it was
+      tl.fromTo("#rl-v2", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, 5.36);
+      tl.to("#rl-c", { borderColor: "#e5484d", boxShadow: "0 0 0 12px rgba(229,72,77,0.25), 0 0 0 4000px rgba(16,24,40,0.30)", duration: 0.12 }, 6.3);
+      // "finds it by the next selector"
+      tl.fromTo("#rl-card", { opacity: 0, x: 40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 6.96);
+      tl.fromTo("#rl-c1", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 7.68);
+      tl.fromTo("#rl-c2", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 8.32);
+      const dx = 522 - 98, dy = 256 - 340, sx = 160 / 184, sy = 132 / 84;
+      tl.to("#rl-c", { x: dx, y: dy, scaleX: sx, scaleY: sy, transformOrigin: "0 0", opacity: 0, duration: 0.55, ease: "power3.inOut" }, 8.3);
+      tl.fromTo("#rl-d", { x: -dx, y: -dy, scaleX: 1 / sx, scaleY: 1 / sy, transformOrigin: "0 0", opacity: 0, borderColor: "#e5484d" }, { x: 0, y: 0, scaleX: 1, scaleY: 1, opacity: 1, borderColor: "#14b8a6", duration: 0.55, ease: "power3.inOut" }, 8.3);
+      // "marks the step as healed"
+      tl.fromTo("#rl-step", { opacity: 0, y: 30, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 9.28);
+      tl.to("#rl-status", { opacity: 0, duration: 0.2 }, 9.2);
+      // "and refreshes the screenshot"
+      tl.fromTo("#rl-flash", { opacity: 0 }, { opacity: 0.95, duration: 0.05 }, 10.96);
+      tl.set("#rl-th2", { opacity: 1 }, 11.02);
+      tl.to("#rl-flash", { opacity: 0, duration: 0.3, ease: "power2.out" }, 11.03);
+      tl.to(["#rl-plate", "#rl-card", "#rl-step"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 12.7);
+      SL.drive(tl, [SL.roller(document.getElementById("rl-sec"), ["Replay… 1s", "Replay… 2s", "Replay… 3s", "Replay… 4s", "Replay… 5s"], [[0, 0], [1.1, 1], [2.1, 2], [3.1, 3], [4.1, 4]])]);
+      window.__timelines["replay"] = tl;
+    })();
+  </script>
+</template>

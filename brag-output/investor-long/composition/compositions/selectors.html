@@ -1,0 +1,126 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #se-win {
+      position: absolute;
+      left: 120px;
+      top: 230px;
+      width: 760px;
+      height: 520px;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+      background: #fff;
+    }
+    #se-plate {
+      position: absolute;
+    }
+    #se-light {
+      left: 1592px;
+      top: 582px;
+      width: 544px;
+      height: 80px;
+      border-width: 6px;
+    }
+    #se-card {
+      position: absolute;
+      left: 960px;
+      top: 170px;
+      width: 840px;
+      background: #fff;
+      border-radius: 32px;
+      box-shadow: var(--shadow-xl);
+      padding: 44px 48px 30px;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+    #se-card .h {
+      font-size: 44px;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+    }
+    #se-card .sub {
+      margin-top: 8px;
+      font-size: 30px;
+      color: var(--ink-2);
+    }
+    .se-row {
+      display: grid;
+      grid-template-columns: 56px 150px 1fr auto;
+      align-items: center;
+      gap: 20px;
+      padding: 26px 0;
+      border-top: 2px solid var(--border);
+    }
+    .se-row:first-of-type {
+      margin-top: 28px;
+    }
+    .se-row .n {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--brand-soft);
+      color: var(--brand-text);
+      font-size: 26px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .se-row .k {
+      justify-self: start;
+      padding: 8px 16px;
+      border-radius: 10px;
+      background: var(--ground);
+      border: 2px solid var(--border);
+      font: 600 28px/1 "JetBrains Mono", monospace;
+      color: var(--ink-2);
+    }
+    .se-row .v {
+      font: 500 32px/1.2 "JetBrains Mono", monospace;
+      color: var(--ink);
+    }
+    .se-row .chip {
+      height: 50px;
+      font-size: 28px;
+      padding: 0 18px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="selectors" data-width="1920" data-height="1080">
+    <div id="se-win">
+      <div id="se-plate" class="plate"><img src="assets/img/erp-new.webp" alt="" /><div id="se-light" class="light"></div></div>
+    </div>
+    <div id="se-card">
+      <div class="h">Selectors</div>
+      <div class="sub">Tried in order by Replay and Assist</div>
+      <div class="se-row" id="se-r1"><div class="n">1</div><div class="k">id</div><div class="v">customer-name</div><div class="chip ok">1 match</div></div>
+      <div class="se-row" id="se-r2"><div class="n">2</div><div class="k">role</div><div class="v">textbox · Name</div><div class="chip ok">1 match</div></div>
+      <div class="se-row" id="se-r3"><div class="n">3</div><div class="k">label</div><div class="v">Name</div><div class="chip ok">1 match</div></div>
+      <div class="se-row" id="se-r4"><div class="n">4</div><div class="k">css</div><div class="v">#customer-name</div><div class="chip ok">1 match</div></div>
+    </div>
+    <audio id="se-p1" class="clip" data-start="0.3" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="se-p2" class="clip" data-start="1.42" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="se-p3" class="clip" data-start="2.62" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="se-p4" class="clip" data-start="3.34" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#se-plate", { x: -944, y: -238, scale: 0.8 });
+      gsap.set([".se-row", ".se-row .chip"], { opacity: 0 });
+      tl.fromTo("#se-win", { opacity: 0, x: -30, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 0.0);
+      tl.fromTo("#se-card", { opacity: 0, x: 30, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 0.05);
+      // each selector lands as it is named
+      [["#se-r1", 0.3], ["#se-r2", 1.42], ["#se-r3", 2.62], ["#se-r4", 3.34]].forEach(([sel, t]) => {
+        tl.fromTo(sel, { opacity: 0, x: 24, filter: "blur(6px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, t);
+      });
+      // "match exactly one element"
+      tl.fromTo(".se-row .chip", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)", stagger: 0.15 }, 6.62);
+      tl.to(["#se-win", "#se-card"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 8.85);
+      window.__timelines["selectors"] = tl;
+    })();
+  </script>
+</template>
