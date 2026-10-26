@@ -347,7 +347,8 @@ describe.skipIf(!fs.existsSync(STUDIO))("importing in the Studio", () => {
     // the start URL is remembered for the next import into this project
     await page.goto(`${origin}/studio/projects/${prj.id}`);
     await page.click("[data-testid=import-guide]");
-    expect(await page.inputValue("#imp-url")).toBe("https://erp.example.com/?cmp=usmf");
+    // the dialog fills the field in an effect, just after it opens
+    await expect.poll(() => page.inputValue("#imp-url"), { timeout: 5000 }).toBe("https://erp.example.com/?cmp=usmf");
     await page.close();
   });
 });
