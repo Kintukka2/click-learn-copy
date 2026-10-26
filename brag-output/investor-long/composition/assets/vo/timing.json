@@ -39,14 +39,14 @@
       "id": "problem",
       "start": 8.8667,
       "duration": 11.0333,
-      "voStart": 9.167,
+      "voStart": 9.3,
       "voEnd": 19.293,
       "phrases": [
         {
           "id": "a",
-          "text": "Platforms like Dynamics three sixty-five ship two release waves every year.",
-          "start": 9.167,
-          "end": 13.94
+          "text": "The software your business runs on keeps changing, release after release.",
+          "start": 9.3,
+          "end": 13.695
         },
         {
           "id": "b",

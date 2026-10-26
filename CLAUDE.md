@@ -10,4 +10,5 @@ These apply to every video, deck, page, post or pitch made about Steplight.
 - Plans change: describe architecture and the roadmap accurately at a high level, without promising dates or exact designs.
 - No real people on screen or in copy. The research in `research/` names the competitor's staff and testimonial authors; leave them out. The demo data's contact names, phone numbers and e-mail domains are replaced in any capture (see `brag-output/README.md`).
 - Name ClickLearn only in investor material, never in client-facing ads. Client copy says "legacy desktop tools".
+- Keep "the problem" high level ("Every software release breaks the training", "release after release"). Don't back it with niche examples such as named platforms, their release waves or release dates.
 - Every claim must be traceable to the code, the docs, the tests or `research/`. Market figures are labelled as third-party numbers.

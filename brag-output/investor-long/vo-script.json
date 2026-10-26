@@ -31,13 +31,13 @@
     },
     {
       "id": "problem",
-      "lead": 0.3,
+      "lead": 0.433,
       "tail": 0.6,
       "phrases": [
         {
           "id": "a",
-          "text": "Platforms like Dynamics three sixty-five ship two release waves every year.",
-          "gap": 0.35
+          "text": "The software your business runs on keeps changing, release after release.",
+          "gap": 0.6
         },
         {
           "id": "b",
