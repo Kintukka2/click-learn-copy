@@ -1,0 +1,197 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #ai-title {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 400px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      font: 800 160px/1 "Inter", sans-serif;
+      letter-spacing: -0.045em;
+    }
+    #ai-badge {
+      width: 150px;
+      height: 150px;
+      border-radius: 38px;
+      background: linear-gradient(135deg, #d97757, #c15f3c);
+      box-shadow: 0 24px 48px -16px rgba(193, 95, 60, 0.55);
+    }
+    #ai-sub {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 610px;
+      text-align: center;
+      font: 500 46px/1.2 "Inter", sans-serif;
+      color: var(--ink-2);
+    }
+    .ai-plate .light {
+      border-width: 6px;
+    }
+    /* Translate dialog (studio/src/editor/dialogs.tsx) rebuilt at 2x */
+    #ai-dlg {
+      position: absolute;
+      left: 460px;
+      top: 170px;
+      width: 1000px;
+      box-sizing: border-box;
+      background: #fff;
+      border-radius: 32px;
+      box-shadow: 0 48px 96px -24px rgba(16, 24, 40, 0.4);
+      padding: 48px 56px 44px;
+      font-family: "Inter", sans-serif;
+      z-index: 4;
+    }
+    #ai-dlg .h {
+      font-size: 48px;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+    }
+    #ai-dlg .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 36px;
+      font-size: 34px;
+    }
+    #ai-dlg .sel {
+      padding: 16px 24px;
+      border-radius: 16px;
+      border: 2px solid var(--border);
+      font-weight: 600;
+    }
+    #ai-dlg .sw {
+      position: relative;
+      width: 84px;
+      height: 46px;
+      border-radius: 999px;
+      background: var(--brand);
+    }
+    #ai-dlg .sw::after {
+      content: "";
+      position: absolute;
+      right: 6px;
+      top: 6px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #fff;
+    }
+    #ai-dlg .eng {
+      margin-top: 36px;
+      font-size: 32px;
+      color: var(--ink-2);
+    }
+    #ai-dlg .eng b {
+      color: #c15f3c;
+    }
+    #ai-dlg .act {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 40px;
+    }
+    #ai-dlg .btn {
+      height: 88px;
+      padding: 0 40px;
+      border-radius: 20px;
+      background: var(--brand);
+      color: #fff;
+      font: 650 34px/88px "Inter", sans-serif;
+    }
+    #ai-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(16, 24, 40, 0.45);
+      z-index: 3;
+    }
+    #ai-word {
+      left: 0;
+      top: 0;
+      width: 1819px;
+      height: 2573px;
+      transform-origin: 0 0;
+      z-index: 5;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="ai" data-width="1920" data-height="1080">
+    <div id="ai-title"><div id="ai-badge"></div><div>Claude</div></div>
+    <div id="ai-sub">Optional AI, for the language work</div>
+    <div id="ai-ask" class="plate ai-plate">
+      <img src="assets/img/portal-ask.webp" alt="" />
+      <div id="ai-l1" class="light" style="left: 2096px; top: 1284px; width: 620px; height: 124px"></div>
+    </div>
+    <div id="ai-studio" class="plate ai-plate">
+      <img src="assets/img/studio-da.webp" alt="" />
+    </div>
+    <div id="ai-backdrop"></div>
+    <div id="ai-dlg">
+      <div class="h">Translate process</div>
+      <div class="row"><span>Language</span><span class="sel">Danish</span></div>
+      <div class="row"><span>Capture localized screenshots</span><span class="sw"></span></div>
+      <div class="eng">Translation engine: <b>Claude</b></div>
+      <div class="act"><div class="btn" id="ai-btn">Translate to Danish</div></div>
+    </div>
+    <div id="ai-word" class="paper"><img src="assets/img/word-p2.webp" alt="" /></div>
+    <div id="ai-draft" class="plate ai-plate">
+      <img src="assets/img/studio-draft.webp" alt="" />
+      <div id="ai-l2" class="light" style="left: 560px; top: 764px; width: 314px; height: 76px"></div>
+      <div id="ai-l3" class="light" style="left: 24px; top: 1718px; width: 316px; height: 62px"></div>
+    </div>
+    <div id="ai-cur" class="cursor" style="z-index: 8">
+      <svg viewBox="0 0 28 28"><path d="M5 2.8v19.6l5.1-4.9 3.3 7.6 3.6-1.6-3.3-7.4h7z" fill="#111827" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" /></svg>
+    </div>
+    <audio id="ai-s1" class="clip" data-start="4.29" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="ai-s2" class="clip" data-start="7.6" data-duration="0.06" data-volume="0.6" src="assets/sfx/click2.ogg"></audio>
+    <audio id="ai-s3" class="clip" data-start="8.21" data-duration="0.6" data-volume="0.3" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="ai-s4" class="clip" data-start="11.1" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="ai-s5" class="clip" data-start="13.49" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(["#ai-ask", "#ai-studio", "#ai-backdrop", "#ai-dlg", "#ai-word", "#ai-draft", "#ai-l1", "#ai-l2", "#ai-l3", "#ai-cur", "#ai-sub"], { opacity: 0 });
+      // "Claude handles the language work"
+      tl.fromTo("#ai-title", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power2.out" }, 0.0);
+      tl.fromTo("#ai-badge", { scale: 0.6 }, { scale: 1, duration: 0.45, ease: "back.out(1.6)" }, 0.0);
+      tl.fromTo("#ai-sub", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.3);
+      tl.to(["#ai-title", "#ai-sub"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 2.15);
+      // portal help answers from documented processes
+      const camA = { x: -960, y: -556, scale: 1 };
+      gsap.set("#ai-ask", camA);
+      tl.fromTo("#ai-ask", { opacity: 0, scale: 1.03 }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 2.3);
+      tl.fromTo("#ai-l1", { opacity: 0, scale: 1.2, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 4.29);
+      // "translates what authors write": the Translate dialog
+      gsap.set("#ai-studio", { x: -400, y: 0, scale: 0.8 });
+      tl.set("#ai-studio", { opacity: 1 }, 6.4);
+      tl.set("#ai-ask", { opacity: 0 }, 6.45);
+      tl.fromTo("#ai-backdrop", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 6.4);
+      tl.fromTo("#ai-dlg", { opacity: 0, scale: 0.95, transformOrigin: "50% 40%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 6.45);
+      tl.fromTo("#ai-cur", { x: 1500, y: 1100, opacity: 1 }, { x: 1180, y: 690, opacity: 1, duration: 0.5, ease: "expo.out" }, 6.9);
+      tl.to("#ai-cur", { scale: 0.84, duration: 0.06 }, 7.6);
+      tl.to("#ai-cur", { scale: 1, duration: 0.12 }, 7.66);
+      tl.to("#ai-btn", { backgroundColor: "#2253bd", duration: 0.08 }, 7.6);
+      tl.set("#ai-cur", { opacity: 0 }, 8.1);
+      // a Word guide becomes a draft process
+      tl.fromTo("#ai-word", { x: -1100, y: -300, scale: 0.42, rotation: -3, opacity: 1 }, { x: 140, y: -260, rotation: 0, opacity: 1, duration: 0.6, ease: "expo.out" }, 8.21);
+      tl.to(["#ai-dlg", "#ai-backdrop", "#ai-studio"], { opacity: 0, duration: 0.2 }, 8.3);
+      const camD = { x: -255, y: -345, scale: 1.4 };
+      gsap.set("#ai-draft", camD);
+      tl.to("#ai-word", { x: 640, y: 120, scale: 0.12, opacity: 0, duration: 0.5, ease: "power3.in" }, 9.95);
+      tl.fromTo("#ai-draft", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 10.2);
+      tl.fromTo("#ai-l2", { opacity: 0, scale: 1.2, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 11.05);
+      // "Without AI, everything still works offline"
+      tl.to("#ai-l2", { opacity: 0, duration: 0.15 }, 12.15);
+      tl.to("#ai-draft", { x: 0, y: -1620, scale: 1.5, duration: 0.7, ease: "power2.inOut" }, 12.2);
+      tl.fromTo("#ai-l3", { opacity: 0, scale: 1.2, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 13.45);
+      tl.to("#ai-draft", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 15.5);
+      window.__timelines["ai"] = tl;
+    })();
+  </script>
+</template>

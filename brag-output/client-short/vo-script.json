@@ -1,0 +1,199 @@
+{
+  "voice": "af_heart",
+  "speed": 0.94,
+  "scenes": [
+    {
+      "id": "hook",
+      "lead": 0.5,
+      "tail": 0.5,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Your software updated overnight.",
+          "gap": 0.35
+        },
+        {
+          "id": "b",
+          "text": "Your training didn't.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "friction",
+      "lead": 0.3,
+      "tail": 0.6,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Now someone has to re-shoot every screenshot,",
+          "gap": 0.12
+        },
+        {
+          "id": "b",
+          "text": "rewrite every step,",
+          "gap": 0.12
+        },
+        {
+          "id": "c",
+          "text": "and translate it all again.",
+          "gap": 0.45
+        },
+        {
+          "id": "d",
+          "text": "Until they do, your people are guessing.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "reveal",
+      "lead": 0.5,
+      "tail": 0.5,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Introducing Steplight.",
+          "gap": 0.4
+        },
+        {
+          "id": "b",
+          "text": "Do the process once, in your browser,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "and Steplight writes the guide for you.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "record",
+      "lead": 0.4,
+      "tail": 0.9,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Every click becomes a clear, written step,",
+          "gap": 0.12
+        },
+        {
+          "id": "b",
+          "text": "with the screenshot already captured, and highlighted.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "outputs",
+      "lead": 0.3,
+      "tail": 0.8,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "From that one recording, you get Word, PDF and PowerPoint guides,",
+          "gap": 0.12
+        },
+        {
+          "id": "b",
+          "text": "video walkthroughs,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "hands-on practice,",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "scored tests,",
+          "gap": 0.1
+        },
+        {
+          "id": "e",
+          "text": "and scorm packages for your L M S.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "guide",
+      "lead": 0.3,
+      "tail": 0.8,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Inside the app itself, Guide me walks people through it, live,",
+          "gap": 0.1
+        },
+        {
+          "id": "b",
+          "text": "one step at a time.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "replay",
+      "lead": 0.3,
+      "tail": 1.0,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "When the software changes, press Replay.",
+          "gap": 0.35
+        },
+        {
+          "id": "b",
+          "text": "Steplight re-runs the process,",
+          "gap": 0.1
+        },
+        {
+          "id": "c",
+          "text": "finds what moved,",
+          "gap": 0.1
+        },
+        {
+          "id": "d",
+          "text": "and refreshes every screenshot.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "languages",
+      "lead": 0.3,
+      "tail": 0.7,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Every guide also comes in seven languages,",
+          "gap": 0.1
+        },
+        {
+          "id": "b",
+          "text": "without recording again.",
+          "gap": 0
+        }
+      ]
+    },
+    {
+      "id": "endcard",
+      "lead": 0.6,
+      "tail": 3.2,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Steplight.",
+          "gap": 0.35
+        },
+        {
+          "id": "b",
+          "text": "Record it once, and it stays right.",
+          "gap": 0
+        }
+      ]
+    }
+  ]
+}

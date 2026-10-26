@@ -1,0 +1,85 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #hook-page {
+      left: 0;
+      top: 0;
+      width: 1819px;
+      height: 2573px;
+      transform-origin: 0 0;
+    }
+    #hook-grow {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+      transform-origin: 0 0;
+      overflow: hidden;
+      border-radius: 4px;
+    }
+    #hook-docshot {
+      position: absolute;
+      inset: 0;
+      background-image: url("assets/img/word-p2.webp");
+      /* the page's screenshot (320,1200 · 1317x824 page px) fills the layer */
+      background-size: 2652px 3752px;
+      background-position: -466px -1748px;
+    }
+    #hook-live {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+    }
+    #hook-light {
+      left: 49px;
+      top: 244px;
+      width: 122px;
+      height: 52px;
+      z-index: 2;
+    }
+    #hook-chip {
+      position: absolute;
+      font-size: 28px;
+      left: 196px;
+      top: 244px;
+      z-index: 3;
+      transform-origin: 0 50%;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="hook" data-width="1920" data-height="1080">
+    <div id="hook-page" class="paper"><img src="assets/img/word-p2.webp" alt="" /></div>
+    <div id="hook-grow">
+      <div id="hook-docshot"></div>
+      <img id="hook-live" src="assets/img/erp-v2.webp" alt="" />
+      <div id="hook-light" class="light"></div>
+      <div id="hook-chip" class="chip bad">Out of date</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // the guide page: its step 1 and screenshot fill the frame (page scale 0.9)
+      gsap.set("#hook-page", { x: 141, y: -856, scale: 0.9, opacity: 1, filter: "blur(0px)" });
+      // the screenshot in the guide becomes today's app (object becomes the world), on "updated"
+      const r0 = { x: 141 + 320 * 0.9, y: -856 + 1200 * 0.9, scale: (1317 * 0.9) / 1920 };
+      tl.fromTo("#hook-grow", { x: r0.x, y: r0.y, scale: r0.scale, opacity: 0 }, { opacity: 1, duration: 0.01 }, 1.08);
+      tl.to("#hook-grow", { x: 0, y: 0, scale: 1, duration: 0.65, ease: "power2.inOut" }, 1.1);
+      tl.to("#hook-page", { filter: "blur(14px)", opacity: 0, scale: 0.94, duration: 0.3, ease: "power2.in" }, 1.15);
+      tl.fromTo("#hook-live", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power1.inOut" }, 1.3);
+      // the guide's highlight stays where New used to be
+      tl.fromTo("#hook-light", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, 1.5);
+      // camera pushes in on the miss: New now lives in the ribbon
+      tl.fromTo("#hook-grow", { scale: 1 }, { scale: 1.32, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 2.05);
+      // "didn't": the highlight is wrong
+      tl.to("#hook-light", { borderColor: "#e5484d", boxShadow: "0 0 0 12px rgba(229,72,77,0.25), 0 0 0 4000px rgba(16,24,40,0.30)", duration: 0.12, ease: "none" }, 2.94);
+      tl.fromTo("#hook-chip", { opacity: 0, scale: 0.6, filter: "blur(6px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "back.out(1.6)" }, 2.96);
+      window.__timelines["hook"] = tl;
+    })();
+  </script>
+</template>

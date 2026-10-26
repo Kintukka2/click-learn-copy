@@ -1,0 +1,48 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #ts-plate .light {
+      border-width: 5px;
+      border-radius: 28px;
+      box-shadow: 0 0 0 10px rgba(20, 184, 166, 0.25);
+    }
+    #ts-dim {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 2880px;
+      height: 1800px;
+      background: rgba(16, 24, 40, 0.18);
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="testing" data-width="1920" data-height="1080">
+    <div id="ts-plate" class="plate">
+      <img src="assets/img/studio-project.webp" alt="" />
+      <div id="ts-dim"></div>
+      <div class="light ts-l" style="left: 2112px; top: 536px; width: 275px; height: 56px"></div>
+      <div class="light ts-l" style="left: 2112px; top: 682px; width: 210px; height: 56px"></div>
+      <div class="light ts-l" style="left: 2112px; top: 828px; width: 210px; height: 56px"></div>
+      <div class="light ts-l" style="left: 2112px; top: 1104px; width: 210px; height: 56px"></div>
+      <div class="light ts-l" style="left: 2112px; top: 1380px; width: 210px; height: 56px"></div>
+    </div>
+    <audio id="ts-p1" class="clip" data-start="1.85" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="ts-p2" class="clip" data-start="2.45" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(".ts-l", { opacity: 0 });
+      gsap.set("#ts-dim", { opacity: 0 });
+      // the project: every process with its automated test result
+      tl.fromTo("#ts-plate", { x: -460, y: -300, scale: 0.84, opacity: 0, filter: "blur(8px)" }, { x: -495, y: -327, scale: 0.86, opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 0.0);
+      // "regression testing for business processes"
+      tl.to("#ts-dim", { opacity: 1, duration: 0.3 }, 1.6);
+      tl.fromTo(".ts-l", { opacity: 0, scale: 1.2, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out", stagger: 0.15 }, 1.85);
+      tl.to("#ts-plate", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 5.4);
+      window.__timelines["testing"] = tl;
+    })();
+  </script>
+</template>

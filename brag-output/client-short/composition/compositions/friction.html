@@ -1,0 +1,162 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    .fr-doc {
+      transform-origin: 0 0;
+    }
+    #fr-p2 {
+      width: 1819px;
+      height: 2573px;
+    }
+    #fr-p3 {
+      width: 1819px;
+      height: 2573px;
+    }
+    #fr-s3 {
+      width: 2134px;
+      height: 1200px;
+    }
+    #fr-s1 {
+      width: 2134px;
+      height: 1200px;
+    }
+    .fr-stale {
+      position: absolute;
+      border: 5px solid var(--bad);
+      border-radius: 6px;
+      background: rgba(229, 72, 77, 0.12);
+      z-index: 5;
+    }
+    #fr-chip {
+      position: absolute;
+      font-size: 32px;
+      height: 60px;
+      z-index: 6;
+      transform-origin: 0 50%;
+    }
+    #fr-page {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1819px;
+      height: 2573px;
+      transform-origin: 0 0;
+      background: #fff;
+      box-shadow: var(--shadow-xl);
+    }
+    #fr-page img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .fr-band {
+      position: absolute;
+      left: 236px;
+      width: 1420px;
+      height: 50px;
+      background: rgba(47, 111, 237, 0.22);
+      border-radius: 6px;
+      transform-origin: 0 50%;
+    }
+    #fr-app {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="friction" data-width="1920" data-height="1080">
+    <!-- shot A: the guides a release breaks -->
+    <div id="fr-wall" class="clip" data-start="0" data-duration="3.05">
+      <div id="fr-p2" class="paper fr-doc"><img src="assets/img/word-p2.webp" alt="" /></div>
+      <div id="fr-p3" class="paper fr-doc"><img src="assets/img/word-p3.webp" alt="" /></div>
+      <div id="fr-s3" class="paper fr-doc"><img src="assets/img/slide-03.webp" alt="" /></div>
+      <div id="fr-s1" class="paper fr-doc"><img src="assets/img/slide-01.webp" alt="" /></div>
+      <div id="fr-x1" class="fr-stale" style="left: 198px; top: 540px; width: 527px; height: 330px"></div>
+      <div id="fr-x2" class="fr-stale" style="left: 768px; top: 258px; width: 527px; height: 329px"></div>
+      <div id="fr-x3" class="fr-stale" style="left: 768px; top: 687px; width: 527px; height: 329px"></div>
+      <div id="fr-x4" class="fr-stale" style="left: 1466px; top: 116px; width: 380px; height: 240px"></div>
+      <div id="fr-chip" class="chip bad" style="left: 222px; top: 560px">Out of date</div>
+    </div>
+    <!-- shots B and C: every step rewritten, then translated -->
+    <div id="fr-edit" class="clip" data-start="3.0" data-duration="3.05">
+      <div id="fr-page">
+        <img id="fr-en" src="assets/img/word-p2.webp" alt="" />
+        <img id="fr-da" src="assets/img/word-da-p2.webp" alt="" />
+        <div class="fr-band" style="top: 297px"></div>
+        <div class="fr-band" style="top: 357px"></div>
+        <div class="fr-band" style="top: 417px"></div>
+        <div class="fr-band" style="top: 477px"></div>
+        <div class="fr-band" style="top: 537px"></div>
+        <div class="fr-band" style="top: 597px"></div>
+        <div class="fr-band" style="top: 657px"></div>
+        <div class="fr-band" style="top: 717px"></div>
+        <div class="fr-band" style="top: 777px"></div>
+        <div class="fr-band" style="top: 837px"></div>
+      </div>
+    </div>
+    <!-- shot D: people guess -->
+    <div id="fr-guess" class="clip" data-start="5.95" data-duration="3.15">
+      <img id="fr-app" src="assets/img/erp-v2.webp" alt="" />
+      <div id="fr-cur" class="cursor">
+        <svg viewBox="0 0 28 28"><path d="M5 2.8v19.6l5.1-4.9 3.3 7.6 3.6-1.6-3.3-7.4h7z" fill="#111827" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+    <audio id="fr-pop1" class="clip" data-start="1.37" data-duration="0.2" data-volume="0.45" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="fr-pop2" class="clip" data-start="1.54" data-duration="0.2" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="fr-pop3" class="clip" data-start="1.71" data-duration="0.2" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="fr-pop4" class="clip" data-start="1.88" data-duration="0.2" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // A: the documents land as a spread
+      const docs = [
+        ["#fr-p2", 70, 60, 0.4],
+        ["#fr-p3", 640, 120, 0.4],
+        ["#fr-s3", 1220, 70, 0.3],
+        ["#fr-s1", 1220, 470, 0.3],
+      ];
+      docs.forEach(([sel, x, y, s], i) => {
+        tl.fromTo(sel, { x: x, y: y + 30, scale: s * 1.03, opacity: 0.5, filter: "blur(8px)" }, { x: x, y: y, scale: s, opacity: 1, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 0.02 + i * 0.07);
+      });
+      // "re-shoot every screenshot": each screenshot is out of date, one by one
+      ["#fr-x1", "#fr-x2", "#fr-x3", "#fr-x4"].forEach((sel, i) => {
+        tl.fromTo(sel, { opacity: 0, scale: 1.06 }, { opacity: 1, scale: 1, duration: 0.22, ease: "power3.out" }, 1.37 + i * 0.17);
+      });
+      tl.fromTo("#fr-chip", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, 1.4);
+
+      // B: "rewrite every step" — punch in on the step list; every line is selected for editing
+      tl.fromTo("#fr-page", { x: -40, y: -129, scale: 1.1, opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, 3.0);
+      gsap.utils.toArray("#fr-page .fr-band").forEach((el, i) => {
+        tl.fromTo(el, { scaleX: 0, opacity: 1 }, { scaleX: 1, duration: 0.2, ease: "power2.out" }, 3.05 + i * 0.07);
+      });
+      // C: "translate it all again": the page becomes the Danish guide
+      tl.to("#fr-page .fr-band", { opacity: 0, duration: 0.18, ease: "power1.in" }, 4.4);
+      tl.fromTo("#fr-da", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, 4.57);
+      tl.to("#fr-en", { opacity: 0, filter: "blur(8px)", duration: 0.15, ease: "power2.in" }, 4.55);
+
+      // D: "your people are guessing": a cursor hunts in the changed app
+      tl.fromTo("#fr-app", { opacity: 0, scale: 1.03, transformOrigin: "50% 40%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out" }, 5.95);
+      const path = [
+        [1240, 760, 6.0],
+        [512, 212, 6.6],
+        [742, 212, 7.25],
+        [168, 322, 7.95],
+        [1000, 560, 8.65],
+      ];
+      tl.set("#fr-cur", { x: path[0][0], y: path[0][1] }, 5.95);
+      for (let i = 1; i < path.length; i++) {
+        const [x, y, t] = path[i];
+        const prev = path[i - 1][2];
+        tl.to("#fr-cur", { x: x, y: y, duration: Math.min(0.5, t - prev - 0.12), ease: "power2.inOut" }, prev + 0.1);
+      }
+      window.__timelines["friction"] = tl;
+    })();
+  </script>
+</template>

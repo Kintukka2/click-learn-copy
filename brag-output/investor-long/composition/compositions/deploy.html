@@ -1,0 +1,152 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    .dp-box {
+      position: absolute;
+      box-sizing: border-box;
+      background: #fff;
+      border-radius: 30px;
+      box-shadow: var(--shadow-xl);
+      font-family: "Inter", sans-serif;
+    }
+    #dp-srv {
+      left: 650px;
+      top: 230px;
+      width: 620px;
+      padding: 40px 40px 36px;
+    }
+    #dp-srv .h {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 46px;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+    }
+    #dp-srv .h svg {
+      width: 64px;
+      height: 64px;
+    }
+    #dp-srv .sub {
+      margin-top: 14px;
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--teal-text);
+    }
+    #dp-srv .in {
+      margin-top: 18px;
+      padding: 22px 26px;
+      border-radius: 18px;
+      background: var(--ground);
+      border: 2px solid var(--border);
+      font-size: 30px;
+      font-weight: 600;
+    }
+    #dp-srv .in span {
+      display: block;
+      margin-top: 4px;
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--ink-2);
+    }
+    .dp-side {
+      top: 300px;
+      width: 440px;
+      padding: 34px 36px;
+    }
+    .dp-side .h {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .dp-side .it {
+      margin-top: 18px;
+      font-size: 36px;
+      font-weight: 650;
+    }
+    #dp-auth {
+      left: 110px;
+    }
+    #dp-learn {
+      left: 1370px;
+    }
+    #dp-lines {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+    }
+    #dp-lines path {
+      fill: none;
+      stroke: var(--brand);
+      stroke-width: 5;
+      stroke-linecap: round;
+    }
+    .dp-tag {
+      position: absolute;
+      z-index: 3;
+    }
+    .dp-tag.chip {
+      font-size: 28px;
+      height: 58px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="deploy" data-width="1920" data-height="1080">
+    <svg id="dp-lines" viewBox="0 0 1920 1080">
+      <path id="dp-l1" d="M550 470 L650 470" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+      <path id="dp-l2" d="M1270 470 L1370 470" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+    </svg>
+    <div id="dp-srv" class="dp-box">
+      <div class="h">
+        <svg viewBox="0 0 32 32">
+          <defs>
+            <linearGradient id="dp-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f6fed" /><stop offset="1" stop-color="#14b8a6" /></linearGradient>
+          </defs>
+          <rect width="32" height="32" rx="8" fill="url(#dp-g)" />
+          <path d="M8 23h5v-5h5v-5h6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="23.5" cy="8.5" r="2.5" fill="#fff" />
+        </svg>
+        Steplight server
+      </div>
+      <div class="sub" id="dp-sub">One container · dedicated server</div>
+      <div class="in dp-in">Studio and API</div>
+      <div class="in dp-in">Headless Chromium<span>Record, replay and render</span></div>
+      <div class="in dp-in">Data volume<span>Plain JSON and PNG files</span></div>
+    </div>
+    <div id="dp-auth" class="dp-box dp-side"><div class="h">Authors</div><div class="it">Browser extension</div><div class="it">Studio</div></div>
+    <div id="dp-learn" class="dp-box dp-side"><div class="h">Learners</div><div class="it">Portal</div><div class="it">Players</div><div class="it">Guide me</div></div>
+    <div id="dp-key" class="dp-tag chip warn" style="left: 330px; top: 640px">Access key</div>
+    <div id="dp-anon" class="dp-tag chip ok" style="left: 1370px; top: 760px">Anonymous analytics</div>
+    <div id="dp-only" class="dp-tag chip ok" style="left: 110px; top: 760px">Only talks to your server</div>
+    <audio id="dp-s1" class="clip" data-start="5.52" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="dp-s2" class="clip" data-start="7.04" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="dp-s3" class="clip" data-start="8.96" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(["#dp-sub", ".dp-in", "#dp-auth", "#dp-learn", ".dp-tag"], { opacity: 0 });
+      tl.fromTo("#dp-srv", { opacity: 0, scale: 0.94, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.45, ease: "expo.out" }, 0.08);
+      tl.fromTo("#dp-sub", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25 }, 1.6);
+      tl.fromTo(".dp-in", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.3, ease: "expo.out", stagger: 0.25 }, 2.2);
+      // "Authoring sits behind an access key"
+      tl.fromTo("#dp-auth", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 4.24);
+      tl.fromTo("#dp-l1", { strokeDashoffset: 110 }, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 4.6);
+      tl.fromTo("#dp-key", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }, 5.52);
+      // "analytics are anonymous"
+      tl.fromTo("#dp-learn", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 6.3);
+      tl.fromTo("#dp-l2", { strokeDashoffset: 110 }, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 6.5);
+      tl.fromTo("#dp-anon", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }, 7.04);
+      // "the extension only talks to your own server"
+      tl.fromTo("#dp-only", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }, 8.96);
+      tl.to(["#dp-srv", "#dp-auth", "#dp-learn", ".dp-tag", "#dp-lines"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 10.95);
+      window.__timelines["deploy"] = tl;
+    })();
+  </script>
+</template>

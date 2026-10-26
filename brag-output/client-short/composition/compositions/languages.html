@@ -1,0 +1,139 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    /* Studio language switch (ProcessEditor.tsx lang-switch) at 2x */
+    #lg-switch {
+      position: absolute;
+      left: 140px;
+      top: 120px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      height: 84px;
+      padding: 0 26px 0 28px;
+      border-radius: 20px;
+      background: #fff;
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      font: 600 34px/1 "Inter", sans-serif;
+      color: var(--ink);
+      overflow: hidden;
+    }
+    #lg-switch.foreign {
+      border-color: rgba(20, 184, 166, 0.6);
+      background: var(--teal-soft);
+      color: var(--teal-text);
+    }
+    #lg-name {
+      display: inline-block;
+      min-width: 240px;
+    }
+    #lg-code {
+      font-size: 22px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: var(--ground);
+      color: var(--ink-2);
+    }
+    #lg-list {
+      left: 140px;
+      top: 250px;
+    }
+    #lg-list .loc {
+      display: inline-block;
+      margin-left: 12px;
+      padding: 2px 12px;
+      border-radius: 8px;
+      background: var(--teal-soft);
+      color: var(--teal-text);
+      font-weight: 600;
+    }
+    #lg-shot {
+      position: absolute;
+      left: 960px;
+      top: 250px;
+      width: 840px;
+      height: 525px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+      background: #fff;
+    }
+    #lg-shot img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #lg-shot .light {
+      border-width: 4px;
+      border-radius: 8px;
+      box-shadow: 0 0 0 8px rgba(20, 184, 166, 0.25), 0 0 0 2000px rgba(16, 24, 40, 0.22);
+    }
+    .lg-t {
+      position: relative;
+    }
+    .lg-t > div {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+    .lg-t > div:first-child {
+      position: relative;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="languages" data-width="1920" data-height="1080">
+    <div id="lg-switch">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" /></svg>
+      <span id="lg-name">English</span><span id="lg-code">EN</span>
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6" /></svg>
+    </div>
+    <div id="lg-list" class="steplist">
+      <div class="head">Steps <span>10</span></div>
+      <div class="steprow sel"><div class="num">1</div><div class="thumb"><img class="lg-th" data-en="assets/img/s1.webp" src="assets/img/s1.webp" alt="" /><div class="hl" style="left: 2px; top: 17px; width: 13px; height: 7px"></div></div>
+        <div class="lg-t"><div class="en"><div class="t">Click <b>New</b>.</div><div class="m">Click</div></div><div class="da"><div class="t">Klik på <b>Ny</b>.</div><div class="m">Click<span class="loc">localized</span></div></div><div class="de"><div class="t">Klicken Sie auf <b>Neu</b>.</div><div class="m">Click<span class="loc">localized</span></div></div></div></div>
+      <div class="steprow"><div class="num">2</div><div class="thumb"><img src="assets/img/s2.webp" alt="" /><div class="hl" style="left: 81px; top: 34px; width: 29px; height: 6px"></div></div>
+        <div class="lg-t"><div class="en"><div class="t">In the <b>Name</b> field, enter <b>Fjord Kontormøbler ApS</b>.</div><div class="m">Type</div></div><div class="da"><div class="t">Indtast <b>Fjord Kontormøbler ApS</b> i feltet <b>Navn</b>.</div><div class="m">Type<span class="loc">localized</span></div></div><div class="de"><div class="t">Geben Sie im Feld <b>Name</b> <b>Fjord Kontormøbler ApS</b> ein.</div><div class="m">Type<span class="loc">localized</span></div></div></div></div>
+      <div class="steprow"><div class="num">3</div><div class="thumb"><img src="assets/img/s3.webp" alt="" /><div class="hl" style="left: 27px; top: 39px; width: 29px; height: 6px"></div></div>
+        <div class="lg-t"><div class="en"><div class="t">In the <b>Address</b> field, enter <b>Strandvejen 60</b>.</div><div class="m">Type</div></div><div class="da"><div class="t">Indtast <b>Strandvejen 60</b> i feltet <b>Adresse</b>.</div><div class="m">Type<span class="loc">localized</span></div></div><div class="de"><div class="t">Geben Sie im Feld <b>Adresse</b> <b>Strandvejen 60</b> ein.</div><div class="m">Type<span class="loc">localized</span></div></div></div></div>
+    </div>
+    <div id="lg-shot">
+      <img id="lg-en" src="assets/img/s1.webp" alt="" />
+      <img id="lg-da" src="assets/img/da-s1.webp" alt="" />
+      <img id="lg-de" src="assets/img/de-s1.webp" alt="" />
+      <div id="lg-light" class="light" style="left: 18px; top: 102px; width: 59px; height: 28px"></div>
+    </div>
+    <audio id="lg-roll" class="clip" data-start="2.0" data-duration="0.2" data-volume="0.3" src="assets/sfx/rollover2.ogg"></audio>
+    <audio id="lg-land" class="clip" data-start="2.66" data-duration="0.2" data-volume="0.45" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo(["#lg-switch", "#lg-list"], { opacity: 0, y: 24, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out", stagger: 0.06 }, 0.0);
+      tl.fromTo("#lg-shot", { opacity: 0, x: 40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 0.1);
+      gsap.set([".lg-t .da", ".lg-t .de", "#lg-da", "#lg-de"], { opacity: 0 });
+      // "seven languages": the language rolls through all seven, lands on Dansk
+      const langs = ["English", "Dansk", "Deutsch", "Français", "Español", "Nederlands", "Svenska"];
+      const codes = ["EN", "DA", "DE", "FR", "ES", "NL", "SV"];
+      const roll = [[0, 0], [2.0, 1], [2.1, 2], [2.2, 3], [2.3, 4], [2.4, 5], [2.5, 6], [2.64, 1]];
+      // Danish: the instructions come from the Danish UI names, with Danish screenshots
+      tl.to(".lg-t .en", { opacity: 0, filter: "blur(6px)", duration: 0.12, stagger: 0.05 }, 2.66);
+      tl.fromTo(".lg-t .da", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, stagger: 0.05 }, 2.7);
+      tl.fromTo("#lg-da", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 2.7);
+      tl.fromTo("#lg-light", { scaleX: 1 }, { scaleX: 51 / 59, transformOrigin: "0% 50%", duration: 0.2 }, 2.7);
+      tl.to(["#lg-switch", "#lg-list", "#lg-shot"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 5.02);
+      const sw = document.getElementById("lg-switch");
+      SL.drive(tl, [
+        SL.roller(document.getElementById("lg-name"), langs, roll),
+        SL.roller(document.getElementById("lg-code"), codes, roll),
+        (t) => sw.classList.toggle("foreign", t >= 2.0),
+      ]);
+      window.__timelines["languages"] = tl;
+    })();
+  </script>
+</template>

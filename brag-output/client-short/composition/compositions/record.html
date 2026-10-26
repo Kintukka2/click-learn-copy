@@ -1,0 +1,234 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #rc-plate img.st {
+      opacity: 0;
+    }
+    #rc-focus {
+      position: absolute;
+      left: 1598px;
+      top: 588px;
+      width: 532px;
+      height: 68px;
+      border: 4px solid #0b5cad;
+      border-radius: 8px;
+      box-shadow: 0 0 0 6px rgba(11, 92, 173, 0.18);
+      background: #fff;
+    }
+    #rc-typed {
+      position: absolute;
+      left: 1622px;
+      top: 590px;
+      height: 64px;
+      line-height: 64px;
+      font: 400 27px/64px "Inter", sans-serif;
+      color: #1c2430;
+      white-space: pre;
+    }
+    #rc-pill {
+      left: 588px;
+      top: 960px;
+      transform: translateX(-50%);
+      z-index: 5;
+    }
+    #rc-panel {
+      position: absolute;
+      left: 1176px;
+      top: 0;
+      width: 744px;
+      height: 1080px;
+      background: #fff;
+      border-left: 2px solid var(--border);
+      box-shadow: -24px 0 60px -30px rgba(16, 24, 40, 0.25);
+      z-index: 4;
+      font-family: "Inter", sans-serif;
+    }
+    #rc-panel .ph {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 40px 40px 26px;
+      border-bottom: 2px solid var(--border);
+    }
+    #rc-panel .logo {
+      width: 52px;
+      height: 52px;
+    }
+    #rc-panel .ph .t1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    #rc-panel .ph .t2 {
+      font-size: 28px;
+      color: var(--ink-3);
+      font-weight: 500;
+    }
+    #rc-panel .sh {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      padding: 30px 40px 0;
+      font-size: 28px;
+      font-weight: 650;
+    }
+    #rc-panel .sh span {
+      color: var(--ink-3);
+      font-weight: 500;
+    }
+    #rc-panel .steprow {
+      position: absolute;
+      left: 20px;
+      width: 704px;
+      box-sizing: border-box;
+    }
+    #rc-dim {
+      position: absolute;
+      inset: 0;
+      background: var(--ground);
+      z-index: 6;
+    }
+    #rc-big {
+      position: absolute;
+      left: 160px;
+      top: 40px;
+      width: 1600px;
+      height: 1000px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+      transform-origin: 0 0;
+      z-index: 7;
+      background: #fff;
+    }
+    #rc-big img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #rc-flash {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+    }
+    #rc-hl {
+      left: 862px;
+      top: 364px;
+      width: 296px;
+      height: 50px;
+      border-width: 5px;
+      border-radius: 10px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="record" data-width="1920" data-height="1080">
+    <div id="rc-plate" class="plate">
+      <img id="rc-v1" src="assets/img/erp-v1.webp" alt="" />
+      <img id="rc-new" class="st" src="assets/img/erp-new.webp" alt="" />
+      <div id="rc-focus"></div>
+      <div id="rc-typed"></div>
+      <img id="rc-done" class="st" src="assets/img/erp-typed.webp" alt="" />
+    </div>
+    <div id="rc-pill" class="rec-pill"><span class="dot"></span><span class="b">Recording</span><span class="n" id="rc-count">0 steps</span><span class="btn">Pause</span><span class="btn">Stop</span></div>
+    <div id="rc-panel">
+      <div class="ph">
+        <svg class="logo" viewBox="0 0 32 32">
+          <defs>
+            <linearGradient id="rc-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f6fed" /><stop offset="1" stop-color="#14b8a6" /></linearGradient>
+          </defs>
+          <rect width="32" height="32" rx="8" fill="url(#rc-g)" />
+          <path d="M8 23h5v-5h5v-5h6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="23.5" cy="8.5" r="2.5" fill="#fff" />
+        </svg>
+        <div><div class="t1">Steplight</div><div class="t2">Create a new customer</div></div>
+      </div>
+      <div class="sh">Steps <span id="rc-n">0</span></div>
+      <div id="rc-row1" class="steprow" style="top: 196px">
+        <div class="num">1</div>
+        <div class="thumb"><img src="assets/img/s1.webp" alt="" /><div class="hl" style="left: 2px; top: 17px; width: 13px; height: 7px"></div></div>
+        <div><div class="t">Click <b>New</b>.</div><div class="m">Click</div></div>
+        <div class="st"></div>
+      </div>
+      <div id="rc-row2" class="steprow sel" style="top: 338px">
+        <div class="num">2</div>
+        <div class="thumb"><img src="assets/img/s2.webp" alt="" /><div class="hl" style="left: 81px; top: 34px; width: 29px; height: 6px"></div></div>
+        <div><div class="t">In the <b>Name</b> field, enter <b>Fjord Kontormøbler ApS</b>.</div><div class="m">Type</div></div>
+        <div class="st"></div>
+      </div>
+    </div>
+    <div id="rc-cur" class="cursor" style="z-index: 5">
+      <svg viewBox="0 0 28 28"><path d="M5 2.8v19.6l5.1-4.9 3.3 7.6 3.6-1.6-3.3-7.4h7z" fill="#111827" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" /></svg>
+    </div>
+    <div id="rc-dim"></div>
+    <div id="rc-big">
+      <img src="assets/img/s2.webp" alt="" />
+      <div id="rc-hl" class="light"></div>
+      <div id="rc-flash"></div>
+    </div>
+    <audio id="rc-click" class="clip" data-start="0.56" data-duration="0.2" data-volume="0.7" src="assets/sfx/click2.ogg"></audio>
+    <audio id="rc-slide1" class="clip" data-start="0.56" data-duration="0.6" data-volume="0.35" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="rc-k1" class="clip" data-start="1.30" data-duration="0.2" data-volume="0.35" src="assets/sfx/keypress-003.wav"></audio>
+    <audio id="rc-k2" class="clip" data-start="1.42" data-duration="0.2" data-volume="0.3" src="assets/sfx/keypress-012.wav"></audio>
+    <audio id="rc-k3" class="clip" data-start="1.55" data-duration="0.2" data-volume="0.35" src="assets/sfx/keypress-007.wav"></audio>
+    <audio id="rc-k4" class="clip" data-start="1.66" data-duration="0.2" data-volume="0.3" src="assets/sfx/keypress-021.wav"></audio>
+    <audio id="rc-k5" class="clip" data-start="1.79" data-duration="0.2" data-volume="0.35" src="assets/sfx/keypress-018.wav"></audio>
+    <audio id="rc-k6" class="clip" data-start="1.91" data-duration="0.2" data-volume="0.3" src="assets/sfx/keypress-026.wav"></audio>
+    <audio id="rc-k7" class="clip" data-start="2.04" data-duration="0.2" data-volume="0.35" src="assets/sfx/keypress-003.wav"></audio>
+    <audio id="rc-slide2" class="clip" data-start="2.1" data-duration="0.6" data-volume="0.35" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="rc-shutter" class="clip" data-start="3.84" data-duration="0.2" data-volume="0.5" src="assets/sfx/click_003.ogg"></audio>
+    <audio id="rc-pop" class="clip" data-start="4.72" data-duration="0.2" data-volume="0.45" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const cam0 = SL.cam(0.6667, 0, 0, 0, 0);
+      gsap.set("#rc-plate", { x: 0, y: 0, scale: 0.6667 });
+      gsap.set(["#rc-focus", "#rc-typed"], { opacity: 0 });
+      gsap.set(["#rc-row1", "#rc-row2", "#rc-big", "#rc-dim"], { opacity: 0 });
+      gsap.set("#rc-hl", { opacity: 0 });
+      gsap.set("#rc-flash", { opacity: 0 });
+      // the cursor comes in and clicks New on "click"
+      const pNew = SL.toFrame(cam0, 93.5, 180);
+      tl.fromTo("#rc-cur", { x: 1500, y: 1150 }, { x: pNew.x - 10, y: pNew.y - 6, duration: 0.48, ease: "expo.out" }, 0.0);
+      tl.to("#rc-cur", { scale: 0.84, duration: 0.06, ease: "power2.in" }, 0.56);
+      tl.to("#rc-cur", { scale: 1, duration: 0.14, ease: "power2.out" }, 0.62);
+      // the click opens the customer card: match cut, comes in slightly large and settles; the camera slides to the form
+      tl.set("#rc-new", { opacity: 1 }, 0.62);
+      tl.set("#rc-v1", { opacity: 0 }, 0.62);
+      tl.fromTo("#rc-plate", { scale: 0.68 }, { scale: 1, x: -984, y: 0, duration: 0.5, ease: "power3.inOut" }, 0.62);
+      // step 1 lands in the step list
+      tl.fromTo("#rc-row1", { opacity: 0, x: 40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, 0.7);
+      // the cursor goes to Name; typing
+      const cam1 = { x: -984, y: 0, scale: 1 };
+      const pName = SL.toFrame(cam1, 1000, 311);
+      tl.to("#rc-cur", { x: pName.x, y: pName.y, duration: 0.4, ease: "power3.inOut" }, 0.82);
+      tl.to("#rc-cur", { scale: 0.84, duration: 0.05 }, 1.2);
+      tl.to("#rc-cur", { scale: 1, opacity: 0, duration: 0.2 }, 1.26);
+      tl.set(["#rc-focus", "#rc-typed"], { opacity: 1 }, 1.22);
+      // blur: the app shows the saved value, the step is recorded
+      tl.set(["#rc-focus", "#rc-typed"], { opacity: 0 }, 2.2);
+      tl.set("#rc-done", { opacity: 1 }, 2.2);
+      tl.fromTo("#rc-row2", { opacity: 0, x: 40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, 2.25);
+      // "with the screenshot already captured": row 2's thumbnail becomes the shot
+      const r = { x: 1274, y: 354, w: 152 };
+      tl.fromTo("#rc-big", { x: r.x - 160, y: r.y - 40, scale: r.w / 1600, opacity: 0 }, { opacity: 1, duration: 0.05 }, 2.62);
+      tl.to("#rc-big", { x: 0, y: 0, scale: 1, duration: 0.6, ease: "power2.inOut" }, 2.64);
+      tl.fromTo("#rc-dim", { opacity: 0 }, { opacity: 0.92, duration: 0.5, ease: "power1.inOut" }, 2.7);
+      tl.fromTo("#rc-flash", { opacity: 0 }, { opacity: 0.75, duration: 0.05, ease: "none" }, 3.84);
+      tl.to("#rc-flash", { opacity: 0, duration: 0.25, ease: "power2.out" }, 3.9);
+      // "and highlighted"
+      tl.fromTo("#rc-hl", { opacity: 0, scale: 1.35 }, { opacity: 1, scale: 1, duration: 0.4, ease: "expo.out" }, 4.72);
+      const count = document.getElementById("rc-count");
+      const n = document.getElementById("rc-n");
+      SL.drive(tl, [
+        SL.typer(document.getElementById("rc-typed"), "Fjord Kontormøbler ApS", 1.3, 26, true),
+        SL.roller(count, ["0 steps", "1 step", "2 steps"], [[0, 0], [0.66, 1], [2.2, 2]]),
+        SL.roller(n, ["0", "1", "2"], [[0, 0], [0.7, 1], [2.25, 2]]),
+      ]);
+      window.__timelines["record"] = tl;
+    })();
+  </script>
+</template>

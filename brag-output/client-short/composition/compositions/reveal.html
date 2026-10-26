@@ -1,0 +1,152 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #rv-before {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+    }
+    #rv-app {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+    }
+    #rv-flood {
+      position: absolute;
+      inset: 0;
+      background: var(--brand);
+      z-index: 3;
+    }
+    #rv-name {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 420px;
+      text-align: center;
+      font: 800 220px/1 "Inter", sans-serif;
+      letter-spacing: -0.045em;
+      color: #fff;
+      z-index: 4;
+    }
+    #rv-name span {
+      display: inline-block;
+    }
+    #rv-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 610px;
+      text-align: center;
+      font: 600 54px/1.25 "Inter", sans-serif;
+      letter-spacing: -0.02em;
+      color: #fff;
+      z-index: 4;
+    }
+    #rv-line .w {
+      display: inline-block;
+    }
+    #rv-pill {
+      left: 588px;
+      top: 960px;
+      z-index: 5;
+      transform-origin: 50% 50%;
+      transform: translateX(-50%);
+    }
+    #rv-panel {
+      position: absolute;
+      left: 1176px;
+      top: 0;
+      width: 744px;
+      height: 1080px;
+      background: #fff;
+      border-left: 2px solid var(--border);
+      box-shadow: -24px 0 60px -30px rgba(16, 24, 40, 0.25);
+      z-index: 4;
+      font-family: "Inter", sans-serif;
+    }
+    #rv-panel .ph {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 40px 40px 26px;
+      border-bottom: 2px solid var(--border);
+    }
+    #rv-panel .logo {
+      width: 52px;
+      height: 52px;
+    }
+    #rv-panel .ph .t1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    #rv-panel .ph .t2 {
+      font-size: 28px;
+      color: var(--ink-3);
+      font-weight: 500;
+    }
+    #rv-panel .sh {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      padding: 30px 40px 0;
+      font-size: 28px;
+      font-weight: 650;
+    }
+    #rv-panel .sh span {
+      color: var(--ink-3);
+      font-weight: 500;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="reveal" data-width="1920" data-height="1080">
+    <img id="rv-before" src="assets/img/erp-v2.webp" alt="" />
+    <img id="rv-app" src="assets/img/erp-v1.webp" alt="" />
+    <div id="rv-flood"></div>
+    <div id="rv-name"><span>S</span><span>t</span><span>e</span><span>p</span><span>l</span><span>i</span><span>g</span><span>h</span><span>t</span></div>
+    <div id="rv-pill" class="rec-pill">
+      <span class="dot"></span><span class="b">Recording</span><span class="n">0 steps</span><span class="btn">Pause</span><span class="btn">Stop</span>
+    </div>
+    <div id="rv-panel">
+      <div class="ph">
+        <svg class="logo" viewBox="0 0 32 32">
+          <defs>
+            <linearGradient id="rv-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f6fed" /><stop offset="1" stop-color="#14b8a6" /></linearGradient>
+          </defs>
+          <rect width="32" height="32" rx="8" fill="url(#rv-g)" />
+          <path d="M8 23h5v-5h5v-5h6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="23.5" cy="8.5" r="2.5" fill="#fff" />
+        </svg>
+        <div><div class="t1">Steplight</div><div class="t2">Create a new customer</div></div>
+      </div>
+      <div class="sh">Steps <span>0</span></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // colour flood from the cursor's last point
+      tl.fromTo("#rv-flood", { clipPath: "circle(0px at 1000px 560px)" }, { clipPath: "circle(2300px at 1000px 560px)", duration: 0.45, ease: "power2.inOut" }, 0);
+      gsap.set("#rv-app", { opacity: 0 });
+      tl.set("#rv-app", { opacity: 1 }, 0.5);
+      tl.set("#rv-before", { opacity: 0 }, 0.5);
+      // the name, letter by letter, landing before it is spoken (1.15 s)
+      tl.fromTo("#rv-name span", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out", stagger: 0.045 }, 0.5);
+      tl.to("#rv-name", { opacity: 0, filter: "blur(8px)", duration: 0.16, ease: "power2.in" }, 2.0);
+      // "Do the process once, in your browser": the field shrinks into the recording pill
+      tl.fromTo("#rv-flood", { clipPath: "inset(0px 0px 0px 0px round 0px)" }, { clipPath: "inset(960px 1032px 50px 288px round 35px)", duration: 0.62, ease: "power3.inOut", immediateRender: false }, 2.11);
+      tl.to("#rv-flood", { backgroundColor: "#101828", duration: 0.4, ease: "power1.inOut" }, 2.3);
+      tl.fromTo("#rv-pill", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, 2.68);
+      tl.to("#rv-flood", { opacity: 0, duration: 0.15 }, 2.85);
+      // "and Steplight writes the guide for you": the step list opens beside the app
+      tl.fromTo("#rv-panel", { x: 160, opacity: 0, filter: "blur(10px)" }, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.55, ease: "expo.out" }, 4.27);
+      window.__timelines["reveal"] = tl;
+    })();
+  </script>
+</template>

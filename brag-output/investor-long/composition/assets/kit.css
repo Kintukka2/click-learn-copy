@@ -1,0 +1,349 @@
+/* Steplight film kit: tokens and parts taken from the Studio, player and Assist CSS (studio/src/styles.css,
+   src/players/player.css, src/assist/assist.css), scaled for 1920x1080 video. */
+:root {
+  --ground: #f6f7f9;
+  --surface: #ffffff;
+  --border: #e4e7ec;
+  --ink: #101828;
+  --ink-2: #475467;
+  --ink-3: #667085;
+  --brand: #2f6fed;
+  --brand-press: #2253bd;
+  --brand-soft: #eef3fe;
+  --brand-text: #1d4fc4;
+  --teal: #14b8a6;
+  --teal-soft: #e6f8f5;
+  --teal-text: #0f766e;
+  --ok: #12b76a;
+  --ok-soft: #ecfdf3;
+  --ok-text: #067647;
+  --warn: #f79009;
+  --warn-soft: #fffaeb;
+  --warn-text: #b54708;
+  --bad: #e5484d;
+  --bad-soft: #fef3f2;
+  --bad-text: #b42318;
+  --app-bar: #0b1f38;
+  --shadow-xl: 0 48px 96px -24px rgba(16, 24, 40, 0.3), 0 12px 24px -12px rgba(16, 24, 40, 0.14);
+  --shadow-lg: 0 24px 48px -12px rgba(16, 24, 40, 0.2), 0 8px 16px -8px rgba(16, 24, 40, 0.08);
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--ground);
+  font-family: "Inter", sans-serif;
+  color: var(--ink);
+  font-feature-settings: "cv11", "ss01", "ss03";
+}
+
+/* A 2x capture of a 1440x900 screen. Its box is the image's own pixels (2880x1800), so scale 1 = 2x UI. */
+.plate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2880px;
+  height: 1800px;
+  transform-origin: 0 0;
+}
+.plate > img,
+.plate > .layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2880px;
+  height: 1800px;
+}
+.plate > img {
+  display: block;
+}
+
+/* Paper: a rendered document page */
+.paper {
+  position: absolute;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+.paper > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The step light: Steplight's own highlight box (Studio editor: 2px teal, 4px teal ring, dim around) */
+.light {
+  position: absolute;
+  border: 6px solid var(--teal);
+  border-radius: 14px;
+  box-shadow: 0 0 0 12px rgba(20, 184, 166, 0.25), 0 0 0 4000px rgba(16, 24, 40, 0.26);
+}
+.light.nodim {
+  box-shadow: 0 0 0 12px rgba(20, 184, 166, 0.25);
+}
+.light.bad {
+  border-color: var(--bad);
+  box-shadow: 0 0 0 12px rgba(229, 72, 77, 0.22), 0 0 0 4000px rgba(16, 24, 40, 0.26);
+}
+
+/* The guide callout (player caption / Assist card) at 2x */
+.callout {
+  position: absolute;
+  width: 680px;
+  padding: 28px 34px 30px;
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08), 0 48px 120px -24px rgba(15, 23, 42, 0.36);
+  font-family: "Inter", sans-serif;
+}
+.callout .kicker {
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.callout .kicker .sub {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  color: #64748b;
+  font-size: 24px;
+}
+.callout .text {
+  margin-top: 12px;
+  font-size: 34px;
+  line-height: 1.35;
+  color: #334155;
+}
+.callout .text b {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* Studio chips at video size */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-family: "Inter", sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.chip::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.chip.bad {
+  background: var(--bad-soft);
+  color: var(--bad-text);
+}
+.chip.warn {
+  background: var(--warn-soft);
+  color: var(--warn-text);
+}
+.chip.ok {
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
+/* Mouse pointer from src/players/icons.ts */
+.cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 64px;
+  height: 64px;
+  transform-origin: 10px 6px;
+}
+.cursor svg {
+  width: 64px;
+  height: 64px;
+  display: block;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.28));
+}
+
+/* Recording pill from extension/content.ts at 2x */
+.rec-pill {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px 14px 28px;
+  border-radius: 999px;
+  background: #101828;
+  color: #fff;
+  font: 26px/1.2 "Inter", sans-serif;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+  white-space: nowrap;
+}
+.rec-pill .dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f04438;
+  box-shadow: 0 0 0 6px rgba(240, 68, 56, 0.25);
+}
+.rec-pill .b {
+  font-weight: 600;
+}
+.rec-pill .n {
+  opacity: 0.75;
+}
+.rec-pill .btn {
+  padding: 6px 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  font-weight: 600;
+}
+
+/* Kinetic titles */
+.title {
+  position: absolute;
+  font-family: "Inter", sans-serif;
+  font-weight: 800;
+  font-size: 92px;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+.title .acc {
+  color: var(--brand);
+}
+.word {
+  display: inline-block;
+}
+
+/* A step row from the Studio step list (StepList.tsx) at 2x */
+.steplist {
+  position: absolute;
+  width: 744px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: var(--shadow-xl);
+  padding: 26px 20px 20px;
+  font-family: "Inter", sans-serif;
+}
+.steplist .head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-size: 28px;
+  font-weight: 650;
+  padding: 0 12px 18px;
+}
+.steplist .head span {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.steprow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 152px 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 16px 44px 16px 14px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+}
+.steprow.sel {
+  background: var(--brand-soft);
+  border-color: rgba(47, 111, 237, 0.35);
+}
+.steprow .num {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ground);
+  color: var(--ink-2);
+  font-size: 24px;
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+}
+.steprow.sel .num {
+  background: var(--brand);
+  color: #fff;
+}
+.steprow .thumb {
+  position: relative;
+  width: 152px;
+  height: 96px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+}
+.steprow .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.steprow .thumb .hl {
+  position: absolute;
+  border: 3px solid var(--teal);
+  border-radius: 4px;
+  box-shadow: 0 0 0 999px rgba(16, 24, 40, 0.18);
+}
+.steprow .t {
+  font-size: 28px;
+  line-height: 1.32;
+  color: var(--ink);
+}
+.steprow .t b {
+  font-weight: 650;
+}
+.steprow .m {
+  margin-top: 6px;
+  font-size: 26px;
+  color: var(--ink-3);
+}
+.steprow .st {
+  position: absolute;
+  right: 16px;
+  top: 22px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+.steprow .st.healed {
+  background: var(--warn);
+}
+
+/* Primary button (Studio .btn-primary, large) at 2x */
+.btn-primary {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  height: 96px;
+  padding: 0 48px;
+  border-radius: 22px;
+  background: var(--brand);
+  color: #fff;
+  font: 650 38px/1 "Inter", sans-serif;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 24px 48px -16px rgba(47, 111, 237, 0.55);
+  white-space: nowrap;
+}
+
+/* Small source line under a figure */
+.source {
+  position: absolute;
+  font: 500 22px/1.3 "Inter", sans-serif;
+  color: var(--ink-3);
+}

@@ -1,0 +1,576 @@
+{
+  "voice": "af_heart",
+  "total": 193.8333,
+  "scenes": [
+    {
+      "id": "cold",
+      "start": 0.0,
+      "duration": 8.8667,
+      "voStart": 0.6,
+      "voEnd": 8.263,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Every company runs on processes,",
+          "start": 0.6,
+          "end": 2.719
+        },
+        {
+          "id": "b",
+          "text": "and on the guides that explain them.",
+          "start": 2.819,
+          "end": 4.554
+        },
+        {
+          "id": "c",
+          "text": "The day the software updates,",
+          "start": 4.954,
+          "end": 6.522
+        },
+        {
+          "id": "d",
+          "text": "those guides go out of date.",
+          "start": 6.622,
+          "end": 8.263
+        }
+      ]
+    },
+    {
+      "id": "problem",
+      "start": 8.8667,
+      "duration": 11.0333,
+      "voStart": 9.167,
+      "voEnd": 19.293,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Platforms like Dynamics three sixty-five ship two release waves every year.",
+          "start": 9.167,
+          "end": 13.94
+        },
+        {
+          "id": "b",
+          "text": "Each one sends training teams back to re-shoot,",
+          "start": 14.29,
+          "end": 16.779
+        },
+        {
+          "id": "c",
+          "text": "rewrite,",
+          "start": 16.859,
+          "end": 17.573
+        },
+        {
+          "id": "d",
+          "text": "and re-translate, by hand.",
+          "start": 17.653,
+          "end": 19.293
+        }
+      ]
+    },
+    {
+      "id": "market",
+      "start": 19.9,
+      "duration": 9.5333,
+      "voStart": 20.2,
+      "voEnd": 28.847,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Gartner sized digital adoption at about a billion dollars in twenty twenty-four,",
+          "start": 20.2,
+          "end": 25.405
+        },
+        {
+          "id": "b",
+          "text": "and S A P paid around one and a half billion for Walk Me.",
+          "start": 25.555,
+          "end": 28.847
+        }
+      ]
+    },
+    {
+      "id": "incumbent",
+      "start": 29.4333,
+      "duration": 10.1,
+      "voStart": 29.733,
+      "voEnd": 38.917,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "The record-once incumbent, Click Learn,",
+          "start": 29.733,
+          "end": 31.907
+        },
+        {
+          "id": "b",
+          "text": "made close to eight million euros in twenty twenty-four,",
+          "start": 32.007,
+          "end": 35.087
+        },
+        {
+          "id": "c",
+          "text": "from more than eight hundred customers,",
+          "start": 35.187,
+          "end": 37.113
+        },
+        {
+          "id": "d",
+          "text": "with a Windows desktop client.",
+          "start": 37.213,
+          "end": 38.917
+        }
+      ]
+    },
+    {
+      "id": "whynow",
+      "start": 39.5333,
+      "duration": 11.5334,
+      "voStart": 39.833,
+      "voEnd": 50.354,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "There is an opening, too.",
+          "start": 39.833,
+          "end": 41.176
+        },
+        {
+          "id": "b",
+          "text": "S A P's own training tool, Enable Now, takes no new cloud renewals after April twenty twenty-seven,",
+          "start": 41.426,
+          "end": 48.27
+        },
+        {
+          "id": "c",
+          "text": "so its customers need somewhere to go.",
+          "start": 48.37,
+          "end": 50.354
+        }
+      ]
+    },
+    {
+      "id": "versus",
+      "start": 51.0667,
+      "duration": 12.2666,
+      "voStart": 51.367,
+      "voEnd": 62.622,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Steplight does the same job from the browser,",
+          "start": 51.367,
+          "end": 53.815
+        },
+        {
+          "id": "b",
+          "text": "with no desktop client and no sixteen-gigabyte workstation.",
+          "start": 53.915,
+          "end": 57.635
+        },
+        {
+          "id": "c",
+          "text": "Automated process testing is built in.",
+          "start": 57.935,
+          "end": 60.399
+        },
+        {
+          "id": "d",
+          "text": "The incumbent keeps it for its top tier.",
+          "start": 60.499,
+          "end": 62.622
+        }
+      ]
+    },
+    {
+      "id": "capture",
+      "start": 63.3333,
+      "duration": 7.6334,
+      "voStart": 63.733,
+      "voEnd": 70.458,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "As an author clicks through a task,",
+          "start": 63.733,
+          "end": 65.499
+        },
+        {
+          "id": "b",
+          "text": "the browser extension describes each element several ways, most robust first:",
+          "start": 65.599,
+          "end": 70.458
+        }
+      ]
+    },
+    {
+      "id": "selectors",
+      "start": 70.9667,
+      "duration": 9.1,
+      "voStart": 71.167,
+      "voEnd": 79.354,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "a stable I D,",
+          "start": 71.167,
+          "end": 72.29
+        },
+        {
+          "id": "b",
+          "text": "its role and name,",
+          "start": 72.37,
+          "end": 73.48
+        },
+        {
+          "id": "c",
+          "text": "its label,",
+          "start": 73.56,
+          "end": 74.335
+        },
+        {
+          "id": "d",
+          "text": "and its place on the page.",
+          "start": 74.415,
+          "end": 75.908
+        },
+        {
+          "id": "e",
+          "text": "It keeps only the ones that match exactly one element.",
+          "start": 76.208,
+          "end": 79.354
+        }
+      ]
+    },
+    {
+      "id": "steps",
+      "start": 80.0667,
+      "duration": 9.5666,
+      "voStart": 80.367,
+      "voEnd": 88.943,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Clicks and keystrokes collapse into clean steps.",
+          "start": 80.367,
+          "end": 82.859
+        },
+        {
+          "id": "b",
+          "text": "Each one gets its instruction written automatically,",
+          "start": 83.059,
+          "end": 85.95
+        },
+        {
+          "id": "c",
+          "text": "and sensitive values are masked in every output.",
+          "start": 86.05,
+          "end": 88.943
+        }
+      ]
+    },
+    {
+      "id": "model",
+      "start": 89.6333,
+      "duration": 11.8,
+      "voStart": 89.933,
+      "voEnd": 100.631,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Every step is stored as structured data, with its screenshot.",
+          "start": 89.933,
+          "end": 93.47
+        },
+        {
+          "id": "b",
+          "text": "Resolve it for a language,",
+          "start": 93.72,
+          "end": 95.274
+        },
+        {
+          "id": "c",
+          "text": "and the same process feeds every output:",
+          "start": 95.374,
+          "end": 97.589
+        },
+        {
+          "id": "d",
+          "text": "documents, players, the portal, and live guidance.",
+          "start": 97.689,
+          "end": 100.631
+        }
+      ]
+    },
+    {
+      "id": "replay",
+      "start": 101.4333,
+      "duration": 12.9334,
+      "voStart": 101.733,
+      "voEnd": 113.758,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Replay drives the real application again in a headless browser, step by step.",
+          "start": 101.733,
+          "end": 106.597
+        },
+        {
+          "id": "b",
+          "text": "When an element has changed,",
+          "start": 106.897,
+          "end": 108.366
+        },
+        {
+          "id": "c",
+          "text": "Steplight finds it by the next selector,",
+          "start": 108.466,
+          "end": 110.66
+        },
+        {
+          "id": "d",
+          "text": "marks the step as healed,",
+          "start": 110.76,
+          "end": 112.111
+        },
+        {
+          "id": "e",
+          "text": "and refreshes the screenshot.",
+          "start": 112.211,
+          "end": 113.758
+        }
+      ]
+    },
+    {
+      "id": "testing",
+      "start": 114.3667,
+      "duration": 5.6333,
+      "voStart": 114.667,
+      "voEnd": 119.216,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Run it in test mode,",
+          "start": 114.667,
+          "end": 115.88
+        },
+        {
+          "id": "b",
+          "text": "and it becomes regression testing for business processes.",
+          "start": 115.98,
+          "end": 119.216
+        }
+      ]
+    },
+    {
+      "id": "localize",
+      "start": 120.0,
+      "duration": 13.3667,
+      "voStart": 120.3,
+      "voEnd": 132.681,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Localization uses the same engine.",
+          "start": 120.3,
+          "end": 122.836
+        },
+        {
+          "id": "b",
+          "text": "Replay runs the app in Danish or German,",
+          "start": 123.086,
+          "end": 125.532
+        },
+        {
+          "id": "c",
+          "text": "captures the real translated screens and labels,",
+          "start": 125.632,
+          "end": 128.44
+        },
+        {
+          "id": "d",
+          "text": "and rebuilds every instruction from them, with no machine translation.",
+          "start": 128.54,
+          "end": 132.681
+        }
+      ]
+    },
+    {
+      "id": "ai",
+      "start": 133.3667,
+      "duration": 15.7333,
+      "voStart": 133.667,
+      "voEnd": 148.415,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Claude handles the language work.",
+          "start": 133.667,
+          "end": 135.478
+        },
+        {
+          "id": "b",
+          "text": "It answers learners' questions from your own documented processes,",
+          "start": 135.728,
+          "end": 139.728
+        },
+        {
+          "id": "c",
+          "text": "translates what authors write,",
+          "start": 139.828,
+          "end": 141.455
+        },
+        {
+          "id": "d",
+          "text": "and turns an existing Word guide into a draft you finish in the app.",
+          "start": 141.555,
+          "end": 145.372
+        },
+        {
+          "id": "e",
+          "text": "Without AI, everything still works offline.",
+          "start": 145.672,
+          "end": 148.415
+        }
+      ]
+    },
+    {
+      "id": "deploy",
+      "start": 149.1,
+      "duration": 11.2,
+      "voStart": 149.4,
+      "voEnd": 159.594,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Steplight ships as a single container on a dedicated server.",
+          "start": 149.4,
+          "end": 153.096
+        },
+        {
+          "id": "b",
+          "text": "Authoring sits behind an access key,",
+          "start": 153.346,
+          "end": 155.388
+        },
+        {
+          "id": "c",
+          "text": "analytics are anonymous,",
+          "start": 155.488,
+          "end": 156.908
+        },
+        {
+          "id": "d",
+          "text": "and the extension only talks to your own server.",
+          "start": 157.008,
+          "end": 159.594
+        }
+      ]
+    },
+    {
+      "id": "proof",
+      "start": 160.3,
+      "duration": 13.1,
+      "voStart": 160.6,
+      "voEnd": 172.595,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "All of this runs today.",
+          "start": 160.6,
+          "end": 161.91
+        },
+        {
+          "id": "b",
+          "text": "About a hundred and forty automated tests,",
+          "start": 162.16,
+          "end": 164.495
+        },
+        {
+          "id": "c",
+          "text": "and a thirty-nine check end-to-end run that records, replays, heals, translates, exports and publishes,",
+          "start": 164.595,
+          "end": 171.114
+        },
+        {
+          "id": "d",
+          "text": "pass on every change.",
+          "start": 171.214,
+          "end": 172.595
+        }
+      ]
+    },
+    {
+      "id": "roadmap",
+      "start": 173.4,
+      "duration": 11.1333,
+      "voStart": 173.7,
+      "voEnd": 183.742,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Next on the roadmap:",
+          "start": 173.7,
+          "end": 174.94
+        },
+        {
+          "id": "b",
+          "text": "one-click setup for whole organizations,",
+          "start": 175.14,
+          "end": 177.481
+        },
+        {
+          "id": "c",
+          "text": "hosting with backups,",
+          "start": 177.581,
+          "end": 178.881
+        },
+        {
+          "id": "d",
+          "text": "an Edge add-on listing,",
+          "start": 178.981,
+          "end": 180.345
+        },
+        {
+          "id": "e",
+          "text": "PDF import,",
+          "start": 180.445,
+          "end": 181.626
+        },
+        {
+          "id": "f",
+          "text": "and redaction inside the recorder.",
+          "start": 181.726,
+          "end": 183.742
+        }
+      ]
+    },
+    {
+      "id": "close",
+      "start": 184.5333,
+      "duration": 9.3,
+      "voStart": 185.133,
+      "voEnd": 190.448,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Steplight.",
+          "start": 185.133,
+          "end": 185.924
+        },
+        {
+          "id": "b",
+          "text": "Every process documented, trained and guided,",
+          "start": 186.274,
+          "end": 189.113
+        },
+        {
+          "id": "c",
+          "text": "and never out of date.",
+          "start": 189.213,
+          "end": 190.448
+        }
+      ]
+    }
+  ]
+}

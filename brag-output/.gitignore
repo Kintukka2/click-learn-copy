@@ -1,0 +1,7 @@
+# Hyperframes working files (snapshots, check reports, caches)
+**/.hyperframes/
+**/renders/
+**/node_modules/
+**/work-*/
+**/.brag.hf-transaction-*/
+**/*.poster.mp4

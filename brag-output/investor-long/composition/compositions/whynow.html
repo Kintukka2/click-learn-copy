@@ -1,0 +1,117 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #wn-head {
+      position: absolute;
+      left: 160px;
+      top: 130px;
+      font-family: "Inter", sans-serif;
+    }
+    #wn-head .a {
+      font-size: 96px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+    #wn-head .b {
+      margin-top: 12px;
+      font-size: 40px;
+      font-weight: 500;
+      color: var(--ink-2);
+    }
+    #wn-axis {
+      position: absolute;
+      left: 160px;
+      top: 640px;
+      width: 1600px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      transform-origin: 0 50%;
+    }
+    #wn-win {
+      position: absolute;
+      left: 400px;
+      top: 628px;
+      width: 187px;
+      height: 28px;
+      border-radius: 14px;
+      background: var(--teal);
+      transform-origin: 0 50%;
+    }
+    .wn-year {
+      position: absolute;
+      top: 668px;
+      font: 600 30px/1 "Inter", sans-serif;
+      color: var(--ink-3);
+      transform: translateX(-50%);
+    }
+    .wn-mk {
+      position: absolute;
+      font-family: "Inter", sans-serif;
+    }
+    .wn-mk .pin {
+      position: absolute;
+      left: -2px;
+      width: 4px;
+      background: var(--ink);
+    }
+    .wn-mk .t {
+      font-size: 34px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .wn-mk .s {
+      margin-top: 6px;
+      font-size: 28px;
+      color: var(--ink-2);
+      white-space: nowrap;
+    }
+    #wn-today .t {
+      color: var(--brand-text);
+    }
+    #wn-label {
+      position: absolute;
+      left: 400px;
+      top: 740px;
+      font: 700 34px/1.2 "Inter", sans-serif;
+      color: var(--teal-text);
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="whynow" data-width="1920" data-height="1080">
+    <div id="wn-head"><div class="a">SAP Enable Now</div><div class="b">SAP's own training authoring tool</div></div>
+    <div id="wn-axis"></div>
+    <div id="wn-win"></div>
+    <div class="wn-year" style="left: 333px">2026</div>
+    <div class="wn-year" style="left: 653px">2027</div>
+    <div class="wn-year" style="left: 973px">2028</div>
+    <div class="wn-year" style="left: 1293px">2029</div>
+    <div class="wn-year" style="left: 1613px">2030</div>
+    <div id="wn-today" class="wn-mk" style="left: 400px; top: 470px; text-align: right"><div class="t">Today</div><div class="s">October 2026</div><div class="pin" style="top: 106px; height: 64px; left: auto; right: -2px"></div></div>
+    <div id="wn-apr" class="wn-mk" style="left: 587px; top: 470px"><div class="t">30 April 2027</div><div class="s">No new cloud renewals</div><div class="pin" style="top: 106px; height: 64px"></div></div>
+    <div id="wn-nov" class="wn-mk" style="left: 1733px; top: 470px; text-align: right"><div class="t">30 November 2030</div><div class="s">Maintenance ends</div></div>
+    <div id="wn-label">The window to switch</div>
+    <audio id="wn-p1" class="clip" data-start="7.27" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(["#wn-today", "#wn-nov"], { xPercent: -100 });
+      gsap.set(["#wn-head", "#wn-today", "#wn-apr", "#wn-nov", "#wn-label", ".wn-year"], { opacity: 0 });
+      tl.fromTo("#wn-head", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, 1.75);
+      tl.fromTo("#wn-axis", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "power3.inOut" }, 0.3);
+      tl.fromTo(".wn-year", { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.1 }, 0.8);
+      tl.fromTo("#wn-today", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.3, ease: "expo.out" }, 4.4);
+      // "after April 2027"
+      tl.fromTo("#wn-apr", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 7.27);
+      tl.fromTo("#wn-nov", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 7.9);
+      // "so its customers need somewhere to go"
+      tl.fromTo("#wn-win", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power3.inOut" }, 8.79);
+      tl.fromTo("#wn-label", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25 }, 9.3);
+      tl.to(["#wn-head", "#wn-axis", "#wn-win", ".wn-year", "#wn-today", "#wn-apr", "#wn-nov", "#wn-label"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 11.3);
+      window.__timelines["whynow"] = tl;
+    })();
+  </script>
+</template>

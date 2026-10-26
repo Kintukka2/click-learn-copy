@@ -1,0 +1,1 @@
+How Steplight works: record a business process once, store it as structured steps, and let Replay re-drive the real app to heal, re-test and re-localize every guide, video and in-app walkthrough after each software release. Three minutes, real product, real test results.

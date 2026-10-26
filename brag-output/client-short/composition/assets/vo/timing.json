@@ -1,0 +1,243 @@
+{
+  "voice": "af_heart",
+  "total": 65.3667,
+  "scenes": [
+    {
+      "id": "hook",
+      "start": 0.0,
+      "duration": 4.4667,
+      "voStart": 0.5,
+      "voEnd": 3.95,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Your software updated overnight.",
+          "start": 0.5,
+          "end": 2.417
+        },
+        {
+          "id": "b",
+          "text": "Your training didn't.",
+          "start": 2.767,
+          "end": 3.95
+        }
+      ]
+    },
+    {
+      "id": "friction",
+      "start": 4.4667,
+      "duration": 9.1,
+      "voStart": 4.767,
+      "voEnd": 12.982,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Now someone has to re-shoot every screenshot,",
+          "start": 4.767,
+          "end": 7.442
+        },
+        {
+          "id": "b",
+          "text": "rewrite every step,",
+          "start": 7.562,
+          "end": 8.783
+        },
+        {
+          "id": "c",
+          "text": "and translate it all again.",
+          "start": 8.903,
+          "end": 10.33
+        },
+        {
+          "id": "d",
+          "text": "Until they do, your people are guessing.",
+          "start": 10.78,
+          "end": 12.982
+        }
+      ]
+    },
+    {
+      "id": "reveal",
+      "start": 13.5667,
+      "duration": 6.8333,
+      "voStart": 14.067,
+      "voEnd": 19.908,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Introducing Steplight.",
+          "start": 14.067,
+          "end": 15.43
+        },
+        {
+          "id": "b",
+          "text": "Do the process once, in your browser,",
+          "start": 15.83,
+          "end": 17.916
+        },
+        {
+          "id": "c",
+          "text": "and Steplight writes the guide for you.",
+          "start": 18.016,
+          "end": 19.908
+        }
+      ]
+    },
+    {
+      "id": "record",
+      "start": 20.4,
+      "duration": 6.3333,
+      "voStart": 20.8,
+      "voEnd": 25.829,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Every click becomes a clear, written step,",
+          "start": 20.8,
+          "end": 22.912
+        },
+        {
+          "id": "b",
+          "text": "with the screenshot already captured, and highlighted.",
+          "start": 23.032,
+          "end": 25.829
+        }
+      ]
+    },
+    {
+      "id": "outputs",
+      "start": 26.7333,
+      "duration": 11.4,
+      "voStart": 27.033,
+      "voEnd": 37.326,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "From that one recording, you get Word, PDF and PowerPoint guides,",
+          "start": 27.033,
+          "end": 31.3
+        },
+        {
+          "id": "b",
+          "text": "video walkthroughs,",
+          "start": 31.42,
+          "end": 32.526
+        },
+        {
+          "id": "c",
+          "text": "hands-on practice,",
+          "start": 32.626,
+          "end": 33.948
+        },
+        {
+          "id": "d",
+          "text": "scored tests,",
+          "start": 34.048,
+          "end": 35.062
+        },
+        {
+          "id": "e",
+          "text": "and scorm packages for your L M S.",
+          "start": 35.162,
+          "end": 37.326
+        }
+      ]
+    },
+    {
+      "id": "guide",
+      "start": 38.1333,
+      "duration": 6.1,
+      "voStart": 38.433,
+      "voEnd": 43.442,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Inside the app itself, Guide me walks people through it, live,",
+          "start": 38.433,
+          "end": 42.019
+        },
+        {
+          "id": "b",
+          "text": "one step at a time.",
+          "start": 42.119,
+          "end": 43.442
+        }
+      ]
+    },
+    {
+      "id": "replay",
+      "start": 44.2333,
+      "duration": 8.9667,
+      "voStart": 44.533,
+      "voEnd": 52.205,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "When the software changes, press Replay.",
+          "start": 44.533,
+          "end": 46.84
+        },
+        {
+          "id": "b",
+          "text": "Steplight re-runs the process,",
+          "start": 47.19,
+          "end": 48.986
+        },
+        {
+          "id": "c",
+          "text": "finds what moved,",
+          "start": 49.086,
+          "end": 50.214
+        },
+        {
+          "id": "d",
+          "text": "and refreshes every screenshot.",
+          "start": 50.314,
+          "end": 52.205
+        }
+      ]
+    },
+    {
+      "id": "languages",
+      "start": 53.2,
+      "duration": 5.2333,
+      "voStart": 53.5,
+      "voEnd": 57.726,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Every guide also comes in seven languages,",
+          "start": 53.5,
+          "end": 56.26
+        },
+        {
+          "id": "b",
+          "text": "without recording again.",
+          "start": 56.36,
+          "end": 57.726
+        }
+      ]
+    },
+    {
+      "id": "endcard",
+      "start": 58.4333,
+      "duration": 6.9334,
+      "voStart": 59.033,
+      "voEnd": 62.154,
+      "phrases": [
+        {
+          "id": "a",
+          "text": "Steplight.",
+          "start": 59.033,
+          "end": 59.824
+        },
+        {
+          "id": "b",
+          "text": "Record it once, and it stays right.",
+          "start": 60.174,
+          "end": 62.154
+        }
+      ]
+    }
+  ]
+}

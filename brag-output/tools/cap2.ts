@@ -1,0 +1,36 @@
+import path from "node:path";
+import type { Server } from "node:http";
+import { chromium } from "playwright";
+import { createApp } from "./src/server/app.js";
+const PORT = 4302, BASE = `http://localhost:${PORT}`;
+const ROOT = path.dirname(new URL(import.meta.url).pathname);
+async function main() {
+  const { app } = createApp({ dataDir: path.join(ROOT, "..", "capdata"), baseUrl: BASE, internalUrl: `http://127.0.0.1:${PORT}` });
+  const server: Server = await new Promise((r) => { const s = app.listen(PORT, () => r(s)); });
+  const browser = await chromium.launch();
+  const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })).newPage();
+  const out = path.join(ROOT, "..", "shots");
+  await page.goto(`${BASE}/demo-erp/#/customers?reset=1&lang=en&v=2`);
+  await page.waitForTimeout(700);
+  await page.getByRole("button", { name: "New" }).first().click();
+  await page.waitForTimeout(600);
+  await page.getByLabel("Name", { exact: true }).fill("Fjord Kontormøbler ApS");
+  await page.getByLabel("Address", { exact: true }).fill("Strandvejen 60");
+  await page.mouse.click(5, 890);
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(out, "erp-form-v2.png") });
+  console.log("save v2", await page.locator("button:has-text('Save')").first().boundingBox());
+  await page.goto(`${BASE}/demo-erp/#/customers?reset=1&lang=en&v=1`);
+  await page.waitForTimeout(700);
+  await page.getByRole("button", { name: "New" }).first().click();
+  await page.waitForTimeout(600);
+  await page.getByLabel("Name", { exact: true }).fill("Fjord Kontormøbler ApS");
+  await page.getByLabel("Address", { exact: true }).fill("Strandvejen 60");
+  await page.mouse.click(5, 890);
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(out, "erp-form-v1.png") });
+  console.log("save v1", await page.locator("button:has-text('Save')").first().boundingBox());
+  await page.goto(`${BASE}/demo-erp/#/?v=1`);
+  await browser.close(); server.close();
+}
+main().then(() => process.exit(0), (e) => { console.error(e); process.exit(1); });

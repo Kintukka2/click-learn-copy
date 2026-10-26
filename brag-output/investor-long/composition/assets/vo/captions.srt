@@ -1,0 +1,167 @@
+1
+00:00:00,600 --> 00:00:04,804
+Every company runs on processes, and on the guides that explain them.
+
+2
+00:00:04,954 --> 00:00:08,513
+The day the software updates, those guides go out of date.
+
+3
+00:00:09,167 --> 00:00:14,190
+Platforms like Dynamics 365 ship two release waves every year.
+
+4
+00:00:14,290 --> 00:00:19,543
+Each one sends training teams back to re-shoot, rewrite, and re-translate, by hand.
+
+5
+00:00:20,200 --> 00:00:29,097
+Gartner sized digital adoption at about a billion dollars in 2024, and SAP paid around one and a half billion for WalkMe.
+
+6
+00:00:29,733 --> 00:00:35,137
+The record-once incumbent, ClickLearn, made close to eight million euros in 2024,
+
+7
+00:00:35,187 --> 00:00:39,167
+from more than eight hundred customers, with a Windows desktop client.
+
+8
+00:00:39,833 --> 00:00:41,376
+There is an opening, too.
+
+9
+00:00:41,426 --> 00:00:48,320
+SAP's own training tool, Enable Now, takes no new cloud renewals after April 2027,
+
+10
+00:00:48,370 --> 00:00:50,604
+so its customers need somewhere to go.
+
+11
+00:00:51,367 --> 00:00:57,885
+Steplight does the same job from the browser, with no desktop client and no 16 GB workstation.
+
+12
+00:00:57,935 --> 00:01:00,449
+Automated process testing is built in.
+
+13
+00:01:00,499 --> 00:01:02,872
+The incumbent keeps it for its top tier.
+
+14
+00:01:03,733 --> 00:01:10,708
+As an author clicks through a task, the browser extension describes each element several ways, most robust first:
+
+15
+00:01:11,167 --> 00:01:16,158
+a stable ID, its role and name, its label, and its place on the page.
+
+16
+00:01:16,208 --> 00:01:19,604
+It keeps only the ones that match exactly one element.
+
+17
+00:01:20,367 --> 00:01:23,009
+Clicks and keystrokes collapse into clean steps.
+
+18
+00:01:23,059 --> 00:01:29,193
+Each one gets its instruction written automatically, and sensitive values are masked in every output.
+
+19
+00:01:29,933 --> 00:01:33,670
+Every step is stored as structured data, with its screenshot.
+
+20
+00:01:33,720 --> 00:01:37,639
+Resolve it for a language, and the same process feeds every output:
+
+21
+00:01:37,689 --> 00:01:40,881
+documents, players, the portal, and live guidance.
+
+22
+00:01:41,733 --> 00:01:46,847
+Replay drives the real application again in a headless browser, step by step.
+
+23
+00:01:46,897 --> 00:01:52,161
+When an element has changed, Steplight finds it by the next selector, marks the step as healed,
+
+24
+00:01:52,211 --> 00:01:54,008
+and refreshes the screenshot.
+
+25
+00:01:54,667 --> 00:01:59,466
+Run it in test mode, and it becomes regression testing for business processes.
+
+26
+00:02:00,300 --> 00:02:03,036
+Localization uses the same engine.
+
+27
+00:02:03,086 --> 00:02:08,490
+Replay runs the app in Danish or German, captures the real translated screens and labels,
+
+28
+00:02:08,540 --> 00:02:12,931
+and rebuilds every instruction from them, with no machine translation.
+
+29
+00:02:13,667 --> 00:02:15,678
+Claude handles the language work.
+
+30
+00:02:15,728 --> 00:02:21,505
+It answers learners' questions from your own documented processes, translates what authors write,
+
+31
+00:02:21,555 --> 00:02:25,622
+and turns an existing Word guide into a draft you finish in the app.
+
+32
+00:02:25,672 --> 00:02:28,665
+Without AI, everything still works offline.
+
+33
+00:02:29,400 --> 00:02:33,296
+Steplight ships as a single container on a dedicated server.
+
+34
+00:02:33,346 --> 00:02:39,844
+Authoring sits behind an access key, analytics are anonymous, and the extension only talks to your own server.
+
+35
+00:02:40,600 --> 00:02:42,110
+All of this runs today.
+
+36
+00:02:42,160 --> 00:02:51,164
+About 140 automated tests, and a 39-check end-to-end run that records, replays, heals, translates, exports and publishes,
+
+37
+00:02:51,214 --> 00:02:52,845
+pass on every change.
+
+38
+00:02:53,700 --> 00:02:55,090
+Next on the roadmap:
+
+39
+00:02:55,140 --> 00:03:01,676
+one-click setup for whole organizations, hosting with backups, an Edge add-on listing, PDF import,
+
+40
+00:03:01,726 --> 00:03:03,992
+and redaction inside the recorder.
+
+41
+00:03:05,133 --> 00:03:06,174
+Steplight.
+
+42
+00:03:06,274 --> 00:03:10,698
+Every process documented, trained and guided, and never out of date.

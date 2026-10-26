@@ -1,0 +1,94 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #gd-btn {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 291px;
+      height: 66px;
+      border-radius: 14px;
+      background: var(--brand);
+      transform-origin: 50% 50%;
+      z-index: 3;
+    }
+    #gd-typed {
+      position: absolute;
+      left: 1622px;
+      top: 590px;
+      font: 400 27px/64px "Inter", sans-serif;
+      color: #1c2430;
+      white-space: pre;
+    }
+    #gd-a2 .mask {
+      position: absolute;
+      left: 1604px;
+      top: 594px;
+      width: 500px;
+      height: 56px;
+      background: #fff;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="guide" data-width="1920" data-height="1080">
+    <div id="gd-portal" class="plate"><img src="assets/img/portal-guide.webp" alt="" /></div>
+    <div id="gd-btn"></div>
+    <div id="gd-app" class="plate">
+      <img id="gd-a1" src="assets/img/assist-1.webp" alt="" />
+      <div id="gd-a2" class="layer"><img src="assets/img/assist-2.webp" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%" /><div id="gd-typed"></div></div>
+      <img id="gd-a3" src="assets/img/assist-3.webp" alt="" />
+    </div>
+    <div id="gd-cur" class="cursor" style="z-index: 6">
+      <svg viewBox="0 0 28 28"><path d="M5 2.8v19.6l5.1-4.9 3.3 7.6 3.6-1.6-3.3-7.4h7z" fill="#111827" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" /></svg>
+    </div>
+    <audio id="gd-c1" class="clip" data-start="0.95" data-duration="0.2" data-volume="0.7" src="assets/sfx/click2.ogg"></audio>
+    <audio id="gd-z" class="clip" data-start="1.0" data-duration="0.2" data-volume="0.35" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+    <audio id="gd-c2" class="clip" data-start="2.19" data-duration="0.2" data-volume="0.7" src="assets/sfx/click2.ogg"></audio>
+    <audio id="gd-k1" class="clip" data-start="3.0" data-duration="0.2" data-volume="0.3" src="assets/sfx/keypress-007.wav"></audio>
+    <audio id="gd-k2" class="clip" data-start="3.2" data-duration="0.2" data-volume="0.28" src="assets/sfx/keypress-018.wav"></audio>
+    <audio id="gd-k3" class="clip" data-start="3.4" data-duration="0.2" data-volume="0.3" src="assets/sfx/keypress-012.wav"></audio>
+    <audio id="gd-k4" class="clip" data-start="3.6" data-duration="0.2" data-volume="0.28" src="assets/sfx/keypress-026.wav"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // the portal's process page, "Guide me in the app"
+      const camP = { x: -96, y: 0, scale: 0.7 };
+      tl.set("#gd-portal", camP, 0);
+      const b = SL.toFrame(camP, 1062, 146);
+      gsap.set("#gd-btn", { x: b.x, y: b.y, opacity: 0, scale: 1 });
+      const pBtn = SL.toFrame(camP, 1166, 170);
+      tl.fromTo("#gd-cur", { x: 1250, y: 1150 }, { x: pBtn.x, y: pBtn.y, duration: 0.55, ease: "expo.out" }, 0.1);
+      tl.to("#gd-cur", { scale: 0.84, duration: 0.06 }, 0.95);
+      tl.to("#gd-cur", { scale: 1, duration: 0.12 }, 1.01);
+      // zoom through the button: its blue becomes the next frame
+      tl.set("#gd-btn", { opacity: 1 }, 1.0);
+      tl.to("#gd-btn", { scale: 36, duration: 0.38, ease: "power3.in" }, 1.0);
+      tl.set("#gd-cur", { opacity: 0 }, 1.12);
+      // the live app with Guide me running
+      const cam1 = { x: 0, y: 0, scale: 1 };
+      tl.set("#gd-app", cam1, 0);
+      gsap.set(["#gd-app", "#gd-a2", "#gd-a3"], { opacity: 0 });
+      tl.set("#gd-app", { opacity: 1 }, 1.38);
+      tl.to("#gd-btn", { opacity: 0, duration: 0.2, ease: "power1.out" }, 1.38);
+      tl.set("#gd-portal", { opacity: 0 }, 1.38);
+      // the person clicks New, as the callout says
+      const pNew = SL.toFrame(cam1, 93.5, 180);
+      tl.set("#gd-cur", { x: 700, y: 760, opacity: 1, scale: 1 }, 1.45);
+      tl.to("#gd-cur", { x: pNew.x - 8, y: pNew.y - 4, duration: 0.5, ease: "power3.inOut" }, 1.55);
+      tl.to("#gd-cur", { scale: 0.84, duration: 0.06 }, 2.19);
+      tl.to("#gd-cur", { scale: 1, opacity: 0, duration: 0.2 }, 2.25);
+      // Guide me moves on to step 2, on the Name field
+      tl.set("#gd-a2", { opacity: 1 }, 2.25);
+      tl.to("#gd-app", { x: -920, y: -180, duration: 0.5, ease: "power2.inOut" }, 2.3);
+      // the person types the name
+      // step 3: Address
+      tl.set("#gd-a3", { opacity: 1 }, 3.95);
+      tl.to("#gd-app", { x: -40, y: -260, duration: 0.5, ease: "power2.inOut" }, 4.0);
+      SL.drive(tl, [SL.typer(document.getElementById("gd-typed"), "Fjord Kontormøbler ApS", 3.0, 28, true)]);
+      window.__timelines["guide"] = tl;
+    })();
+  </script>
+</template>
