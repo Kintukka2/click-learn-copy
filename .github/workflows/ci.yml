@@ -19,7 +19,12 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run typecheck
       - run: npm run build
-      - run: npm test
+      - run: mkdir -p tmp/heap && npm test
+        env:
+          # an intermittent out-of-memory crash in a test worker: trace each test's heap, and write a
+          # heap snapshot (uploaded below) when a process nears a 1 GB heap; a test file uses ~50 MB
+          STEPLIGHT_HEAP_TRACE: "1"
+          NODE_OPTIONS: --max-old-space-size=1024 --heapsnapshot-near-heap-limit=1 --diagnostic-dir=tmp/heap
       - run: npm run e2e
       - uses: actions/upload-artifact@v4
         if: always()
@@ -27,6 +32,13 @@ jobs:
           name: e2e-output
           path: tmp/e2e-out/
           retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: heap-snapshots
+          path: tmp/heap/
+          retention-days: 7
+          if-no-files-found: ignore
 
   docker:
     runs-on: ubuntu-latest
