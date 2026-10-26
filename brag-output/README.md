@@ -7,6 +7,8 @@ Two narrated product films, made with `/brag` and Hyperframes. The narration is 
 | Client cut | Prospects: the friction, the fix, the features in real UI | 1:05 | `client-short/brag.mp4` |
 | Investor cut | Investors and technical buyers: market, mechanism, proof, roadmap | 3:14 | `investor-long/brag.mp4` |
 
+Matching sales collateral (an investor deck, a client deck and an A4 one-pager) is in `collateral/`.
+
 Each folder has the plan and storyboard (`brag-plan.md`), the Hyperframes handoff (`composition-brief.md`), the narration script (`vo-script.json`), captions (`captions.srt`), a poster (`brag.jpg`, also baked in as frame 0), the caption for posting (`share-copy.txt`) and the editable composition (`composition/`). Longer copy for LinkedIn, email and investor intros is in `share-copy-variants.md`.
 
 ## What is on screen is the real product

@@ -10,7 +10,7 @@ Investors and detail-minded buyers want the mechanism. The film works through on
 The live ERP, then the Word guide that explains it. On "the day the software updates", the guide's screenshot grows into today's app (the new layout). The guide's highlight is left on the wrong element, turns red, and "Out of date" lands.
 
 ## Chapters and key moments
-1. **Problem:** a Dynamics 365 release-wave timeline (Oct 2025 to Oct 2027) with a guide under every wave. Each guide's screenshot goes stale on "re-shoot", its step list is selected on "rewrite", and it fans into EN/DA/DE copies on "re-translate".
+1. **Problem:** a generic release timeline ("Your business software, release after release") with a guide under every release. It is kept high level on purpose, with no vendor names or dates. Each guide's screenshot goes stale on "re-shoot", its step list is selected on "rewrite", and it fans into EN/DA/DE copies on "re-translate".
 2. **Market:** $1.04B, the 2024 digital adoption market (Gartner, as cited by Whatfix), and $1.5B, SAP's 2024 acquisition of WalkMe.
 3. **Incumbent:** ClickLearn, with €7.9M revenue in 2024, 800+ customers and a Windows desktop client (16 GB RAM, .NET). Sources are shown on screen.
 4. **Why now:** SAP Enable Now takes no new cloud renewals after 30 April 2027 and maintenance ends on 30 November 2030. The window to switch is drawn on the timeline.
@@ -50,7 +50,7 @@ The same as the client cut (`../client-short/brag-plan.md`), plus a dark code ca
 ## Grounding
 | Claim | Source |
 |---|---|
-| Dynamics 365 release waves twice a year | `research/CLICKLEARN_ANALYSIS.md`, `research/detail/01` |
+| Business software changes release after release | Stated generally; `research/CLICKLEARN_ANALYSIS.md` documents twice-yearly ERP release cycles |
 | Digital adoption ≈ $1.04B (2024) | research: Gartner as quoted by Whatfix |
 | SAP–WalkMe ≈ $1.5B (Sep 2024) | `research/detail/02` |
 | ClickLearn €7.89M revenue in 2024 (FT1000 2026), 800+ customers, Windows desktop client with 16 GB RAM and .NET 4.8, automated testing in the Enterprise tier | `research/detail/02`, `03`, `04` |
@@ -69,4 +69,4 @@ The same as the client cut (`../client-short/brag-plan.md`), plus a dark code ca
 - SFX: soft drops on chips and numbers, clicks only on visible clicks, one stamp on "out of date", card slides on carried objects, and a bell on the mark.
 
 ## Voiceover script
-See `vo-script.json` (18 scenes, phrase by phrase). It was polished with the humanizer pass: fragment rows merged, staged run-ups removed, and the Dynamics 365 Guides line dropped (a HoloLens product, not a fair comparison).
+See `vo-script.json` (18 scenes, phrase by phrase). It was polished with the humanizer pass: fragment rows merged, staged run-ups removed, a vendor-specific training-tool comparison dropped, and the problem line kept free of vendor names.

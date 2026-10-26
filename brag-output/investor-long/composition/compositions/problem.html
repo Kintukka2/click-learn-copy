@@ -28,13 +28,6 @@
       background: var(--border);
       transform-origin: 0 50%;
     }
-    .pb-year {
-      position: absolute;
-      top: 400px;
-      font: 600 28px/1 "Inter", sans-serif;
-      color: var(--ink-3);
-      transform: translateX(-50%);
-    }
     .pb-mk {
       position: absolute;
       top: 280px;
@@ -47,11 +40,6 @@
       font-size: 32px;
       font-weight: 700;
       color: var(--ink);
-    }
-    .pb-mk .m {
-      font-size: 26px;
-      color: var(--ink-3);
-      margin-top: 2px;
     }
     .pb-mk .dot {
       position: absolute;
@@ -114,21 +102,19 @@
     }
   </style>
   <div id="root" class="scene" data-composition-id="problem" data-width="1920" data-height="1080">
-    <div id="pb-head"><div class="a">Microsoft Dynamics 365</div><div class="b">Release waves, twice a year</div></div>
+    <div id="pb-head"><div class="a">Your business software</div><div class="b">Release after release</div></div>
     <div id="pb-axis"></div>
-    <div class="pb-year" style="left: 480px">2026</div>
-    <div class="pb-year" style="left: 1120px">2027</div>
-    <div class="pb-mk" style="left: 320px"><div class="w">Wave 2</div><div class="m">Oct 2025</div><div class="dot"></div></div>
-    <div class="pb-mk" style="left: 640px"><div class="w">Wave 1</div><div class="m">Apr 2026</div><div class="dot"></div></div>
-    <div class="pb-mk" style="left: 960px"><div class="w">Wave 2</div><div class="m">Oct 2026</div><div class="dot"></div></div>
-    <div class="pb-mk" style="left: 1280px"><div class="w">Wave 1</div><div class="m">Apr 2027</div><div class="dot"></div></div>
-    <div class="pb-mk" style="left: 1600px"><div class="w">Wave 2</div><div class="m">Oct 2027</div><div class="dot"></div></div>
+    <div class="pb-mk" style="left: 320px"><div class="w">Release</div><div class="dot"></div></div>
+    <div class="pb-mk" style="left: 640px"><div class="w">Release</div><div class="dot"></div></div>
+    <div class="pb-mk" style="left: 960px"><div class="w">Release</div><div class="dot"></div></div>
+    <div class="pb-mk" style="left: 1280px"><div class="w">Release</div><div class="dot"></div></div>
+    <div class="pb-mk" style="left: 1600px"><div class="w">Release</div><div class="dot"></div></div>
     <div class="pb-stack" style="left: 215px"><div class="pb-doc da c2"><div class="lang">DE</div></div><div class="pb-doc da c1"><div class="lang">DA</div></div><div class="pb-doc c0"><div class="x"></div><div class="band"></div><div class="lang">EN</div></div></div>
     <div class="pb-stack" style="left: 535px"><div class="pb-doc da c2"><div class="lang">DE</div></div><div class="pb-doc da c1"><div class="lang">DA</div></div><div class="pb-doc c0"><div class="x"></div><div class="band"></div><div class="lang">EN</div></div></div>
     <div class="pb-stack" style="left: 855px"><div class="pb-doc da c2"><div class="lang">DE</div></div><div class="pb-doc da c1"><div class="lang">DA</div></div><div class="pb-doc c0"><div class="x"></div><div class="band"></div><div class="lang">EN</div></div></div>
     <div class="pb-stack" style="left: 1175px"><div class="pb-doc da c2"><div class="lang">DE</div></div><div class="pb-doc da c1"><div class="lang">DA</div></div><div class="pb-doc c0"><div class="x"></div><div class="band"></div><div class="lang">EN</div></div></div>
     <div class="pb-stack" style="left: 1495px"><div class="pb-doc da c2"><div class="lang">DE</div></div><div class="pb-doc da c1"><div class="lang">DA</div></div><div class="pb-doc c0"><div class="x"></div><div class="band"></div><div class="lang">EN</div></div></div>
-    <audio id="pb-t1" class="clip" data-start="2.7" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="pb-t1" class="clip" data-start="2.4" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
     <audio id="pb-t2" class="clip" data-start="7.21" data-duration="0.18" data-volume="0.45" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
     <audio id="pb-t3" class="clip" data-start="8.89" data-duration="0.6" data-volume="0.3" src="assets/sfx/card-slide-1.ogg"></audio>
   </div>
@@ -137,9 +123,8 @@
       const tl = gsap.timeline({ paused: true });
       tl.fromTo("#pb-head", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, 0.05);
       tl.fromTo("#pb-axis", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "power3.inOut" }, 0.3);
-      tl.fromTo(".pb-year", { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.2 }, 0.9);
-      // "two release waves every year": the waves land one by one
-      tl.fromTo(".pb-mk", { opacity: 0, y: -16, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out", stagger: 0.25 }, 2.7);
+      // "keeps changing, release after release": the releases land one by one
+      tl.fromTo(".pb-mk", { opacity: 0, y: -16, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out", stagger: 0.25 }, 2.4);
       // "Each one sends training teams back": a guide under every wave
       tl.fromTo(".pb-stack", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out", stagger: 0.1 }, 5.4);
       gsap.set([".pb-doc.c1", ".pb-doc.c2", ".pb-doc .x", ".pb-doc .lang"], { opacity: 0 });
@@ -154,7 +139,7 @@
       gsap.set(".pb-doc.c2", { zIndex: 1 });
       gsap.set(".pb-doc.c1", { zIndex: 2 });
       gsap.set(".pb-doc.c0", { zIndex: 3 });
-      tl.to(".pb-stack, .pb-mk, #pb-axis, .pb-year, #pb-head", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 10.8);
+      tl.to(".pb-stack, .pb-mk, #pb-axis, #pb-head", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 10.8);
       window.__timelines["problem"] = tl;
     })();
   </script>

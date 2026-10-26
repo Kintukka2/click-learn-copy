@@ -7,8 +7,8 @@ Every company runs on processes, and on the guides that explain them.
 The day the software updates, those guides go out of date.
 
 3
-00:00:09,167 --> 00:00:14,190
-Platforms like Dynamics 365 ship two release waves every year.
+00:00:09,300 --> 00:00:13,945
+The software your business runs on keeps changing, release after release.
 
 4
 00:00:14,290 --> 00:00:19,543
