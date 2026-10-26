@@ -49,6 +49,6 @@ Rendering needs Node 22+, ffmpeg and `npx hyperframes browser ensure` once. The 
 
 ## Review notes
 
-- **Checked:** `hyperframes check` shows 0 errors in both films, with WCAG AA contrast on every text check. Loudness was measured on the render: −14.5 LUFS integrated, −1.5 dBTP, no clipping. Key frames and every scene cut were inspected as stills.
+- **Checked:** `hyperframes check` shows 0 errors in both films, with WCAG AA contrast on every text check. Loudness was measured on the renders: −14.5 LUFS (client) and −14.0 LUFS (investor) integrated, −1.5 dBTP, no clipping. Key frames and every scene cut were inspected as stills.
 - **Not checked by ear:** the mix was measured, not listened to. Watch once with sound before sending.
 - **Warnings kept on purpose:** small secondary labels (step numbers, language codes, mono code text) sit at 22–27 px; the per-letter "Steplight" reveal is counted as nine words by the reading-time check.
