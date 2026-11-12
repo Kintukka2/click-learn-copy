@@ -1,0 +1,144 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #rc-plate img.l {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    #rc-dim {
+      position: absolute;
+      inset: 0;
+      background: rgba(16, 24, 40, 0.35);
+    }
+    #rc-pop {
+      left: 1300px;
+      top: 80px;
+      width: 456px;
+      height: 768px;
+      z-index: 3;
+    }
+    #rc-btn {
+      position: absolute;
+      left: 20px;
+      top: 703px;
+      width: 384px;
+      height: 48px;
+      border-radius: 10px;
+      border: 4px solid var(--teal);
+      box-shadow: 0 0 0 8px rgba(20, 184, 166, 0.25);
+    }
+    #rc-steps {
+      left: 1100px;
+      top: 250px;
+      z-index: 3;
+    }
+    #rc-auto {
+      position: absolute;
+      left: 1100px;
+      top: 650px;
+      z-index: 3;
+      font-size: 28px;
+    }
+    #rc-list {
+      left: 618px;
+      top: 170px;
+      width: 684px;
+      height: 590px;
+      z-index: 3;
+    }
+    #rc-list img {
+      height: auto;
+    }
+    #rc-row {
+      position: absolute;
+      left: 22px;
+      top: 450px;
+      width: 566px;
+      height: 92px;
+      border-radius: 14px;
+      border: 5px solid var(--teal);
+      box-shadow: 0 0 0 10px rgba(20, 184, 166, 0.22);
+    }
+    #rc-new {
+      position: absolute;
+      left: 1330px;
+      top: 594px;
+      z-index: 3;
+      font-size: 30px;
+    }
+    #rc-any {
+      position: absolute;
+      left: 1330px;
+      top: 664px;
+      z-index: 3;
+      font-size: 28px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="record" data-width="1920" data-height="1080">
+    <div id="rc-plate" class="plate">
+      <img class="l" id="rc-app" src="assets/img/erp-v1.webp" alt="" />
+      <img class="l" id="rc-r0" src="assets/img/rec-start.webp" alt="" />
+      <img class="l" id="rc-r1" src="assets/img/rec-typed.webp" alt="" />
+    </div>
+    <div id="rc-dim"></div>
+    <div id="rc-pop" class="win"><img src="assets/img/popup-record.webp" alt="" /><div id="rc-btn"></div></div>
+    <div id="rc-cur" class="cursor" style="z-index: 4">
+      <svg viewBox="0 0 28 28"><path d="M5 2.8v19.6l5.1-4.9 3.3 7.6 3.6-1.6-3.3-7.4h7z" fill="#111827" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" /></svg>
+    </div>
+    <div id="rc-steps" class="steplist">
+      <div class="head">Steps <span>2</span></div>
+      <div class="steprow" id="rc-s1"><div class="num">1</div><div class="thumb" style="background: url('assets/img/erp-v1.webp') 0 0 / cover"></div><div><div class="t">Click <b>New</b>.</div><div class="m">Click</div></div></div>
+      <div class="steprow" id="rc-s2"><div class="num">2</div><div class="thumb" style="background: url('assets/img/rec-typed.webp') 0 0 / cover"></div><div><div class="t">In the <b>Name</b> field, enter <b>Fjord Kontormøbler ApS</b>.</div><div class="m">Type</div></div></div>
+    </div>
+    <div id="rc-auto" class="tag teal">Written for you</div>
+    <div id="rc-list" class="win"><img src="assets/img/popup-finalise.webp" alt="" /><div id="rc-row"></div></div>
+    <div id="rc-new" class="tag brand">Listed straight away</div>
+    <div id="rc-any" class="tag outline">For anyone on this screen</div>
+    <audio id="rc-a1" class="clip" data-hf-media-start-basis="local" data-start="0.5" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="rc-c1" class="clip" data-hf-media-start-basis="local" data-start="3.2" data-duration="0.01" data-volume="0.45" src="assets/sfx/click_003.ogg"></audio>
+    <audio id="rc-c2" class="clip" data-hf-media-start-basis="local" data-start="5.32" data-duration="0.01" data-volume="0.45" src="assets/sfx/click_003.ogg"></audio>
+    <audio id="rc-a2" class="clip" data-hf-media-start-basis="local" data-start="7.3" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="rc-a3" class="clip" data-hf-media-start-basis="local" data-start="11.32" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#rc-plate", { x: 0, y: -120, scale: 0.6667 });
+      gsap.set(["#rc-r0", "#rc-r1", "#rc-btn", "#rc-s1", "#rc-s2", "#rc-dim"], { opacity: 0 });
+      tl.fromTo("#rc-plate", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.1);
+      tl.fromTo("#rc-dim", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.3);
+      // "Authors can also record a new process straight into System Replay"
+      tl.fromTo("#rc-pop", { opacity: 0, y: 50, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 0.5);
+      tl.fromTo("#rc-cur", { x: 900, y: 980, opacity: 0 }, { opacity: 1, duration: 0.2 }, 1.4);
+      tl.to("#rc-cur", { x: 1505, y: 800, duration: 1.4, ease: "power2.inOut" }, 1.5);
+      tl.fromTo("#rc-btn", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 2.8);
+      tl.to("#rc-cur", { scale: 0.86, duration: 0.08, yoyo: true, repeat: 1 }, 3.18);
+      // "They do the task in D365"
+      tl.to(["#rc-pop", "#rc-dim"], { opacity: 0, filter: "blur(8px)", duration: 0.25, ease: "power2.in" }, 4.3);
+      tl.fromTo("#rc-r0", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 4.45);
+      tl.to("#rc-cur", { x: 118, y: 116, duration: 0.8, ease: "power3.inOut" }, 4.45);
+      tl.to("#rc-cur", { scale: 0.86, duration: 0.08, yoyo: true, repeat: 1 }, 5.3);
+      tl.fromTo("#rc-r1", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 6.2);
+      tl.to("#rc-cur", { x: 760, y: 300, duration: 0.6, ease: "power2.inOut" }, 6.2);
+      tl.to("#rc-cur", { opacity: 0, duration: 0.2 }, 6.9);
+      // "the steps and screenshots are written for them"
+      tl.fromTo("#rc-steps", { opacity: 0, x: 60, filter: "blur(10px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 7.2);
+      tl.fromTo("#rc-s1", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 7.35);
+      tl.fromTo("#rc-s2", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 7.6);
+      tl.fromTo("#rc-auto", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 8.2);
+      // "and it shows up in the extension straight away for anyone on that screen"
+      tl.to(["#rc-steps", "#rc-auto"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 9.8);
+      tl.to("#rc-dim", { opacity: 1, filter: "blur(0px)", duration: 0.3 }, 9.85);
+      tl.fromTo("#rc-list", { opacity: 0, y: 40, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 9.95);
+      tl.fromTo("#rc-row", { opacity: 0, scale: 1.05, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 11.3);
+      tl.fromTo("#rc-new", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }, 11.35);
+      tl.fromTo("#rc-any", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }, 12.0);
+      tl.to("[id^='rc-']", { opacity: 0, filter: "blur(8px)", duration: 0.15, ease: "power2.in" }, 13.54);
+      window.__timelines["record"] = tl;
+    })();
+  </script>
+</template>

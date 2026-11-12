@@ -1,0 +1,185 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #cl-pg {
+      left: 800px;
+      top: 300px;
+      width: 320px;
+      height: 452px;
+    }
+    #cl-pgtag {
+      left: 800px;
+      top: 770px;
+      font-size: 28px;
+    }
+    #cl-ring {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: visible;
+    }
+    #cl-ring circle {
+      fill: none;
+      stroke: #6a4fd1;
+      stroke-width: 7;
+      stroke-linecap: round;
+    }
+    #cl-rtag {
+      left: 960px;
+      top: 168px;
+      background: #6a4fd1;
+      font-size: 30px;
+    }
+    #cl-ava {
+      position: absolute;
+      left: 1140px;
+      top: 600px;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: #fde8ec;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    #cl-ava img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #cl-avatag {
+      left: 1140px;
+      top: 762px;
+      font-size: 28px;
+    }
+    .cl-ok {
+      position: absolute;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: var(--ok);
+      color: #fff;
+      font: 800 34px/58px "Inter", sans-serif;
+      text-align: center;
+      box-shadow: 0 0 0 8px rgba(18, 183, 106, 0.2);
+    }
+    .cl-out {
+      position: absolute;
+      width: 360px;
+      font-family: "Inter", sans-serif;
+    }
+    .cl-out .im {
+      width: 360px;
+      height: 225px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(16, 24, 40, 0.06);
+    }
+    .cl-out .im img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top left;
+      display: block;
+    }
+    .cl-out .lb {
+      margin-top: 14px;
+      font: 700 32px/1.2 "Inter", sans-serif;
+      color: var(--ink);
+    }
+    #cl-o1 { left: 130px; top: 170px; }
+    #cl-o2 { left: 130px; top: 600px; }
+    #cl-o3 { left: 1430px; top: 170px; }
+    #cl-o4 { left: 1430px; top: 600px; }
+    #cl-end {
+      position: absolute;
+      left: 0;
+      top: 330px;
+      width: 1920px;
+      text-align: center;
+      font-family: "Inter", sans-serif;
+    }
+    #cl-end .t {
+      font: 800 96px/1.05 "Inter", sans-serif;
+      letter-spacing: -0.035em;
+      color: var(--ink);
+    }
+    #cl-end .c {
+      margin-top: 26px;
+      font: 600 40px/1.2 "Inter", sans-serif;
+      color: var(--ink-2);
+    }
+    #cl-end .c b {
+      color: #6a4fd1;
+    }
+    #cl-next {
+      position: absolute;
+      left: 960px;
+      top: 700px;
+      font: 600 32px/1.3 "Inter", sans-serif;
+      color: var(--ink);
+      background: #fff;
+      border: 3px solid var(--border);
+      border-radius: 999px;
+      padding: 20px 36px;
+      white-space: nowrap;
+    }
+    #cl-next b {
+      color: var(--brand-text);
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="close" data-width="1920" data-height="1080">
+    <svg id="cl-ring" viewBox="0 0 1920 1080"><circle id="cl-circ" cx="960" cy="526" r="330" pathLength="1" /></svg>
+    <div id="cl-rtag" class="tag">System Replay</div>
+    <div id="cl-pgtag" class="tag brand">PG · the output</div>
+    <div id="cl-pg" class="paper"><img src="assets/img/word-p2.webp" alt="" /></div>
+    <div id="cl-ok1" class="cl-ok" style="left: 1090px; top: 286px">✓</div>
+    <div id="cl-ava"><img src="assets/img/ava.webp" alt="" /></div>
+    <div id="cl-avatag" class="tag">Ava</div>
+    <div id="cl-ok2" class="cl-ok" style="left: 1262px; top: 592px">✓</div>
+    <div id="cl-o1" class="cl-out"><div class="im"><img src="assets/img/studio-en.webp" alt="" /></div><div class="lb">Screenshots</div></div>
+    <div id="cl-o2" class="cl-out"><div class="im"><img src="assets/img/word-da-p2.webp" alt="" /></div><div class="lb">Localized documentation</div></div>
+    <div id="cl-o3" class="cl-out"><div class="im"><img src="assets/img/pptx-01.webp" alt="" /></div><div class="lb">Training</div></div>
+    <div id="cl-o4" class="cl-out"><div class="im"><img src="assets/img/assist-1.webp" alt="" /></div><div class="lb">Help inside D365</div></div>
+    <div id="cl-end"><div class="t">Getting more value from our PGs</div><div class="c">PG Builder → PG → <b>System Replay</b></div></div>
+    <div id="cl-next"><b>Proposed next step:</b> continue development and testing once the PG Builder is finished</div>
+    <audio id="cl-a1" class="clip" data-hf-media-start-basis="local" data-start="0.45" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="cl-a2" class="clip" data-hf-media-start-basis="local" data-start="5.5" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="cl-a3" class="clip" data-hf-media-start-basis="local" data-start="7.5" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="cl-a4" class="clip" data-hf-media-start-basis="local" data-start="8.46" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="cl-a5" class="clip" data-hf-media-start-basis="local" data-start="10.22" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="cl-a6" class="clip" data-hf-media-start-basis="local" data-start="10.94" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="cl-bell" class="clip" data-hf-media-start-basis="local" data-start="12.7" data-duration="1.48" data-volume="0.4" src="assets/sfx/impactBell_heavy_000.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(["#cl-rtag", "#cl-next"], { xPercent: -50 });
+      gsap.set(["#cl-ok1", "#cl-ok2", "#cl-end", "#cl-next"], { opacity: 0 });
+      // "The PG stays the output"
+      tl.fromTo("#cl-pg", { opacity: 0, y: 40, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 0.4);
+      tl.fromTo("#cl-pgtag", { opacity: 0, scale: 0.7, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 1.7);
+      // "System Replay keeps the PGs, and Ava, current"
+      tl.fromTo("#cl-circ", { strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut" }, 2.45);
+      tl.fromTo("#cl-rtag", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 2.5);
+      tl.fromTo(["#cl-ava", "#cl-avatag"], { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)", stagger: 0.06 }, 4.75);
+      tl.fromTo(["#cl-ok1", "#cl-ok2"], { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)", stagger: 0.1 }, 5.5);
+      // "and gets more from them: screenshots, localized documentation, training and help inside D365"
+      const out = (sel, t) => tl.fromTo(sel, { opacity: 0, y: 24, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, t);
+      out("#cl-o1", 7.5);
+      out("#cl-o2", 8.46);
+      out("#cl-o3", 10.22);
+      out("#cl-o4", 10.94);
+      // end card
+      tl.to(["#cl-ring", "#cl-rtag", "#cl-pgtag", "#cl-pg", "#cl-ok1", "#cl-ava", "#cl-avatag", "#cl-ok2", ".cl-out"], { opacity: 0, scale: 0.96, filter: "blur(10px)", duration: 0.4, ease: "power2.in" }, 12.35);
+      tl.fromTo("#cl-end", { opacity: 0, y: 30, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 12.7);
+      tl.fromTo("#cl-next", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 13.6);
+      window.__timelines["close"] = tl;
+    })();
+  </script>
+</template>

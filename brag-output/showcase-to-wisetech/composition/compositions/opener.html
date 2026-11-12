@@ -1,0 +1,128 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #co-app {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+    }
+    #co-page {
+      left: 0;
+      top: 0;
+      width: 1819px;
+      height: 2573px;
+      transform-origin: 0 0;
+    }
+    #co-grow {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+      transform-origin: 0 0;
+      overflow: hidden;
+      border-radius: 4px;
+    }
+    #co-docshot {
+      position: absolute;
+      inset: 0;
+      background-image: url("assets/img/word-p2.webp");
+      background-size: 2652px 3752px;
+      background-position: -466px -1748px;
+    }
+    #co-live {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1200px;
+    }
+    #co-light {
+      left: 49px;
+      top: 244px;
+      width: 122px;
+      height: 52px;
+      z-index: 2;
+    }
+    #co-chip {
+      position: absolute;
+      left: 196px;
+      top: 244px;
+      z-index: 3;
+      font-size: 28px;
+      transform-origin: 0 50%;
+    }
+    #co-pg {
+      position: absolute;
+      left: 180px;
+      top: 72px;
+      z-index: 4;
+      font-size: 30px;
+    }
+    #co-note {
+      position: absolute;
+      left: 64px;
+      bottom: 52px;
+      z-index: 4;
+      font: 500 28px/1 "Inter", sans-serif;
+      color: #fff;
+      background: rgba(16, 24, 40, 0.78);
+      padding: 12px 20px;
+      border-radius: 12px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="opener" data-width="1920" data-height="1080">
+    <img id="co-app" src="assets/img/erp-v1.webp" alt="" />
+    <div id="co-cur" class="cursor" style="z-index: 2">
+      <svg viewBox="0 0 28 28"><path d="M5 2.8v19.6l5.1-4.9 3.3 7.6 3.6-1.6-3.3-7.4h7z" fill="#111827" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" /></svg>
+    </div>
+    <div id="co-page" class="paper"><img src="assets/img/word-p2.webp" alt="" /></div>
+    <div id="co-pg" class="tag brand">PG · Create a new customer</div>
+    <div id="co-note">Demo app standing in for D365</div>
+    <div id="co-grow">
+      <div id="co-docshot"></div>
+      <img id="co-live" src="assets/img/erp-v2.webp" alt="" />
+      <div id="co-light" class="light"></div>
+      <div id="co-chip" class="chip bad">Out of date</div>
+    </div>
+    <audio id="co-slide" class="clip" data-hf-media-start-basis="local" data-start="2.9" data-duration="0.6" data-volume="0.3" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="co-grow-s" class="clip" data-hf-media-start-basis="local" data-start="9.4" data-duration="0.6" data-volume="0.35" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="co-pgpop" class="clip" data-hf-media-start-basis="local" data-start="7.65" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="co-stamp" class="clip" data-hf-media-start-basis="local" data-start="12.64" data-duration="0.18" data-volume="0.55" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // "Every company runs on processes": the app at work
+      tl.fromTo("#co-note", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 0.3);
+      tl.fromTo("#co-cur", { x: 1300, y: 900 }, { x: 600, y: 470, duration: 1.4, ease: "power2.inOut" }, 0.2);
+      tl.to("#co-cur", { x: 128, y: 246, duration: 0.7, ease: "power3.inOut" }, 1.7);
+      tl.to("#co-note", { opacity: 0, duration: 0.25 }, 2.7);
+      // "and on the guides that explain them": the guide slides in over it
+      tl.fromTo("#co-page", { x: 141, y: 240, scale: 0.9, opacity: 0, filter: "blur(6px)" }, { y: -856, opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, 2.95);
+      tl.set("#co-cur", { opacity: 0 }, 3.4);
+      tl.to("#co-page", { y: -1000, duration: 5.6, ease: "none" }, 3.7);
+      // "those guides are the PGs"
+      tl.fromTo("#co-pg", { opacity: 0, scale: 0.7, filter: "blur(6px)", transformOrigin: "0 50%" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.35, ease: "back.out(1.6)" }, 7.62);
+      // "The day D365 changes": the PG's screenshot becomes today's app
+      const r0 = { x: 141 + 320 * 0.9, y: -1000 + 1200 * 0.9, scale: (1317 * 0.9) / 1920 };
+      tl.to("#co-pg", { opacity: 0, duration: 0.2 }, 9.35);
+      tl.fromTo("#co-grow", { x: r0.x, y: r0.y, scale: r0.scale, opacity: 0 }, { opacity: 1, duration: 0.01 }, 9.43);
+      tl.to("#co-grow", { x: 0, y: 0, scale: 1, duration: 0.65, ease: "power2.inOut" }, 9.45);
+      tl.to("#co-page", { filter: "blur(14px)", opacity: 0, scale: 0.94, duration: 0.3, ease: "power2.in" }, 9.5);
+      tl.fromTo("#co-live", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power1.inOut" }, 9.65);
+      tl.fromTo("#co-light", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, 9.9);
+      tl.fromTo("#co-grow", { scale: 1 }, { scale: 1.32, duration: 1.4, ease: "power2.inOut", immediateRender: false }, 10.45);
+      // "they start going out of date"
+      tl.to("#co-light", { borderColor: "#e5484d", boxShadow: "0 0 0 12px rgba(229,72,77,0.25), 0 0 0 4000px rgba(16,24,40,0.30)", duration: 0.12, ease: "none" }, 12.5);
+      tl.fromTo("#co-chip", { opacity: 0, scale: 0.6, filter: "blur(6px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "back.out(1.6)" }, 12.62);
+      tl.to("#co-grow", { opacity: 0, filter: "blur(8px)", duration: 0.16, ease: "power2.in" }, 13.72);
+      window.__timelines["opener"] = tl;
+    })();
+  </script>
+</template>

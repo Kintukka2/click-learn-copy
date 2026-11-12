@@ -1,0 +1,395 @@
+1
+00:00:00,000 --> 00:00:02,540
+Every company runs on processes,
+
+2
+00:00:02,560 --> 00:00:04,940
+and on the guides that explain them.
+
+3
+00:00:04,960 --> 00:00:07,500
+For our finance teams, those guides are
+
+4
+00:00:07,520 --> 00:00:09,020
+the PGs.
+
+5
+00:00:09,040 --> 00:00:12,860
+The day D365 changes, they start going out
+
+6
+00:00:12,880 --> 00:00:13,900
+of date.
+
+7
+00:00:13,920 --> 00:00:15,820
+In a big transformation,
+
+8
+00:00:15,840 --> 00:00:18,380
+people get trained, documents get built
+
+9
+00:00:18,400 --> 00:00:20,300
+and recordings get stored,
+
+10
+00:00:20,320 --> 00:00:23,340
+and then it all slowly goes out of date,
+
+11
+00:00:23,360 --> 00:00:25,340
+because it's hard to maintain.
+
+12
+00:00:25,360 --> 00:00:29,340
+Every D365 update, new module and rollout
+
+13
+00:00:29,360 --> 00:00:31,180
+wave is another round.
+
+14
+00:00:31,200 --> 00:00:33,980
+Each one sends the team back to re-shoot,
+
+15
+00:00:34,000 --> 00:00:36,810
+rewrite and re-translate the PGs,
+
+16
+00:00:36,960 --> 00:00:38,300
+by hand.
+
+17
+00:00:38,320 --> 00:00:41,340
+And the PGs are Ava's source of truth in
+
+18
+00:00:41,360 --> 00:00:44,140
+Teams, so when a PG is out of date,
+
+19
+00:00:44,160 --> 00:00:46,380
+so are Ava's answers.
+
+20
+00:00:46,400 --> 00:00:48,940
+The PG Builder turns recordings,
+
+21
+00:00:48,960 --> 00:00:51,980
+manuals and other material into PGs to the
+
+22
+00:00:52,000 --> 00:00:53,900
+current approved standard.
+
+23
+00:00:53,920 --> 00:00:56,460
+System Replay, the third use case,
+
+24
+00:00:56,480 --> 00:01:00,220
+checks those PGs against D365 and feeds
+
+25
+00:01:00,240 --> 00:01:02,830
+what it finds back into them.
+
+26
+00:01:02,850 --> 00:01:05,950
+It starts from a PG the team already has.
+
+27
+00:01:05,970 --> 00:01:08,990
+The author walks through it once in D365
+
+28
+00:01:09,010 --> 00:01:10,510
+with the browser extension,
+
+29
+00:01:10,530 --> 00:01:12,830
+which ties each step to the real button
+
+30
+00:01:12,850 --> 00:01:14,030
+or field.
+
+31
+00:01:14,050 --> 00:01:17,070
+From then on, it can replay the whole PG
+
+32
+00:01:17,090 --> 00:01:18,030
+on its own.
+
+33
+00:01:18,050 --> 00:01:20,590
+Each button or field is recorded several
+
+34
+00:01:20,610 --> 00:01:21,230
+ways:
+
+35
+00:01:21,250 --> 00:01:23,790
+its ID, its role and name,
+
+36
+00:01:23,810 --> 00:01:26,670
+its label, and its place on the page.
+
+37
+00:01:26,690 --> 00:01:28,350
+If the first check fails,
+
+38
+00:01:28,370 --> 00:01:29,950
+it moves on to the next,
+
+39
+00:01:29,970 --> 00:01:33,340
+so a button that has moved is still found.
+
+40
+00:01:33,410 --> 00:01:37,150
+After a D365 update, that replay becomes
+
+41
+00:01:37,170 --> 00:01:39,550
+a PG versus system check.
+
+42
+00:01:39,570 --> 00:01:42,830
+Steps that don't match are flagged as discrepancies,
+
+43
+00:01:42,850 --> 00:01:45,150
+and the author decides which is right:
+
+44
+00:01:45,170 --> 00:01:47,470
+the system or the PG.
+
+45
+00:01:47,490 --> 00:01:49,550
+If the PG needs to change,
+
+46
+00:01:49,570 --> 00:01:51,870
+the plan is to pass the confirmed change
+
+47
+00:01:51,890 --> 00:01:54,590
+to the PG Builder, so the update follows
+
+48
+00:01:54,610 --> 00:01:56,910
+its rules and goes through the usual review
+
+49
+00:01:56,930 --> 00:01:58,140
+and sign-off.
+
+50
+00:01:58,460 --> 00:02:01,000
+Every run also captures a fresh,
+
+51
+00:02:01,020 --> 00:02:03,480
+highlighted screenshot of each step,
+
+52
+00:02:03,500 --> 00:02:05,560
+ready for the PG when it needs one,
+
+53
+00:02:05,580 --> 00:02:07,240
+to support an audit trail,
+
+54
+00:02:07,260 --> 00:02:09,800
+or for any other training material.
+
+55
+00:02:09,820 --> 00:02:13,480
+For Wave 2 and Wave 3, it can replay a PG
+
+56
+00:02:13,500 --> 00:02:16,360
+with D365 in another language.
+
+57
+00:02:16,380 --> 00:02:18,520
+Nothing is machine-translated.
+
+58
+00:02:18,540 --> 00:02:22,280
+It reads the exact label D365 shows on every
+
+59
+00:02:22,300 --> 00:02:24,920
+button and field, and builds the localized
+
+60
+00:02:24,940 --> 00:02:26,920
+documentation from those.
+
+61
+00:02:26,940 --> 00:02:29,720
+The same steps and screenshots become training
+
+62
+00:02:29,740 --> 00:02:30,440
+material:
+
+63
+00:02:30,460 --> 00:02:33,400
+PowerPoint decks, a narrated walkthrough,
+
+64
+00:02:33,420 --> 00:02:36,440
+practice, a short test and video clips.
+
+65
+00:02:36,460 --> 00:02:40,040
+And a PG can sit on top of D365 itself,
+
+66
+00:02:40,060 --> 00:02:42,600
+with Guide me highlighting each field and
+
+67
+00:02:42,620 --> 00:02:45,000
+taking the user through the task one step
+
+68
+00:02:45,020 --> 00:02:45,960
+at a time.
+
+69
+00:02:45,980 --> 00:02:48,920
+Authors can also record a new process straight
+
+70
+00:02:48,940 --> 00:02:50,440
+into System Replay.
+
+71
+00:02:50,460 --> 00:02:52,920
+They do the task in D365,
+
+72
+00:02:52,940 --> 00:02:55,000
+the steps and screenshots are written for
+
+73
+00:02:55,020 --> 00:02:57,480
+them, and it shows up in the extension straight
+
+74
+00:02:57,500 --> 00:02:59,830
+away for anyone on that screen.
+
+75
+00:02:59,850 --> 00:03:03,110
+Each process already exports as a Word document.
+
+76
+00:03:03,130 --> 00:03:05,910
+The next idea is to attach the PG Builder
+
+77
+00:03:05,930 --> 00:03:08,150
+to that, so one recording could produce
+
+78
+00:03:08,170 --> 00:03:11,270
+the PG itself, in full or in part.
+
+79
+00:03:11,290 --> 00:03:14,470
+That's a work in progress and isn't guaranteed.
+
+80
+00:03:14,490 --> 00:03:17,190
+Part of the recent AI spend went into building
+
+81
+00:03:17,210 --> 00:03:18,310
+System Replay.
+
+82
+00:03:18,330 --> 00:03:20,150
+Running it uses none.
+
+83
+00:03:20,170 --> 00:03:22,870
+Replays, checks and screenshots run on their
+
+84
+00:03:22,890 --> 00:03:26,390
+own, so using it more adds no AI spend.
+
+85
+00:03:26,410 --> 00:03:29,110
+It runs as a single container on a dedicated
+
+86
+00:03:29,130 --> 00:03:31,430
+server, and authors sign in with an access
+
+87
+00:03:31,450 --> 00:03:32,070
+key.
+
+88
+00:03:32,090 --> 00:03:34,550
+The extension only talks to that server,
+
+89
+00:03:34,570 --> 00:03:36,790
+so PG content stays on it.
+
+90
+00:03:36,810 --> 00:03:38,950
+Today it's a working prototype,
+
+91
+00:03:38,970 --> 00:03:41,110
+built and tested on a demo app.
+
+92
+00:03:41,130 --> 00:03:43,190
+It still needs a lot of work before it's
+
+93
+00:03:43,210 --> 00:03:44,230
+ready for the business,
+
+94
+00:03:44,250 --> 00:03:46,550
+and the PG Builder comes first.
+
+95
+00:03:46,570 --> 00:03:48,790
+The PG stays the output.
+
+96
+00:03:48,810 --> 00:03:50,870
+System Replay keeps the PGs,
+
+97
+00:03:50,890 --> 00:03:53,830
+and Ava, current, and gets more from them:
+
+98
+00:03:53,850 --> 00:03:56,550
+screenshots, localized documentation,
+
+99
+00:03:56,570 --> 00:03:59,780
+training and help inside D365.

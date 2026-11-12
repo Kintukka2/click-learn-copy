@@ -1,0 +1,160 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #ec-eye {
+      left: 100px;
+      top: 150px;
+    }
+    #ec-title {
+      left: 100px;
+      top: 196px;
+      font-size: 60px;
+    }
+    .ec-src {
+      left: 100px;
+      width: 260px;
+      justify-content: center;
+    }
+    #ec-builder {
+      left: 450px;
+      top: 410px;
+      width: 310px;
+    }
+    #ec-pg {
+      left: 840px;
+      top: 410px;
+      width: 200px;
+      min-width: 0;
+    }
+    #ec-replay {
+      left: 1120px;
+      top: 410px;
+      width: 320px;
+    }
+    #ec-d365 {
+      left: 1520px;
+      top: 410px;
+      width: 220px;
+      min-width: 0;
+    }
+    #ec-std {
+      left: 470px;
+      top: 620px;
+    }
+    #ec-third {
+      left: 1150px;
+      top: 340px;
+    }
+    #ec-current {
+      left: 820px;
+      top: 340px;
+    }
+    #ec-loop {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: visible;
+    }
+    #ec-loop path {
+      fill: none;
+      stroke: #6a4fd1;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    #ec-head {
+      fill: #6a4fd1;
+    }
+    #ec-back {
+      position: absolute;
+      left: 940px;
+      top: 762px;
+      width: 340px;
+      text-align: center;
+      font: 700 28px/1.2 "Inter", sans-serif;
+      color: #6a4fd1;
+    }
+    #ec-pulse {
+      position: absolute;
+      left: 1452px;
+      top: 478px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #6a4fd1;
+      box-shadow: 0 0 0 10px rgba(106, 79, 209, 0.2);
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="ecosystem" data-width="1920" data-height="1080">
+    <div id="ec-eye" class="eyebrow">The PG ecosystem</div>
+    <div id="ec-title" class="h2">Getting more value from our PGs</div>
+    <div id="ec-s1" class="tag outline ec-src" style="top: 380px">Recordings</div>
+    <div id="ec-s2" class="tag outline ec-src" style="top: 466px">Manuals</div>
+    <div id="ec-s3" class="tag outline ec-src" style="top: 552px">Other material</div>
+    <div id="ec-w1" class="wire" style="left: 372px; top: 493px; width: 66px"></div>
+    <div id="ec-builder" class="node builder"><div class="k">Builds</div><div class="n">PG Builder</div><div class="d">Template and rules</div></div>
+    <div id="ec-std" class="tag ok">✓ Current approved standard</div>
+    <div id="ec-w2" class="wire" style="left: 772px; top: 493px; width: 56px"></div>
+    <div id="ec-pg" class="node pg"><div class="k">Output</div><div class="n">PG</div><div class="d">The guide</div></div>
+    <div id="ec-w3" class="wire" style="left: 1052px; top: 493px; width: 56px"></div>
+    <div id="ec-replay" class="node replay"><div class="k">Checks</div><div class="n">System Replay</div><div class="d">Replays each step</div></div>
+    <div id="ec-third" class="tag" style="background: #6a4fd1">The third use case</div>
+    <div id="ec-w4" class="wire" style="left: 1452px; top: 493px; width: 56px"></div>
+    <div id="ec-d365" class="node"><div class="k">Live system</div><div class="n">D365</div><div class="d">Screens and fields</div></div>
+    <div id="ec-pulse"></div>
+    <svg id="ec-loop" viewBox="0 0 1920 1080">
+      <path id="ec-path" pathLength="1" d="M 1280 596 L 1280 722 Q 1280 742 1260 742 L 960 742 Q 940 742 940 722 L 940 620" />
+      <polygon id="ec-head" points="924,624 956,624 940,598" />
+    </svg>
+    <div id="ec-back">Feeds back into the PG</div>
+    <div id="ec-current" class="tag ok">✓ Kept current</div>
+    <audio id="ec-a1" class="clip" data-hf-media-start-basis="local" data-start="0.42" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="ec-a2" class="clip" data-hf-media-start-basis="local" data-start="4.58" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="ec-a3" class="clip" data-hf-media-start-basis="local" data-start="7.62" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="ec-a4" class="clip" data-hf-media-start-basis="local" data-start="13.5" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="ec-a5" class="clip" data-hf-media-start-basis="local" data-start="15.12" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const pop = (sel, t) => tl.fromTo(sel, { opacity: 0, y: 24, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, t);
+      const chip = (sel, t) => tl.fromTo(sel, { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, t);
+      const wire = (sel, t) => tl.fromTo(sel, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, t);
+      gsap.set("#ec-pulse", { opacity: 0 });
+      tl.fromTo(["#ec-eye", "#ec-title"], { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out", stagger: 0.08 }, 0.1);
+      // "The PG Builder turns recordings, manuals and other material"
+      pop("#ec-builder", 0.4);
+      pop("#ec-s1", 1.8);
+      pop("#ec-s2", 2.6);
+      pop("#ec-s3", 3.5);
+      wire("#ec-w1", 3.95);
+      // "into PGs to the current approved standard"
+      wire("#ec-w2", 4.3);
+      pop("#ec-pg", 4.58);
+      chip("#ec-std", 6.05);
+      // "System Replay, the third use case"
+      wire("#ec-w3", 7.5);
+      pop("#ec-replay", 7.62);
+      chip("#ec-third", 9.0);
+      // "checks those PGs against D365"
+      wire("#ec-w4", 10.6);
+      pop("#ec-d365", 11.5);
+      tl.fromTo("#ec-pulse", { opacity: 0, x: 0 }, { opacity: 1, x: 40, duration: 0.5, ease: "power2.inOut" }, 12.0);
+      tl.to("#ec-pulse", { opacity: 0, duration: 0.25 }, 12.6);
+      // "and feeds what it finds back into them"
+      tl.fromTo("#ec-path", { strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.0, ease: "power2.inOut" }, 13.5);
+      tl.fromTo("#ec-head", { opacity: 0 }, { opacity: 1, duration: 0.15 }, 14.45);
+      tl.fromTo("#ec-back", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 14.2);
+      tl.to("#ec-third", { opacity: 0, duration: 0.2 }, 14.9);
+      chip("#ec-current", 15.12);
+      tl.to("#ec-pg", { scale: 1.06, duration: 0.25, yoyo: true, repeat: 1, ease: "power2.inOut" }, 15.12);
+      tl.to("[id^='ec-']", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 16.0);
+      window.__timelines["ecosystem"] = tl;
+    })();
+  </script>
+</template>

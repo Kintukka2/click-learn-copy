@@ -1,0 +1,113 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #se-eye {
+      left: 200px;
+      top: 150px;
+    }
+    #se-srv {
+      left: 1020px;
+      top: 330px;
+      width: 600px;
+      min-height: 380px;
+      box-sizing: border-box;
+    }
+    #se-srv .n {
+      font-size: 52px;
+    }
+    #se-box {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      bottom: 30px;
+      padding: 22px 26px;
+      border-radius: 18px;
+      background: #fff;
+      border: 3px solid var(--ok);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font: 700 32px/1.2 "Inter", sans-serif;
+      color: var(--ok-text);
+    }
+    #se-lock {
+      position: relative;
+      width: 34px;
+      height: 28px;
+      margin-top: 12px;
+      border-radius: 6px;
+      background: var(--ok);
+      flex: none;
+    }
+    #se-lock::before {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: -16px;
+      width: 22px;
+      height: 22px;
+      border: 5px solid var(--ok);
+      border-bottom: 0;
+      border-radius: 12px 12px 0 0;
+      box-sizing: border-box;
+    }
+    #se-auth {
+      left: 200px;
+      top: 410px;
+      width: 420px;
+    }
+    #se-key {
+      left: 200px;
+      top: 640px;
+      font-size: 30px;
+    }
+    #se-wire {
+      left: 632px;
+      top: 497px;
+      width: 376px;
+    }
+    #se-only {
+      position: absolute;
+      left: 640px;
+      top: 396px;
+      width: 360px;
+      text-align: center;
+      font: 700 28px/1.2 "Inter", sans-serif;
+      color: var(--ink-2);
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="secure" data-width="1920" data-height="1080">
+    <div id="se-eye" class="eyebrow">Finance content stays put</div>
+    <div id="se-srv" class="node replay"><div class="k">Dedicated server</div><div class="n">System Replay</div><div class="d">A single container</div><div id="se-box"><div id="se-lock"></div>PG content stays here</div></div>
+    <div id="se-auth" class="node"><div class="k">Authors</div><div class="n">Extension and Studio</div></div>
+    <div id="se-key" class="tag">Sign in with an access key</div>
+    <div id="se-wire" class="wire"></div>
+    <div id="se-only">Talks only to this server</div>
+    <audio id="se-a1" class="clip" data-hf-media-start-basis="local" data-start="1.08" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="se-a2" class="clip" data-hf-media-start-basis="local" data-start="4.9" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="se-a3" class="clip" data-hf-media-start-basis="local" data-start="8.57" data-duration="0.18" data-volume="0.4" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const pop = (sel, t) => tl.fromTo(sel, { opacity: 0, y: 24, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, t);
+      gsap.set("#se-box", { opacity: 0 });
+      tl.fromTo("#se-eye", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 0.1);
+      // "It runs as a single container on a dedicated server"
+      pop("#se-srv", 1.05);
+      // "and authors sign in with an access key"
+      pop("#se-auth", 3.6);
+      tl.fromTo("#se-key", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 4.9);
+      // "The extension only talks to that server"
+      tl.fromTo("#se-wire", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, 6.05);
+      tl.fromTo("#se-only", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 7.55);
+      // "so PG content stays on it"
+      tl.fromTo("#se-box", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 8.55);
+      tl.to("[id^='se-']", { opacity: 0, filter: "blur(8px)", duration: 0.14, ease: "power2.in" }, 10.26);
+      window.__timelines["secure"] = tl;
+    })();
+  </script>
+</template>
