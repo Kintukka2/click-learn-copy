@@ -1,0 +1,144 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #fp-pg {
+      left: 130px;
+      top: 230px;
+      width: 420px;
+      height: 594px;
+    }
+    #fp-pgtag {
+      position: absolute;
+      left: 130px;
+      top: 160px;
+      font-size: 30px;
+    }
+    #fp-wire {
+      left: 566px;
+      top: 520px;
+      width: 110px;
+    }
+    #fp-studio {
+      left: 690px;
+      top: 200px;
+      width: 1080px;
+      height: 675px;
+    }
+    #fp-ban {
+      position: absolute;
+      left: 186px;
+      top: 186px;
+      width: 280px;
+      height: 149px;
+      border: 5px solid var(--brand);
+      border-radius: 12px;
+      box-shadow: 0 0 0 8px rgba(47, 111, 237, 0.2);
+    }
+    #fp-drafted {
+      position: absolute;
+      left: 690px;
+      top: 130px;
+      font-size: 30px;
+    }
+    #fp-pop {
+      left: 1330px;
+      top: 150px;
+      width: 456px;
+      height: 768px;
+    }
+    #fp-btn {
+      position: absolute;
+      left: 28px;
+      top: 724px;
+      width: 352px;
+      height: 46px;
+      border-radius: 10px;
+      border: 4px solid var(--teal);
+      box-shadow: 0 0 0 8px rgba(20, 184, 166, 0.25);
+    }
+    #fp-plate {
+      z-index: 1;
+    }
+    #fp-b2 {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    #fp-l1 {
+      left: 96px;
+      top: 316px;
+      width: 182px;
+      height: 88px;
+    }
+    #fp-l2 {
+      left: 1166px;
+      top: 572px;
+      width: 970px;
+      height: 100px;
+    }
+    #fp-ext {
+      position: absolute;
+      right: 120px;
+      bottom: 70px;
+      z-index: 3;
+      font-size: 30px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="frompg" data-width="1920" data-height="1080">
+    <div id="fp-pgtag" class="tag brand">The PG the team already has</div>
+    <div id="fp-pg" class="paper"><img src="assets/img/word-p2.webp" alt="" /></div>
+    <div id="fp-wire" class="wire"></div>
+    <div id="fp-drafted" class="tag outline">Read into System Replay</div>
+    <div id="fp-studio" class="screen"><img src="assets/img/studio-draft.webp" alt="" /><div id="fp-ban"></div></div>
+    <div id="fp-pop" class="win"><img src="assets/img/popup-finalise.webp" alt="" /><div id="fp-btn"></div></div>
+    <div id="fp-cur" class="cursor" style="z-index: 4">
+      <svg viewBox="0 0 28 28"><path d="M5 2.8v19.6l5.1-4.9 3.3 7.6 3.6-1.6-3.3-7.4h7z" fill="#111827" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" /></svg>
+    </div>
+    <div id="fp-plate" class="plate">
+      <img id="fp-b1" src="assets/img/build-1.webp" alt="" />
+      <img id="fp-b2" src="assets/img/build-2.webp" alt="" />
+      <div id="fp-l1" class="light nodim"></div>
+      <div id="fp-l2" class="light nodim"></div>
+    </div>
+    <div id="fp-ext" class="tag">Each step tied to the real element in D365</div>
+    <audio id="fp-a1" class="clip" data-hf-media-start-basis="local" data-start="0.32" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="fp-a2" class="clip" data-hf-media-start-basis="local" data-start="3.45" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="fp-click" class="clip" data-hf-media-start-basis="local" data-start="6.78" data-duration="0.01" data-volume="0.45" src="assets/sfx/click_003.ogg"></audio>
+    <audio id="fp-a3" class="clip" data-hf-media-start-basis="local" data-start="8.6" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="fp-a4" class="clip" data-hf-media-start-basis="local" data-start="10.5" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#fp-plate", { x: 0, y: 0, scale: 0.9 });
+      gsap.set(["#fp-plate", "#fp-b2", "#fp-l1", "#fp-l2", "#fp-ext"], { opacity: 0 });
+      // "It starts from a PG the team already has"
+      tl.fromTo(["#fp-pg", "#fp-pgtag"], { opacity: 0, x: -40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out", stagger: 0.06 }, 0.3);
+      tl.fromTo("#fp-wire", { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, 1.95);
+      tl.fromTo("#fp-studio", { opacity: 0, x: 50, filter: "blur(10px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 2.1);
+      tl.fromTo("#fp-drafted", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "expo.out" }, 2.4);
+      tl.fromTo("#fp-ban", { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 2.6);
+      // "The author walks through it once in D365 with the browser extension"
+      tl.fromTo("#fp-pop", { opacity: 0, y: 60, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 3.5);
+      tl.fromTo("#fp-cur", { x: 1100, y: 980, opacity: 0 }, { opacity: 1, duration: 0.2 }, 4.6);
+      tl.to("#fp-cur", { x: 1520, y: 888, duration: 1.4, ease: "power2.inOut" }, 4.7);
+      tl.fromTo("#fp-btn", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 6.2);
+      tl.to("#fp-cur", { scale: 0.86, duration: 0.08, yoyo: true, repeat: 1 }, 6.76);
+      // "which ties each step to the real button or field"
+      tl.to(["#fp-pg", "#fp-pgtag", "#fp-wire", "#fp-studio", "#fp-drafted", "#fp-pop", "#fp-cur"], { opacity: 0, filter: "blur(8px)", duration: 0.25, ease: "power2.in" }, 7.25);
+      tl.fromTo("#fp-plate", { opacity: 0, scale: 0.84 }, { opacity: 1, scale: 0.9, duration: 0.5, ease: "expo.out" }, 7.4);
+      tl.fromTo("#fp-ext", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 8.2);
+      tl.fromTo("#fp-l1", { opacity: 0, scale: 1.25, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 8.6);
+      tl.to("#fp-l1", { scale: 1.08, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.inOut" }, 9.84);
+      tl.to("#fp-l1", { opacity: 0, duration: 0.15 }, 10.1);
+      tl.fromTo("#fp-b2", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power1.inOut" }, 10.05);
+      tl.to("#fp-plate", { x: -280, duration: 0.45, ease: "power2.inOut" }, 10.05);
+      tl.fromTo("#fp-l2", { opacity: 0, scale: 1.15, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 10.5);
+      tl.to(["#fp-plate", "#fp-ext"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 11.12);
+      window.__timelines["frompg"] = tl;
+    })();
+  </script>
+</template>

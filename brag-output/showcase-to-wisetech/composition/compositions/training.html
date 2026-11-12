@@ -1,0 +1,128 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #tr-lab {
+      position: absolute;
+      left: 280px;
+      top: 62px;
+      font-size: 34px;
+      padding: 16px 30px;
+    }
+    #tr-scr {
+      left: 280px;
+      top: 150px;
+      width: 1360px;
+      height: 850px;
+    }
+    .tr-l {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1360px;
+      height: 850px;
+      background: #fff;
+    }
+    .tr-l img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1360px;
+      display: block;
+    }
+    #tr-ppt {
+      background: #0b1f38;
+    }
+    #tr-ppt img {
+      top: 42px;
+    }
+    #tr-vid {
+      background: transparent;
+    }
+    #tr-play {
+      position: absolute;
+      left: 620px;
+      top: 365px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(16, 24, 40, 0.72);
+    }
+    #tr-play::after {
+      content: "";
+      position: absolute;
+      left: 46px;
+      top: 33px;
+      border-left: 42px solid #fff;
+      border-top: 27px solid transparent;
+      border-bottom: 27px solid transparent;
+    }
+    #tr-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 64px;
+      background: rgba(16, 24, 40, 0.82);
+    }
+    #tr-prog {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      top: 28px;
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.3);
+    }
+    #tr-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      border-radius: 4px;
+      background: var(--teal);
+      transform-origin: 0 50%;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="training" data-width="1920" data-height="1080">
+    <div id="tr-lab" class="tag brand"><span id="tr-txt">Same steps, same screenshots</span></div>
+    <div id="tr-scr" class="screen">
+      <div class="tr-l" id="tr-st"><img src="assets/img/studio-en.webp" alt="" /></div>
+      <div class="tr-l" id="tr-ppt"><img src="assets/img/pptx-01.webp" alt="" /></div>
+      <div class="tr-l" id="tr-show"><img src="assets/img/player-show.webp" alt="" /></div>
+      <div class="tr-l" id="tr-try"><img src="assets/img/player-try.webp" alt="" /></div>
+      <div class="tr-l" id="tr-test"><img src="assets/img/player-test.webp" alt="" /></div>
+      <div class="tr-l" id="tr-vid"><div id="tr-play"></div><div id="tr-bar"><div id="tr-prog"><div id="tr-fill"></div></div></div></div>
+    </div>
+    <audio id="tr-s1" class="clip" data-hf-media-start-basis="local" data-start="3.6" data-duration="0.6" data-volume="0.26" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="tr-s2" class="clip" data-hf-media-start-basis="local" data-start="5.05" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="tr-s3" class="clip" data-hf-media-start-basis="local" data-start="6.55" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="tr-s4" class="clip" data-hf-media-start-basis="local" data-start="7.52" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="tr-s5" class="clip" data-hf-media-start-basis="local" data-start="8.64" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(["#tr-ppt", "#tr-show", "#tr-try", "#tr-test", "#tr-vid"], { xPercent: 100 });
+      tl.fromTo("#tr-scr", { opacity: 0, y: 40, scale: 0.97, filter: "blur(8px)" }, { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 0.3);
+      tl.fromTo("#tr-lab", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 0.5);
+      // each format pushes in on its word
+      const push = (sel, t) => tl.to(sel, { xPercent: 0, duration: 0.4, ease: "power3.inOut" }, t);
+      push("#tr-ppt", 3.55);
+      push("#tr-show", 5.0);
+      push("#tr-try", 6.5);
+      push("#tr-test", 7.47);
+      tl.set("#tr-vid", { xPercent: 0 }, 8.6);
+      tl.fromTo("#tr-vid", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 8.6);
+      tl.set("#tr-show", { zIndex: 6 }, 8.6);
+      tl.set("#tr-vid", { zIndex: 7 }, 8.6);
+      tl.fromTo("#tr-fill", { scaleX: 0 }, { scaleX: 0.3, duration: 0.8, ease: "none" }, 8.6);
+      tl.to(["#tr-scr", "#tr-lab"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 9.33);
+      SL.drive(tl, [SL.roller(document.getElementById("tr-txt"), ["Same steps, same screenshots", "PowerPoint deck", "Narrated walkthrough", "Hands-on practice", "A short test", "Video clip"], [[0, 0], [3.6, 1], [5.05, 2], [6.55, 3], [7.52, 4], [8.64, 5]])]);
+      window.__timelines["training"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,110 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #ho-eye {
+      left: 120px;
+      top: 150px;
+    }
+    #ho-title {
+      left: 120px;
+      top: 196px;
+      font-size: 60px;
+    }
+    #ho-plan {
+      right: 120px;
+      top: 160px;
+    }
+    .ho-node {
+      top: 390px;
+      width: 330px;
+    }
+    #ho-n1 { left: 120px; }
+    #ho-n2 { left: 560px; }
+    #ho-n3 { left: 1000px; }
+    #ho-n4 { left: 1440px; width: 360px; }
+    .ho-w {
+      top: 476px;
+    }
+    #ho-tok {
+      position: absolute;
+      left: 600px;
+      top: 640px;
+      padding: 18px 26px;
+      border-radius: 16px;
+      background: #fff;
+      border: 3px solid var(--ok);
+      box-shadow: var(--shadow-lg);
+      font: 700 28px/1 "Inter", sans-serif;
+      color: var(--ok-text);
+      white-space: nowrap;
+    }
+    #ho-rules {
+      position: absolute;
+      left: 1000px;
+      top: 620px;
+      width: 360px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    #ho-rules .tag {
+      position: relative;
+      font-size: 28px;
+      padding: 10px 18px;
+    }
+    #ho-sign {
+      left: 1440px;
+      top: 620px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="handoff" data-width="1920" data-height="1080">
+    <div id="ho-eye" class="eyebrow">Keeping PGs current</div>
+    <div id="ho-title" class="h2">Confirmed changes go to the PG Builder</div>
+    <div id="ho-plan" class="tag outline">Planned</div>
+    <div id="ho-n1" class="node bad ho-node"><div class="k">Flagged</div><div class="n">Discrepancy</div><div class="d">From the PG versus system check</div></div>
+    <div id="ho-w1" class="wire ho-w" style="left: 462px; width: 86px"></div>
+    <div id="ho-n2" class="node ho-node"><div class="k">The author</div><div class="n">Review</div><div class="d">Confirms the PG needs to change</div></div>
+    <div id="ho-w2" class="wire ho-w" style="left: 902px; width: 86px"></div>
+    <div id="ho-n3" class="node builder ho-node"><div class="k">Updates</div><div class="n">PG Builder</div><div class="d">Under its rules</div></div>
+    <div id="ho-w3" class="wire ho-w" style="left: 1342px; width: 86px"></div>
+    <div id="ho-n4" class="node pg ho-node"><div class="k">Output</div><div class="n">Updated PG</div><div class="d">Ready for sign-off</div></div>
+    <div id="ho-tok">✓ Confirmed change</div>
+    <div id="ho-rules"><div class="tag outline">Template</div><div class="tag outline">US English</div><div class="tag outline">Naming</div><div class="tag outline">Structure</div></div>
+    <div id="ho-sign" class="tag ok">✓ Reviewed and signed off</div>
+    <audio id="ho-a1" class="clip" data-hf-media-start-basis="local" data-start="0.42" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="ho-a2" class="clip" data-hf-media-start-basis="local" data-start="3.15" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="ho-a3" class="clip" data-hf-media-start-basis="local" data-start="4.78" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="ho-a4" class="clip" data-hf-media-start-basis="local" data-start="9.52" data-duration="0.18" data-volume="0.4" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const pop = (sel, t) => tl.fromTo(sel, { opacity: 0, y: 24, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, t);
+      const wire = (sel, t) => tl.fromTo(sel, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, t);
+      tl.fromTo(["#ho-eye", "#ho-title"], { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out", stagger: 0.08 }, 0.1);
+      // "If the PG needs to change"
+      pop("#ho-n1", 0.42);
+      wire("#ho-w1", 1.1);
+      pop("#ho-n2", 1.3);
+      // "the plan is"
+      tl.fromTo("#ho-plan", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 2.4);
+      // "to pass the confirmed change to the PG Builder"
+      tl.fromTo("#ho-tok", { opacity: 0, x: 0, y: 0 }, { opacity: 1, duration: 0.2 }, 3.15);
+      wire("#ho-w2", 3.4);
+      tl.to("#ho-tok", { x: 440, duration: 1.1, ease: "power2.inOut" }, 3.3);
+      pop("#ho-n3", 4.78);
+      tl.to("#ho-tok", { opacity: 0, y: -20, duration: 0.25 }, 5.2);
+      // "so the update follows its rules"
+      tl.fromTo("#ho-rules .tag", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.3, ease: "expo.out", stagger: 0.1 }, 7.3);
+      // "and goes through the usual review and sign-off"
+      wire("#ho-w3", 7.95);
+      pop("#ho-n4", 8.15);
+      tl.fromTo("#ho-sign", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 9.5);
+      tl.to("[id^='ho-']", { opacity: 0, filter: "blur(8px)", duration: 0.15, ease: "power2.in" }, 10.82);
+      window.__timelines["handoff"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,151 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #av-pg {
+      left: 200px;
+      top: 250px;
+      width: 380px;
+      height: 537px;
+    }
+    #av-dim {
+      position: absolute;
+      inset: 0;
+      background: rgba(120, 96, 60, 0.22);
+    }
+    #av-pgtag {
+      position: absolute;
+      left: 200px;
+      top: 180px;
+      font-size: 30px;
+    }
+    #av-stale {
+      position: absolute;
+      left: 420px;
+      top: 226px;
+      z-index: 3;
+    }
+    #av-wire {
+      left: 610px;
+      top: 516px;
+      width: 190px;
+    }
+    #av-truth {
+      position: absolute;
+      left: 560px;
+      top: 440px;
+      font: 700 28px/1 "Inter", sans-serif;
+      color: var(--ink-2);
+      white-space: nowrap;
+    }
+    #av-chat {
+      left: 830px;
+      top: 190px;
+      width: 900px;
+      height: 660px;
+      background: #f7f8fb;
+    }
+    #av-chat .bar {
+      height: 112px;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      padding: 0 32px;
+      background: #fff;
+      border-bottom: 2px solid var(--border);
+      font-family: "Inter", sans-serif;
+    }
+    #av-chat .bar img,
+    .av-face {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #fde8ec;
+      object-fit: cover;
+    }
+    #av-chat .bar .nm {
+      font: 800 36px/1 "Inter", sans-serif;
+      color: var(--ink);
+    }
+    #av-chat .bar .in {
+      margin-top: 6px;
+      font: 500 28px/1 "Inter", sans-serif;
+      color: var(--ink-3);
+    }
+    .av-q {
+      position: absolute;
+      right: 36px;
+      top: 160px;
+      max-width: 600px;
+      padding: 22px 28px;
+      border-radius: 26px 26px 6px 26px;
+      background: var(--brand);
+      color: #fff;
+      font: 500 32px/1.35 "Inter", sans-serif;
+    }
+    .av-a {
+      position: absolute;
+      left: 36px;
+      top: 330px;
+      display: flex;
+      gap: 18px;
+      align-items: flex-end;
+    }
+    .av-a .msg {
+      max-width: 640px;
+      padding: 24px 30px;
+      border-radius: 26px 26px 26px 6px;
+      background: #fff;
+      border: 2px solid var(--border);
+      color: var(--ink);
+      font: 500 32px/1.4 "Inter", sans-serif;
+    }
+    .av-a .msg b {
+      font-weight: 700;
+    }
+    #av-old {
+      position: absolute;
+      left: 126px;
+      top: 450px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="ava" data-width="1920" data-height="1080">
+    <div id="av-pgtag" class="tag brand">PG</div>
+    <div id="av-pg" class="paper"><img src="assets/img/word-p2.webp" alt="" /><div id="av-dim"></div></div>
+    <div id="av-stale" class="chip bad">Out of date</div>
+    <div id="av-wire" class="wire"></div>
+    <div id="av-truth">Source of truth</div>
+    <div id="av-chat" class="win">
+      <div class="bar"><img src="assets/img/ava.webp" alt="" /><div><div class="nm">Ava</div><div class="in">in Teams</div></div></div>
+      <div class="av-q" id="av-q">How do I create a new customer?</div>
+      <div class="av-a" id="av-a"><div class="av-face" style="background: #fde8ec url('assets/img/ava.webp') center / cover"></div><div class="msg">Click <b>Save</b> in the top bar.</div></div>
+      <div id="av-old" class="chip bad">Out of date</div>
+    </div>
+    <audio id="av-s1" class="clip" data-hf-media-start-basis="local" data-start="1.45" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="av-s2" class="clip" data-hf-media-start-basis="local" data-start="3.12" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="av-s3" class="clip" data-hf-media-start-basis="local" data-start="6.25" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="av-s4" class="clip" data-hf-media-start-basis="local" data-start="6.74" data-duration="0.18" data-volume="0.45" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // "And the PGs"
+      tl.fromTo(["#av-pg", "#av-pgtag"], { opacity: 0, x: -40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out", stagger: 0.06 }, 0.3);
+      // "are Ava's source of truth in Teams"
+      tl.fromTo("#av-chat", { opacity: 0, x: 60, filter: "blur(10px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 1.4);
+      tl.fromTo("#av-wire", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, 2.0);
+      tl.fromTo("#av-truth", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "expo.out" }, 2.45);
+      tl.fromTo("#av-q", { opacity: 0, y: 24, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "expo.out" }, 3.1);
+      // "so when a PG is out of date"
+      tl.fromTo("#av-stale", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 5.0);
+      tl.fromTo("#av-dim", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.inOut" }, 5.0);
+      // "so are Ava's answers"
+      tl.fromTo("#av-a", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 6.22);
+      tl.fromTo("#av-old", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 6.72);
+      tl.to(["#av-pg", "#av-pgtag", "#av-stale", "#av-wire", "#av-truth", "#av-chat"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 7.85);
+      window.__timelines["ava"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,180 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #lc-plate img.l {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    #lc-waves {
+      position: absolute;
+      right: 80px;
+      top: 60px;
+      display: flex;
+      gap: 16px;
+      z-index: 3;
+    }
+    #lc-waves .tag {
+      position: relative;
+      font-size: 32px;
+    }
+    #lc-status {
+      position: absolute;
+      left: 960px;
+      top: 950px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      height: 76px;
+      padding: 0 34px;
+      border-radius: 999px;
+      background: #101828;
+      color: #fff;
+      font: 600 30px/1 "Inter", sans-serif;
+      white-space: nowrap;
+      z-index: 3;
+    }
+    #lc-mt {
+      position: absolute;
+      left: 960px;
+      top: 470px;
+      z-index: 4;
+      font-size: 48px;
+      padding: 22px 40px;
+      background: #fff;
+      color: var(--ink-2);
+      border: 4px solid var(--border);
+      box-shadow: var(--shadow-xl);
+    }
+    #lc-strike {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 50%;
+      height: 7px;
+      margin-top: -3px;
+      background: var(--bad);
+      border-radius: 4px;
+      transform-origin: 0 50%;
+    }
+    #lc-neu {
+      position: absolute;
+      left: 380px;
+      top: 330px;
+      z-index: 3;
+      padding: 24px 32px;
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: var(--shadow-xl);
+      font-family: "Inter", sans-serif;
+    }
+    #lc-neu .w {
+      font: 800 56px/1 "Inter", sans-serif;
+      color: var(--ink);
+    }
+    #lc-neu .s {
+      margin-top: 10px;
+      font: 600 28px/1 "Inter", sans-serif;
+      color: var(--teal-text);
+    }
+    #lc-row {
+      position: absolute;
+      left: 380px;
+      top: 560px;
+      display: flex;
+      gap: 18px;
+      z-index: 3;
+    }
+    .lc-lab {
+      padding: 20px 28px;
+      border-radius: 18px;
+      background: #fff;
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      font: 700 40px/1 "Inter", sans-serif;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+    .lc-lab i {
+      font-style: normal;
+      margin-left: 14px;
+      font: 700 28px/1 "Inter", sans-serif;
+      color: #fff;
+      background: var(--ink);
+      border-radius: 8px;
+      padding: 4px 10px;
+      vertical-align: middle;
+    }
+    #lc-doc {
+      left: 1180px;
+      top: 120px;
+      width: 560px;
+      height: 792px;
+      z-index: 5;
+    }
+    #lc-doctag {
+      position: absolute;
+      left: 1180px;
+      top: 940px;
+      z-index: 5;
+      font-size: 30px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="localize" data-width="1920" data-height="1080">
+    <div id="lc-plate" class="plate">
+      <img class="l" id="lc-en" src="assets/img/erp-v1.webp" alt="" />
+      <img class="l" id="lc-da" src="assets/img/erp-da.webp" alt="" />
+      <img class="l" id="lc-de" src="assets/img/erp-de.webp" alt="" />
+      <div id="lc-light" class="light" style="left: 98px; top: 318px; width: 178px; height: 84px"></div>
+    </div>
+    <div id="lc-waves"><div class="tag brand" id="lc-w2">Wave 2</div><div class="tag brand" id="lc-w3">Wave 3</div></div>
+    <div id="lc-status"><span>↻</span><span id="lc-lang">Replaying the PG in English</span></div>
+    <div id="lc-mt" class="tag">Machine translation<div id="lc-strike"></div></div>
+    <div id="lc-neu"><div class="w">Neu</div><div class="s">The exact label, read from D365</div></div>
+    <div id="lc-row"><div class="lc-lab" id="lc-l1">New<i>EN</i></div><div class="lc-lab" id="lc-l2">Ny<i>DA</i></div><div class="lc-lab" id="lc-l3">Neu<i>DE</i></div></div>
+    <div id="lc-doc" class="paper"><img src="assets/img/word-da-p2.webp" alt="" /></div>
+    <div id="lc-doctag" class="tag teal">Localized documentation · Danish</div>
+    <audio id="lc-a1" class="clip" data-hf-media-start-basis="local" data-start="0.88" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="lc-a2" class="clip" data-hf-media-start-basis="local" data-start="1.68" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="lc-a3" class="clip" data-hf-media-start-basis="local" data-start="7.6" data-duration="0.18" data-volume="0.45" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
+    <audio id="lc-a4" class="clip" data-hf-media-start-basis="local" data-start="10.5" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="lc-a5" class="clip" data-hf-media-start-basis="local" data-start="13.95" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#lc-plate", { x: 0, y: 0, scale: 0.6667 });
+      gsap.set("#lc-status", { xPercent: -50 });
+      gsap.set("#lc-mt", { xPercent: -50, yPercent: -50 });
+      gsap.set(["#lc-da", "#lc-de", "#lc-light", "#lc-neu", ".lc-lab", "#lc-doc", "#lc-doctag"], { opacity: 0 });
+      // "For Wave 2 and Wave 3"
+      tl.fromTo("#lc-plate", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.1);
+      tl.fromTo("#lc-w2", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 0.88);
+      tl.fromTo("#lc-w3", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 1.68);
+      // "it can replay a PG with D365 in another language"
+      tl.fromTo("#lc-status", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 2.5);
+      tl.fromTo("#lc-da", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.inOut" }, 5.35);
+      tl.fromTo("#lc-de", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.inOut" }, 6.35);
+      // "Nothing is machine-translated"
+      tl.fromTo("#lc-mt", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 6.95);
+      tl.fromTo("#lc-strike", { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, 7.6);
+      tl.to("#lc-mt", { opacity: 0, filter: "blur(8px)", duration: 0.25 }, 8.55);
+      // "It reads the exact label D365 shows"
+      tl.to("#lc-status", { opacity: 0, duration: 0.25 }, 8.7);
+      tl.to("#lc-plate", { x: 0, y: -48, scale: 1.3, duration: 0.8, ease: "power2.inOut" }, 8.85);
+      tl.fromTo("#lc-light", { opacity: 0, scale: 1.25, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 9.85);
+      tl.fromTo("#lc-neu", { opacity: 0, x: -30, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, 10.5);
+      // "on every button and field"
+      tl.fromTo(".lc-lab", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out", stagger: 0.32 }, 12.2);
+      // "and builds the localized documentation from those"
+      tl.fromTo("#lc-doc", { opacity: 0, x: 120, rotation: 4, filter: "blur(10px)" }, { opacity: 1, x: 0, rotation: 0, filter: "blur(0px)", duration: 0.55, ease: "expo.out" }, 13.95);
+      tl.fromTo("#lc-doctag", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 14.6);
+      tl.to("[id^='lc-']", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 16.85);
+      SL.drive(tl, [SL.roller(document.getElementById("lc-lang"), ["Replaying the PG in English", "Replaying the PG in Danish", "Replaying the PG in German"], [[0, 0], [5.35, 1], [6.35, 2]])]);
+      window.__timelines["localize"] = tl;
+    })();
+  </script>
+</template>

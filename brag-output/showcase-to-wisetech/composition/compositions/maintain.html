@@ -1,0 +1,312 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    /* part 1: what a transformation leaves behind */
+    .mt-item {
+      position: absolute;
+    }
+    .mt-item .img {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow-xl), 0 0 0 1px rgba(16, 24, 40, 0.06);
+    }
+    .mt-item .img img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top left;
+    }
+    .mt-item .lab {
+      margin-top: 22px;
+      font: 700 34px/1 "Inter", sans-serif;
+      color: var(--ink);
+    }
+    .mt-item .stale {
+      position: absolute;
+      right: -14px;
+      top: -18px;
+      font-size: 28px;
+      height: 46px;
+    }
+    #mt-train {
+      left: 150px;
+      top: 330px;
+    }
+    #mt-train .img {
+      width: 520px;
+      height: 292px;
+    }
+    #mt-docs {
+      left: 760px;
+      top: 230px;
+      width: 420px;
+    }
+    #mt-docs .pages {
+      position: relative;
+      width: 420px;
+      height: 420px;
+    }
+    .mt-page {
+      position: absolute;
+      top: 0;
+      width: 280px;
+      height: 396px;
+      background: #fff url("assets/img/word-p2.webp") 0 0 / 280px 396px no-repeat;
+      border-radius: 6px;
+      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(16, 24, 40, 0.06);
+    }
+    #mt-docs .stale {
+      right: 0;
+      top: -10px;
+    }
+    #mt-rec {
+      left: 1260px;
+      top: 360px;
+    }
+    #mt-rec .img {
+      width: 500px;
+      height: 312px;
+    }
+    .mt-play {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 108px;
+      height: 108px;
+      margin: -54px 0 0 -54px;
+      border-radius: 50%;
+      background: rgba(16, 24, 40, 0.72);
+    }
+    .mt-play::after {
+      content: "";
+      position: absolute;
+      left: 42px;
+      top: 30px;
+      border-left: 38px solid #fff;
+      border-top: 24px solid transparent;
+      border-bottom: 24px solid transparent;
+    }
+    .mt-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 10px;
+      background: rgba(16, 24, 40, 0.25);
+    }
+    .mt-bar i {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 38%;
+      background: var(--bad);
+    }
+    #mt-when {
+      position: absolute;
+      right: 150px;
+      top: 120px;
+      font: 700 34px/1 "Inter", sans-serif;
+      color: var(--ink-2);
+      background: #fff;
+      border: 3px solid var(--border);
+      border-radius: 999px;
+      padding: 16px 28px;
+    }
+    /* part 2: the release animation from the investor film */
+    #pb-head {
+      position: absolute;
+      left: 160px;
+      top: 120px;
+    }
+    #pb-head .a {
+      font: 800 64px/1.05 "Inter", sans-serif;
+      letter-spacing: -0.03em;
+    }
+    #pb-head .b {
+      margin-top: 10px;
+      font: 500 34px/1.2 "Inter", sans-serif;
+      color: var(--ink-2);
+    }
+    #pb-hand {
+      position: absolute;
+      right: 160px;
+      top: 150px;
+      font-size: 30px;
+    }
+    #pb-axis {
+      position: absolute;
+      left: 160px;
+      top: 380px;
+      width: 1600px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      transform-origin: 0 50%;
+    }
+    .pb-mk {
+      position: absolute;
+      top: 280px;
+      width: 260px;
+      margin-left: -130px;
+      text-align: center;
+      font-family: "Inter", sans-serif;
+    }
+    .pb-mk .w {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .pb-mk .dot {
+      position: absolute;
+      left: 118px;
+      top: 88px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--brand);
+      box-shadow: 0 0 0 8px rgba(47, 111, 237, 0.18);
+    }
+    .pb-stack {
+      position: absolute;
+      top: 470px;
+      width: 210px;
+      height: 297px;
+    }
+    .pb-doc {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 210px;
+      height: 297px;
+      background: #fff url("assets/img/word-p2.webp") 0 0 / 210px 297px no-repeat;
+      border-radius: 4px;
+      box-shadow: 0 12px 28px -10px rgba(16, 24, 40, 0.3), 0 0 0 1px rgba(16, 24, 40, 0.06);
+    }
+    .pb-doc.da {
+      background-image: url("assets/img/word-da-p2.webp");
+    }
+    .pb-doc .x {
+      position: absolute;
+      left: 34px;
+      top: 136px;
+      width: 157px;
+      height: 101px;
+      border: 5px solid var(--bad);
+      border-radius: 3px;
+      background: rgba(229, 72, 77, 0.14);
+    }
+    .pb-doc .band {
+      position: absolute;
+      left: 25px;
+      top: 34px;
+      width: 165px;
+      height: 67px;
+      background: rgba(47, 111, 237, 0.28);
+      border-radius: 3px;
+      transform-origin: 0 50%;
+    }
+    .pb-doc .lang {
+      position: absolute;
+      right: -10px;
+      bottom: -14px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fff;
+      font: 700 28px/1 "Inter", sans-serif;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="maintain" data-width="1920" data-height="1080">
+    <div id="mt-when">Go-live</div>
+    <div id="mt-train" class="mt-item"><div class="img"><img src="assets/img/pptx-01.webp" alt="" /></div><div class="lab">Training</div><div class="chip bad stale">Out of date</div></div>
+    <div id="mt-docs" class="mt-item">
+      <div class="pages"><div class="mt-page" id="mt-p1" style="left: 0"></div><div class="mt-page" id="mt-p2" style="left: 70px"></div><div class="mt-page" id="mt-p3" style="left: 140px"></div></div>
+      <div class="lab">Documents</div>
+      <div class="chip bad stale">Out of date</div>
+    </div>
+    <div id="mt-rec" class="mt-item"><div class="img"><img src="assets/img/player-show.webp" alt="" /><div class="mt-play"></div><div class="mt-bar"><i></i></div></div><div class="lab">Recordings</div><div class="chip bad stale">Out of date</div></div>
+
+    <div id="pb-head"><div class="a">D365</div><div class="b">Update after update, wave after wave</div></div>
+    <div id="pb-hand" class="tag">By hand</div>
+    <div id="pb-axis"></div>
+    <div class="pb-mk" id="pb-m1" style="left: 320px"><div class="w">Update</div><div class="dot"></div></div>
+    <div class="pb-mk" id="pb-m2" style="left: 640px"><div class="w">New module</div><div class="dot"></div></div>
+    <div class="pb-mk" id="pb-m3" style="left: 960px"><div class="w">Wave 2</div><div class="dot"></div></div>
+    <div class="pb-mk" id="pb-m4" style="left: 1280px"><div class="w">Update</div><div class="dot"></div></div>
+    <div class="pb-mk" id="pb-m5" style="left: 1600px"><div class="w">Wave 3</div><div class="dot"></div></div>
+    <div class="pb-stack" style="left: 215px"><div class="pb-doc da c2"><div class="lang">DE</div></div><div class="pb-doc da c1"><div class="lang">DA</div></div><div class="pb-doc c0"><div class="x"></div><div class="band"></div><div class="lang">EN</div></div></div>
+    <div class="pb-stack" style="left: 535px"><div class="pb-doc da c2"><div class="lang">DE</div></div><div class="pb-doc da c1"><div class="lang">DA</div></div><div class="pb-doc c0"><div class="x"></div><div class="band"></div><div class="lang">EN</div></div></div>
+    <div class="pb-stack" style="left: 855px"><div class="pb-doc da c2"><div class="lang">DE</div></div><div class="pb-doc da c1"><div class="lang">DA</div></div><div class="pb-doc c0"><div class="x"></div><div class="band"></div><div class="lang">EN</div></div></div>
+    <div class="pb-stack" style="left: 1175px"><div class="pb-doc da c2"><div class="lang">DE</div></div><div class="pb-doc da c1"><div class="lang">DA</div></div><div class="pb-doc c0"><div class="x"></div><div class="band"></div><div class="lang">EN</div></div></div>
+    <div class="pb-stack" style="left: 1495px"><div class="pb-doc da c2"><div class="lang">DE</div></div><div class="pb-doc da c1"><div class="lang">DA</div></div><div class="pb-doc c0"><div class="x"></div><div class="band"></div><div class="lang">EN</div></div></div>
+
+    <audio id="mt-s1" class="clip" data-hf-media-start-basis="local" data-start="2.0" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="mt-s2" class="clip" data-hf-media-start-basis="local" data-start="3.25" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="mt-s3" class="clip" data-hf-media-start-basis="local" data-start="4.8" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="mt-s4" class="clip" data-hf-media-start-basis="local" data-start="9.5" data-duration="0.18" data-volume="0.45" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+    <audio id="pb-t1" class="clip" data-hf-media-start-basis="local" data-start="12.1" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="pb-t2" class="clip" data-hf-media-start-basis="local" data-start="19.33" data-duration="0.18" data-volume="0.45" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
+    <audio id="pb-t3" class="clip" data-hf-media-start-basis="local" data-start="21.0" data-duration="0.6" data-volume="0.3" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="pb-t4" class="clip" data-hf-media-start-basis="local" data-start="23.32" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#mt-train", { rotation: -4 });
+      gsap.set("#mt-rec", { rotation: 3 });
+      gsap.set("#mt-p1", { rotation: -6, transformOrigin: "50% 100%" });
+      gsap.set("#mt-p3", { rotation: 6, transformOrigin: "50% 100%" });
+      gsap.set([".mt-item .stale", "#pb-hand"], { opacity: 0 });
+      gsap.set(".mt-item .img, .mt-page", { filter: "grayscale(0) sepia(0) brightness(1)" });
+      // "people get trained, documents get built and recordings get stored"
+      tl.fromTo("#mt-when", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 0.4);
+      tl.fromTo("#mt-train", { opacity: 0, y: 60, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 2.0);
+      tl.fromTo(".mt-page", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out", stagger: 0.14 }, 3.25);
+      tl.fromTo("#mt-docs .lab", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 3.5);
+      tl.fromTo("#mt-rec", { opacity: 0, y: 60, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 4.8);
+      // "and then it all slowly goes out of date": time passes, everything fades
+      SL.drive(tl, [SL.roller(document.getElementById("mt-when"), ["Go-live", "3 months later", "6 months later", "A year later"], [[0, 0], [7.4, 1], [8.3, 2], [9.2, 3]])]);
+      tl.to(".mt-item .img, .mt-page", { filter: "grayscale(1) sepia(0.35) brightness(0.92)", duration: 2.4, ease: "power1.inOut" }, 7.4);
+      tl.to(["#mt-train", "#mt-rec"], { y: "+=18", duration: 2.4, ease: "power1.inOut" }, 7.4);
+      // "because it's hard to maintain"
+      tl.fromTo(".mt-item .stale", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)", stagger: 0.12 }, 9.48);
+      tl.to(["#mt-when", ".mt-item"], { opacity: 0, filter: "blur(8px)", duration: 0.25, ease: "power2.in" }, 11.1);
+
+      // "Every D365 update, new module and rollout wave is another round"
+      tl.fromTo("#pb-head", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, 11.4);
+      tl.fromTo("#pb-axis", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "power3.inOut" }, 11.45);
+      const mk = { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out" };
+      const from = { opacity: 0, y: -16, filter: "blur(6px)" };
+      tl.fromTo("#pb-m1", from, mk, 12.1);
+      tl.fromTo("#pb-m2", from, mk, 13.95);
+      tl.fromTo("#pb-m3", from, mk, 14.95);
+      tl.fromTo("#pb-m4", from, mk, 15.5);
+      tl.fromTo("#pb-m5", from, mk, 16.1);
+      // a PG under each one
+      tl.fromTo(".pb-stack", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out", stagger: 0.1 }, 16.6);
+      gsap.set([".pb-doc.c1", ".pb-doc.c2", ".pb-doc .x", ".pb-doc .lang"], { opacity: 0 });
+      // "re-shoot": every screenshot is stale
+      tl.fromTo(".pb-doc .x", { opacity: 0, scale: 1.2 }, { opacity: 1, scale: 1, duration: 0.2, ease: "power3.out", stagger: 0.08 }, 19.33);
+      // "rewrite": every step list
+      tl.fromTo(".pb-doc .band", { scaleX: 0 }, { scaleX: 1, duration: 0.22, ease: "power2.out", stagger: 0.08 }, 20.13);
+      // "re-translate": every PG becomes three
+      tl.fromTo(".pb-doc.c1", { x: 0, y: 0, opacity: 0 }, { x: 26, y: 26, opacity: 1, duration: 0.35, ease: "expo.out", stagger: 0.08 }, 21.0);
+      tl.fromTo(".pb-doc.c2", { x: 0, y: 0, opacity: 0 }, { x: 52, y: 52, opacity: 1, duration: 0.35, ease: "expo.out", stagger: 0.08 }, 21.06);
+      tl.fromTo(".pb-doc .lang", { opacity: 0 }, { opacity: 1, duration: 0.2, stagger: 0.02 }, 21.2);
+      gsap.set(".pb-doc.c2", { zIndex: 1 });
+      gsap.set(".pb-doc.c1", { zIndex: 2 });
+      gsap.set(".pb-doc.c0", { zIndex: 3 });
+      // "by hand"
+      tl.fromTo("#pb-hand", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 23.3);
+      tl.to(".pb-stack, .pb-mk, #pb-axis, #pb-head, #pb-hand", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 24.15);
+      window.__timelines["maintain"] = tl;
+    })();
+  </script>
+</template>

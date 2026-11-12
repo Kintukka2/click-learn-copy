@@ -1,0 +1,184 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #ck-title {
+      left: 0;
+      width: 1920px;
+      top: 130px;
+      text-align: center;
+      font-size: 76px;
+    }
+    #ck-title .w {
+      display: inline-block;
+    }
+    #ck-title .acc {
+      color: #6a4fd1;
+    }
+    #ck-pg {
+      left: 300px;
+      top: 330px;
+      width: 380px;
+      height: 537px;
+    }
+    #ck-pgtag {
+      position: absolute;
+      left: 300px;
+      top: 270px;
+      font-size: 30px;
+    }
+    #ck-vs {
+      position: absolute;
+      left: 760px;
+      top: 540px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #6a4fd1;
+      color: #fff;
+      font: 800 40px/120px "Inter", sans-serif;
+      text-align: center;
+      box-shadow: 0 0 0 14px rgba(106, 79, 209, 0.18);
+    }
+    #ck-sys {
+      left: 960px;
+      top: 330px;
+      width: 860px;
+      height: 538px;
+    }
+    #ck-systag {
+      position: absolute;
+      left: 960px;
+      top: 270px;
+      font-size: 30px;
+    }
+    #ck-plate {
+      z-index: 1;
+    }
+    #ck-box {
+      position: absolute;
+      left: 1452px;
+      top: 206px;
+      width: 248px;
+      height: 134px;
+      border: 6px solid var(--warn);
+      border-radius: 18px;
+      box-shadow: 0 0 0 12px rgba(247, 144, 9, 0.22);
+      z-index: 2;
+    }
+    #ck-flag {
+      position: absolute;
+      left: 1060px;
+      top: 360px;
+      z-index: 2;
+      font-size: 30px;
+    }
+    #ck-dim {
+      position: absolute;
+      inset: 0;
+      background: rgba(16, 24, 40, 0.55);
+      z-index: 2;
+    }
+    #ck-q {
+      position: absolute;
+      left: 460px;
+      top: 300px;
+      width: 1000px;
+      padding: 44px 48px 48px;
+      background: #fff;
+      border-radius: 32px;
+      box-shadow: var(--shadow-xl);
+      z-index: 3;
+      font-family: "Inter", sans-serif;
+      text-align: center;
+    }
+    #ck-q .k {
+      font: 700 28px/1 "Inter", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--warn-text);
+    }
+    #ck-q .h {
+      margin-top: 14px;
+      font: 800 56px/1.1 "Inter", sans-serif;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    #ck-q .opts {
+      margin-top: 36px;
+      display: flex;
+      gap: 28px;
+      justify-content: center;
+    }
+    .ck-opt {
+      width: 420px;
+      padding: 30px 24px;
+      border-radius: 22px;
+      border: 4px solid var(--border);
+      font: 700 38px/1.2 "Inter", sans-serif;
+      color: var(--ink);
+    }
+    .ck-opt i {
+      display: block;
+      margin-top: 8px;
+      font: 500 28px/1.3 "Inter", sans-serif;
+      font-style: normal;
+      color: var(--ink-3);
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="check" data-width="1920" data-height="1080">
+    <div id="ck-title" class="h2"><span class="w" id="ck-w1">PG</span> <span class="w acc" id="ck-w2">versus</span> <span class="w" id="ck-w3">system check</span></div>
+    <div id="ck-pgtag" class="tag brand">PG</div>
+    <div id="ck-pg" class="paper"><img src="assets/img/word-p2.webp" alt="" /></div>
+    <div id="ck-vs">vs</div>
+    <div id="ck-systag" class="tag warn">D365 after an update</div>
+    <div id="ck-sys" class="screen"><img src="assets/img/erp-v2.webp" alt="" /></div>
+    <div id="ck-plate" class="plate"><img src="assets/img/studio-healed.webp" alt="" /></div>
+    <div id="ck-box"></div>
+    <div id="ck-flag" class="tag warn">3 steps don’t match</div>
+    <div id="ck-dim"></div>
+    <div id="ck-q">
+      <div class="k">Discrepancy</div>
+      <div class="h">The author decides which is right</div>
+      <div class="opts"><div class="ck-opt" id="ck-o1">The system<i>change D365</i></div><div class="ck-opt" id="ck-o2">The PG<i>update the guide</i></div></div>
+    </div>
+    <audio id="ck-a1" class="clip" data-hf-media-start-basis="local" data-start="0.35" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="ck-a2" class="clip" data-hf-media-start-basis="local" data-start="4.66" data-duration="0.18" data-volume="0.4" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
+    <audio id="ck-a3" class="clip" data-hf-media-start-basis="local" data-start="8.32" data-duration="0.11" data-volume="0.38" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="ck-a4" class="clip" data-hf-media-start-basis="local" data-start="9.95" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="ck-a5" class="clip" data-hf-media-start-basis="local" data-start="12.1" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="ck-a6" class="clip" data-hf-media-start-basis="local" data-start="12.82" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#ck-plate", { x: -240, y: -240, scale: 0.75 });
+      gsap.set(["#ck-plate", "#ck-box", "#ck-flag", "#ck-dim", "#ck-q", ".ck-w"], { opacity: 0 });
+      // "After a D365 update, that replay becomes"
+      tl.fromTo(["#ck-pg", "#ck-pgtag"], { opacity: 0, x: -40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out", stagger: 0.06 }, 0.3);
+      tl.fromTo(["#ck-sys", "#ck-systag"], { opacity: 0, x: 40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out", stagger: 0.06 }, 1.9);
+      // "a PG versus system check"
+      const word = (sel, t) => tl.fromTo(sel, { opacity: 0, y: 30, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, t);
+      word("#ck-w1", 4.05);
+      word("#ck-w2", 4.62);
+      word("#ck-w3", 5.1);
+      tl.fromTo("#ck-vs", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.8)" }, 4.62);
+      // "Steps that don't match are flagged as discrepancies"
+      tl.to(["#ck-title", "#ck-pg", "#ck-pgtag", "#ck-vs", "#ck-sys", "#ck-systag"], { opacity: 0, filter: "blur(8px)", duration: 0.25, ease: "power2.in" }, 6.05);
+      tl.fromTo("#ck-plate", { opacity: 0, scale: 0.72 }, { opacity: 1, scale: 0.75, duration: 0.5, ease: "expo.out" }, 6.2);
+      tl.fromTo("#ck-box", { opacity: 0, scale: 1.2, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, 7.85);
+      tl.fromTo("#ck-flag", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }, 8.3);
+      // "and the author decides which is right, the system or the PG"
+      tl.to(["#ck-flag", "#ck-box"], { opacity: 0, duration: 0.2 }, 9.8);
+      tl.fromTo("#ck-dim", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 9.85);
+      tl.fromTo("#ck-q", { opacity: 0, y: 60, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 9.95);
+      tl.to("#ck-o1", { borderColor: "#6a4fd1", backgroundColor: "#f0ecfd", scale: 1.04, duration: 0.25, ease: "power2.out" }, 12.08);
+      tl.to("#ck-o1", { scale: 1, borderColor: "#e4e7ec", backgroundColor: "#ffffff", duration: 0.25, ease: "power2.inOut" }, 12.7);
+      tl.to("#ck-o2", { borderColor: "#6a4fd1", backgroundColor: "#f0ecfd", scale: 1.04, duration: 0.25, ease: "power2.out" }, 12.82);
+      tl.to(["#ck-plate", "#ck-box", "#ck-flag", "#ck-dim", "#ck-q"], { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 13.85);
+      window.__timelines["check"] = tl;
+    })();
+  </script>
+</template>

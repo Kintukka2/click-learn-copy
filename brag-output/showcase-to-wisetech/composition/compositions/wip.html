@@ -1,0 +1,113 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #wp-eye {
+      left: 100px;
+      top: 150px;
+    }
+    #wp-title {
+      left: 100px;
+      top: 196px;
+      font-size: 60px;
+    }
+    #wp-next {
+      right: 100px;
+      top: 160px;
+    }
+    .wp-n {
+      top: 400px;
+    }
+    #wp-rec { left: 100px; width: 270px; min-width: 0; }
+    #wp-rep { left: 450px; width: 300px; min-width: 0; }
+    #wp-rep .n { font-size: 34px; }
+    #wp-bld { left: 1195px; width: 300px; min-width: 0; }
+    #wp-pg { left: 1575px; width: 240px; min-width: 0; }
+    .wp-w {
+      top: 486px;
+    }
+    #wp-doc {
+      left: 830px;
+      top: 316px;
+      width: 260px;
+      height: 368px;
+    }
+    #wp-today {
+      left: 820px;
+      top: 706px;
+      font-size: 28px;
+    }
+    #wp-full {
+      left: 1575px;
+      top: 640px;
+      font-size: 28px;
+    }
+    #wp-part {
+      left: 1575px;
+      top: 706px;
+      font-size: 28px;
+    }
+    #wp-big {
+      left: 960px;
+      top: 850px;
+      font-size: 38px;
+      padding: 18px 36px;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="wip" data-width="1920" data-height="1080">
+    <div id="wp-eye" class="eyebrow">The next idea</div>
+    <div id="wp-title" class="h2">One recording to a PG</div>
+    <div id="wp-next" class="tag warn">Work in progress</div>
+    <div id="wp-rec" class="node wp-n"><div class="k">Author</div><div class="n">Record</div><div class="d">The task in D365</div></div>
+    <div id="wp-w1" class="wire wp-w" style="left: 380px; width: 60px"></div>
+    <div id="wp-rep" class="node replay wp-n"><div class="k">Captures</div><div class="n">System Replay</div><div class="d">Steps and screenshots</div></div>
+    <div id="wp-w2" class="wire wp-w" style="left: 760px; width: 60px"></div>
+    <div id="wp-doc" class="paper"><img src="assets/img/word-p2.webp" alt="" /></div>
+    <div id="wp-today" class="tag ok">✓ Word export, today</div>
+    <div id="wp-w3" class="wire dash wp-w" style="left: 1104px; width: 80px"></div>
+    <div id="wp-bld" class="node wip wp-n"><div class="k">Attached</div><div class="n">PG Builder</div><div class="d">Its template and rules</div></div>
+    <div id="wp-w4" class="wire dash wp-w" style="left: 1504px; width: 60px"></div>
+    <div id="wp-pg" class="node wip wp-n"><div class="k">Output</div><div class="n">PG</div><div class="d">Generated</div></div>
+    <div id="wp-full" class="tag outline">In full</div>
+    <div id="wp-part" class="tag outline">or in part</div>
+    <div id="wp-big" class="tag warn">Work in progress · not guaranteed</div>
+    <audio id="wp-a1" class="clip" data-hf-media-start-basis="local" data-start="1.6" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="wp-a2" class="clip" data-hf-media-start-basis="local" data-start="5.4" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="wp-a3" class="clip" data-hf-media-start-basis="local" data-start="8.75" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="wp-a4" class="clip" data-hf-media-start-basis="local" data-start="12.05" data-duration="0.18" data-volume="0.4" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const pop = (sel, t) => tl.fromTo(sel, { opacity: 0, y: 24, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, t);
+      const chip = (sel, t) => tl.fromTo(sel, { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, t);
+      const wire = (sel, t) => tl.fromTo(sel, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, t);
+      gsap.set("#wp-big", { xPercent: -50 });
+      tl.fromTo(["#wp-eye", "#wp-title"], { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out", stagger: 0.08 }, 0.1);
+      // "Each process already exports as a Word document"
+      pop("#wp-rec", 0.4);
+      wire("#wp-w1", 0.8);
+      pop("#wp-rep", 0.9);
+      wire("#wp-w2", 1.5);
+      tl.fromTo("#wp-doc", { opacity: 0, y: 30, rotation: -3, filter: "blur(8px)" }, { opacity: 1, y: 0, rotation: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 1.6);
+      chip("#wp-today", 2.5);
+      // "The next idea is to attach the PG Builder to that"
+      chip("#wp-next", 3.75);
+      wire("#wp-w3", 4.9);
+      pop("#wp-bld", 5.4);
+      // "so one recording could produce the PG itself"
+      tl.to("#wp-rec", { scale: 1.05, duration: 0.25, yoyo: true, repeat: 1, ease: "power2.inOut" }, 7.25);
+      wire("#wp-w4", 8.3);
+      pop("#wp-pg", 8.75);
+      // "in full or in part"
+      chip("#wp-full", 10.1);
+      chip("#wp-part", 10.85);
+      // "That's a work in progress and isn't guaranteed"
+      tl.fromTo("#wp-big", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.6)" }, 12.05);
+      tl.to("[id^='wp-']", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 14.52);
+      window.__timelines["wip"] = tl;
+    })();
+  </script>
+</template>

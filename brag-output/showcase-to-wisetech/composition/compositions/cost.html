@@ -1,0 +1,128 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #co2-eye {
+      left: 160px;
+      top: 150px;
+    }
+    .co2-card {
+      position: absolute;
+      top: 240px;
+      width: 760px;
+      height: 600px;
+      padding: 44px 48px;
+      border-radius: 32px;
+      background: #fff;
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      font-family: "Inter", sans-serif;
+      box-sizing: border-box;
+    }
+    #co2-build {
+      left: 160px;
+    }
+    #co2-run {
+      left: 1000px;
+      border-color: var(--ok);
+      background: var(--ok-soft);
+    }
+    .co2-card .k {
+      font: 700 28px/1 "Inter", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    #co2-run .k {
+      color: var(--ok-text);
+    }
+    .co2-card .n {
+      margin-top: 18px;
+      font: 800 56px/1.1 "Inter", sans-serif;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    #co2-run .n {
+      font-size: 110px;
+      color: var(--ok-text);
+    }
+    .co2-card .d {
+      margin-top: 20px;
+      font: 500 32px/1.35 "Inter", sans-serif;
+      color: var(--ink-2);
+    }
+    #co2-list {
+      margin-top: 26px;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    #co2-list .tag {
+      position: relative;
+      font-size: 30px;
+    }
+    #co2-more {
+      position: absolute;
+      left: 48px;
+      right: 48px;
+      bottom: 44px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font: 600 28px/1 "Inter", sans-serif;
+      color: var(--ink-2);
+      white-space: nowrap;
+    }
+    .co2-dot {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--ok);
+    }
+    #co2-zero {
+      margin-left: auto;
+      color: var(--ok-text);
+      font-weight: 700;
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="cost" data-width="1920" data-height="1080">
+    <div id="co2-eye" class="eyebrow">What it costs to run</div>
+    <div id="co2-build" class="co2-card"><div class="k">Building it</div><div class="n">AI-assisted design and testing</div><div class="d">Where part of the recent AI spend went</div></div>
+    <div id="co2-run" class="co2-card">
+      <div class="k">Running it</div>
+      <div class="n">No AI</div>
+      <div id="co2-list"><div class="tag ok" id="co2-l1">✓ Replays</div><div class="tag ok" id="co2-l2">✓ Checks</div><div class="tag ok" id="co2-l3">✓ Screenshots</div></div>
+      <div id="co2-more"><span>More runs</span><i class="co2-dot"></i><i class="co2-dot"></i><i class="co2-dot"></i><i class="co2-dot"></i><span id="co2-zero">AI spend added: none</span></div>
+    </div>
+    <audio id="co2-a1" class="clip" data-hf-media-start-basis="local" data-start="0.7" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="co2-a2" class="clip" data-hf-media-start-basis="local" data-start="4.0" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="co2-a3" class="clip" data-hf-media-start-basis="local" data-start="5.1" data-duration="0.18" data-volume="0.4" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+    <audio id="co2-a4" class="clip" data-hf-media-start-basis="local" data-start="10.32" data-duration="0.11" data-volume="0.35" src="assets/sfx/drop_002.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const chip = (sel, t) => tl.fromTo(sel, { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, t);
+      gsap.set(["#co2-run .n", "#co2-more", "#co2-zero"], { opacity: 0 });
+      tl.fromTo("#co2-eye", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 0.1);
+      // "Part of the recent AI spend went into building System Replay"
+      tl.fromTo("#co2-build", { opacity: 0, y: 40, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 0.7);
+      // "Running it uses none"
+      tl.fromTo("#co2-run", { opacity: 0, y: 40, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 4.0);
+      tl.fromTo("#co2-run .n", { opacity: 0, scale: 0.7, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, 5.1);
+      tl.to("#co2-build", { opacity: 0.55, duration: 0.4 }, 5.1);
+      // "Replays, checks and screenshots run on their own"
+      chip("#co2-l1", 5.85);
+      chip("#co2-l2", 6.72);
+      chip("#co2-l3", 7.28);
+      // "so using it more adds no AI spend"
+      tl.fromTo("#co2-more", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 9.3);
+      tl.fromTo(".co2-dot", { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, duration: 0.2, ease: "back.out(2)", stagger: 0.14 }, 9.4);
+      tl.fromTo("#co2-zero", { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }, 10.3);
+      tl.to("[id^='co2-']", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 11.65);
+      window.__timelines["cost"] = tl;
+    })();
+  </script>
+</template>

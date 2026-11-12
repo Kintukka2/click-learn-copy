@@ -6,6 +6,7 @@ Two narrated product films, made with `/brag` and Hyperframes. The narration is 
 |---|---|---|---|
 | Client cut | Prospects: the friction, the fix, the features in real UI | 1:05 | `client-short/brag.mp4` |
 | Investor cut | Investors and technical buyers: market, mechanism, proof, roadmap | 3:14 | `investor-long/brag.mp4` |
+| Showcase to WiseTech | The current client: the replay capability as "System Replay", in the client's terms (internal, see its README) | 4:03 | `showcase-to-wisetech/showcase-to-wisetech.mp4` |
 
 Matching sales collateral (an investor deck, a client deck and an A4 one-pager) is in `collateral/`.
 

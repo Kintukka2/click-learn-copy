@@ -1,0 +1,166 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+    #fs-status {
+      position: absolute;
+      left: 960px;
+      top: 950px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      height: 76px;
+      padding: 0 34px;
+      border-radius: 999px;
+      background: #101828;
+      color: #fff;
+      font: 600 30px/1 "Inter", sans-serif;
+      white-space: nowrap;
+      z-index: 3;
+    }
+    #fs-v2tag {
+      position: absolute;
+      left: 60px;
+      top: 60px;
+      z-index: 3;
+      font-size: 30px;
+    }
+    #fs-card {
+      position: absolute;
+      left: 1060px;
+      top: 220px;
+      width: 760px;
+      padding: 34px 34px 28px;
+      background: #fff;
+      border-radius: 28px;
+      box-shadow: var(--shadow-xl);
+      font-family: "Inter", sans-serif;
+      z-index: 3;
+    }
+    #fs-card .h {
+      font: 800 44px/1.1 "Inter", sans-serif;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    #fs-card .s {
+      margin-top: 8px;
+      font: 500 28px/1.2 "Inter", sans-serif;
+      color: var(--ink-3);
+    }
+    .fs-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      align-items: center;
+      gap: 20px;
+      margin-top: 18px;
+      padding: 18px 20px;
+      border: 3px solid var(--border);
+      border-radius: 18px;
+    }
+    .fs-row .n {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--ground);
+      color: var(--ink-2);
+      font: 700 30px/56px "Inter", sans-serif;
+      text-align: center;
+    }
+    .fs-row .k {
+      font: 650 34px/1.2 "Inter", sans-serif;
+      color: var(--ink);
+    }
+    .fs-row .st {
+      position: relative;
+      width: 220px;
+      height: 52px;
+    }
+    .fs-row .st .chip {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+    #fs-foot {
+      margin-top: 22px;
+      font: 600 28px/1.3 "Inter", sans-serif;
+      color: var(--ok-text);
+    }
+  </style>
+  <div id="root" class="scene" data-composition-id="fourstep" data-width="1920" data-height="1080">
+    <div id="fs-plate" class="plate">
+      <img id="fs-v1" src="assets/img/erp-form-v1.webp" alt="" />
+      <img id="fs-v2" src="assets/img/erp-form-v2.webp" alt="" />
+      <div id="fs-a" class="light" style="left: 1592px; top: 582px; width: 544px; height: 80px"></div>
+      <div id="fs-b" class="light" style="left: 552px; top: 666px; width: 544px; height: 80px"></div>
+      <div id="fs-c" class="light" style="left: 98px; top: 340px; width: 184px; height: 84px"></div>
+      <div id="fs-d" class="light" style="left: 522px; top: 256px; width: 160px; height: 132px"></div>
+    </div>
+    <div id="fs-v2tag" class="tag warn">New layout after an update</div>
+    <div id="fs-status"><span>↻</span><span id="fs-step">Replaying the PG · step 1 of 10</span></div>
+    <div id="fs-card">
+      <div class="h">The 4-step check</div>
+      <div class="s">How it finds Save</div>
+      <div class="fs-row" id="fs-r1"><div class="n">1</div><div class="k">Its ID</div><div class="st"><div class="chip bad" id="fs-c1">Not found</div></div></div>
+      <div class="fs-row" id="fs-r2"><div class="n">2</div><div class="k">Its role and name</div><div class="st"><div class="chip warn" id="fs-c2a">Checking…</div><div class="chip ok" id="fs-c2b">Found</div></div></div>
+      <div class="fs-row" id="fs-r3"><div class="n">3</div><div class="k">Its label</div><div class="st"></div></div>
+      <div class="fs-row" id="fs-r4"><div class="n">4</div><div class="k">Its place on the page</div><div class="st"></div></div>
+      <div id="fs-foot">✓ Step marked as changed</div>
+    </div>
+    <audio id="fs-a1" class="clip" data-hf-media-start-basis="local" data-start="4.45" data-duration="0.6" data-volume="0.28" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="fs-r1s" class="clip" data-hf-media-start-basis="local" data-start="7.52" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="fs-r2s" class="clip" data-hf-media-start-basis="local" data-start="8.6" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="fs-r3s" class="clip" data-hf-media-start-basis="local" data-start="10.1" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="fs-r4s" class="clip" data-hf-media-start-basis="local" data-start="11.4" data-duration="0.11" data-volume="0.3" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="fs-cut" class="clip" data-hf-media-start-basis="local" data-start="12.85" data-duration="0.14" data-volume="0.35" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
+    <audio id="fs-glide" class="clip" data-hf-media-start-basis="local" data-start="16.6" data-duration="0.6" data-volume="0.3" src="assets/sfx/card-slide-1.ogg"></audio>
+    <audio id="fs-ok" class="clip" data-hf-media-start-basis="local" data-start="17.92" data-duration="0.11" data-volume="0.4" src="assets/sfx/drop_001.ogg"></audio>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#fs-plate", { x: 0, y: 0, scale: 0.6667 });
+      gsap.set(["#fs-v2", "#fs-a", "#fs-b", "#fs-c", "#fs-d", "#fs-c1", "#fs-c2a", "#fs-c2b", "#fs-foot", "#fs-v2tag"], { opacity: 0 });
+      gsap.set("#fs-status", { xPercent: -50 });
+      // "From then on, it can replay the whole PG on its own"
+      tl.fromTo("#fs-status", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, 0.1);
+      const on = (sel, t) => tl.fromTo(sel, { opacity: 0, scale: 1.25, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out" }, t);
+      on("#fs-a", 0.6);
+      tl.to("#fs-a", { opacity: 0, duration: 0.15 }, 1.55);
+      on("#fs-b", 1.6);
+      tl.to("#fs-b", { opacity: 0, duration: 0.15 }, 2.6);
+      on("#fs-c", 2.65);
+      tl.to("#fs-status", { opacity: 0, duration: 0.25 }, 4.0);
+      // "Each button or field is recorded several ways"
+      tl.fromTo("#fs-card", { opacity: 0, x: 40, filter: "blur(8px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 4.45);
+      gsap.set([".fs-row"], { opacity: 0 });
+      const row = (sel, t) => tl.fromTo(sel, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: "expo.out" }, t);
+      row("#fs-r1", 7.52);
+      row("#fs-r2", 8.6);
+      row("#fs-r3", 10.1);
+      row("#fs-r4", 11.4);
+      // "If the first check fails": the layout has changed, Save is not where it was
+      tl.fromTo("#fs-v2", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, 12.85);
+      tl.fromTo("#fs-v2tag", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.3, ease: "expo.out" }, 12.95);
+      tl.to("#fs-c", { borderColor: "#e5484d", boxShadow: "0 0 0 12px rgba(229,72,77,0.25), 0 0 0 4000px rgba(16,24,40,0.30)", duration: 0.12 }, 13.3);
+      tl.to("#fs-r1", { borderColor: "#e5484d", duration: 0.15 }, 13.85);
+      tl.fromTo("#fs-c1", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 13.85);
+      // "it moves on to the next"
+      tl.to("#fs-r2", { borderColor: "#f79009", duration: 0.15 }, 14.6);
+      tl.fromTo("#fs-c2a", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 14.6);
+      // "so a button that has moved is still found"
+      const dx = 522 - 98, dy = 256 - 340, sx = 160 / 184, sy = 132 / 84;
+      tl.to("#fs-c", { x: dx, y: dy, scaleX: sx, scaleY: sy, transformOrigin: "0 0", opacity: 0, duration: 0.55, ease: "power3.inOut" }, 16.6);
+      tl.fromTo("#fs-d", { x: -dx, y: -dy, scaleX: 1 / sx, scaleY: 1 / sy, transformOrigin: "0 0", opacity: 0, borderColor: "#e5484d" }, { x: 0, y: 0, scaleX: 1, scaleY: 1, opacity: 1, borderColor: "#14b8a6", duration: 0.55, ease: "power3.inOut" }, 16.6);
+      tl.to("#fs-c2a", { opacity: 0, duration: 0.12 }, 17.9);
+      tl.to("#fs-r2", { borderColor: "#12b76a", backgroundColor: "#ecfdf3", duration: 0.15 }, 17.92);
+      tl.fromTo("#fs-c2b", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 17.92);
+      tl.fromTo("#fs-foot", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "expo.out" }, 17.98);
+      tl.to(["#fs-plate", "#fs-card", "#fs-v2tag"], { opacity: 0, filter: "blur(8px)", duration: 0.16, ease: "power2.in" }, 19.2);
+      SL.drive(tl, [SL.roller(document.getElementById("fs-step"), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => "Replaying the PG · step " + n + " of 10"), [[0, 0], [0.6, 1], [1.0, 2], [1.35, 3], [1.6, 4], [1.9, 5], [2.15, 6], [2.35, 7], [2.5, 8], [2.65, 9]])]);
+      window.__timelines["fourstep"] = tl;
+    })();
+  </script>
+</template>
