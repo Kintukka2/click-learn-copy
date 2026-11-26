@@ -174,7 +174,8 @@
   color: var(--muted);
   font-size: 12px;
 }
-.x {
+.x,
+.eye {
   display: grid;
   place-items: center;
   flex: none;
@@ -187,9 +188,51 @@
   color: var(--muted);
   cursor: pointer;
 }
-.x:hover {
+.x:hover,
+.eye:hover {
   background: #f1f4f8;
   color: var(--ink);
+}
+.eye {
+  margin-right: -2px;
+}
+.eye[aria-pressed="true"],
+.eye[aria-pressed="true"]:hover {
+  background: var(--p);
+  color: #fff;
+}
+/* the note card is dragged by its header */
+.head.drag {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.card.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+.card.dragging .head.drag {
+  cursor: grabbing;
+}
+/* see through the card: faded, and clicks go to the page behind it (except on the eye button) */
+.card.peek,
+.card.is-note.peek {
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: color-mix(in srgb, var(--p) 25%, transparent);
+  box-shadow: none;
+}
+.card.peek::before {
+  opacity: 0.15;
+}
+.card.peek > :not(.head),
+.card.peek .head > :not(.eye) {
+  opacity: 0.15;
+  transition: opacity 0.15s;
+}
+.card.peek .eye {
+  pointer-events: auto;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
 }
 .title {
   font-size: 15px;

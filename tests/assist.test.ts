@@ -540,6 +540,47 @@ document.getElementById("filter").addEventListener("keydown", function (e) {
     await page.close();
   }, 30_000);
 
+  it("centres a note card, lets the learner drag it (remembered) and see and click through it", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const html = `<!doctype html><html><body style="margin:0"><button id="behind" style="position:fixed;left:590px;top:320px;width:100px;height:40px">Behind</button>
+<script>window.clicks = 0; document.getElementById("behind").addEventListener("click", function () { window.clicks++; });</script></body></html>`;
+    const errors = await serve(page, { html });
+    await page.goto("http://app.test/");
+    const steps = [
+      { id: "c1", action: "note", title: "First note." },
+      { id: "c2", action: "note", title: "Second note." },
+    ].map((st, i) => ({ ...st, index: i + 1, url: "http://app.test/" }));
+    await page.evaluate((x) => (window as any).SteplightAssist.start(x), { ...proc, id: "centre", title: "Notes", steps });
+    await expect.poll(async () => (await state(page))?.count).toBe("Step 1 of 2");
+    // in the middle of the window, not in the bottom-right corner
+    await expect.poll(async () => Math.abs((await state(page))!.card.x + (await state(page))!.card.width / 2 - 640)).toBeLessThan(3);
+    // see through: the card lets the click reach the button behind it
+    const shadow = (sel: string) => page.evaluate((q) => { (document.querySelector("[data-steplight-assist]")!.shadowRoot!.querySelector(q) as HTMLElement).click(); }, sel);
+    await page.mouse.click(640, 340);
+    expect(await page.evaluate(() => (window as any).clicks)).toBe(0);
+    await shadow(".eye");
+    await page.mouse.click(640, 340);
+    expect(await page.evaluate(() => (window as any).clicks)).toBe(1);
+    await shadow(".eye");
+    await page.mouse.click(640, 340);
+    expect(await page.evaluate(() => (window as any).clicks)).toBe(1);
+    // drag it by its header to the top-left; the next note opens there
+    const c = (await state(page))!.card;
+    await page.mouse.move(c.x + 60, c.y + 14);
+    await page.mouse.down();
+    await page.mouse.move(200, 120, { steps: 5 });
+    await page.mouse.up();
+    const moved = (await state(page))!.card;
+    expect(moved.x).toBeLessThan(200);
+    expect(moved.y).toBeLessThan(120);
+    await shadow(".fwd");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 2 of 2");
+    await page.waitForTimeout(100);
+    expect(Math.abs((await state(page))!.card.x - moved.x)).toBeLessThan(3);
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
   it("keeps to the recorded record when the step is not the learner's choice", async () => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await serve(page, { html: gridHtml });

@@ -58,6 +58,7 @@ export function loadActive(): SavedState | null {
 }
 
 const ICON_CHECK = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const ICON_EYE = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
 const ICON_X = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, html?: string): HTMLElementTagNameMap[K] {
@@ -108,6 +109,28 @@ function covered(e: Element): boolean {
   return !!other && !other.contains(e) && !e.contains(other);
 }
 
+// The learner's card preferences, per browser: where they dragged the note card, and whether they see through it.
+const KEY_NOTE_POS = "steplight.assist.notePos";
+const KEY_PEEK = "steplight.assist.peek";
+
+function readPref<T>(key: string): T | null {
+  try {
+    const v = window.localStorage.getItem(key);
+    return v === null ? null : (JSON.parse(v) as T);
+  } catch {
+    return null;
+  }
+}
+
+function writePref(key: string, v: unknown) {
+  try {
+    if (v === null) window.localStorage.removeItem(key);
+    else window.localStorage.setItem(key, JSON.stringify(v));
+  } catch {
+    /* storage blocked */
+  }
+}
+
 // Steps learned to be toggles (clicking them hid the next step's element), per browser.
 const KEY_TOGGLES = "steplight.assist.toggles";
 
@@ -156,6 +179,11 @@ export class AssistSession {
   private target: Element | null = null;
   /** A step where the learner picks the row: the same cell in every row, any of which completes it. */
   private choices: Element[] = [];
+  /** See through the card (and click through it) to what is behind it. */
+  private peek = readPref<boolean>(KEY_PEEK) === true;
+  /** Where the learner dragged the note card: its top-left corner as a fraction of the window. */
+  private notePos = readPref<{ fx: number; fy: number }>(KEY_NOTE_POS);
+  private dragging = false;
   /** The row choice under the pointer, outlined inside the column's ring. */
   private hoverRing!: HTMLElement;
   private hovered: Element | null = null;
@@ -502,6 +530,7 @@ export class AssistSession {
     const s = this.s;
     // a note has nothing to find on the page: it looks different, and its Next pulses like a highlight
     this.card.className = st.action === "note" ? "card is-note" : "card";
+    this.card.classList.toggle("peek", this.peek);
     this.card.innerHTML = "";
     this.card.setAttribute("aria-label", `${s.step} ${st.index} ${s.of} ${n}`);
     const head = el("div", "head");
@@ -514,7 +543,14 @@ export class AssistSession {
     close.setAttribute("aria-label", s.exit);
     close.title = s.exit;
     close.addEventListener("click", () => this.stop("exit"));
-    head.append(count, proc, close);
+    const eye = el("button", "eye", ICON_EYE);
+    eye.type = "button";
+    eye.setAttribute("aria-label", s.seeThrough);
+    eye.setAttribute("aria-pressed", String(this.peek));
+    eye.title = s.seeThrough;
+    eye.addEventListener("click", () => this.setPeek(!this.peek));
+    head.append(count, proc, eye, close);
+    if (st.action === "note") this.makeDraggable(head);
     const title = el("div", "title", richText(st.title));
     this.card.append(head, title);
     if (st.description) this.card.append(el("div", "desc", richText(st.description)));
@@ -611,6 +647,57 @@ export class AssistSession {
     this.place(true);
   }
 
+  /** See through the card: it fades and lets clicks through to the page (its eye button stays usable). */
+  private setPeek(on: boolean) {
+    this.peek = on;
+    writePref(KEY_PEEK, on ? true : null);
+    this.card.classList.toggle("peek", on);
+    this.card.querySelector(".eye")?.setAttribute("aria-pressed", String(on));
+  }
+
+  /** Drag the note card by its header; the place is remembered for the next notes. */
+  private makeDraggable(handle: HTMLElement) {
+    handle.classList.add("drag");
+    handle.addEventListener("pointerdown", (e: PointerEvent) => {
+      if (e.button !== 0 || (e.target as Element).closest("button") || this.peek) return;
+      e.preventDefault();
+      const r = this.card.getBoundingClientRect();
+      const dx = e.clientX - r.left;
+      const dy = e.clientY - r.top;
+      this.dragging = true;
+      this.card.classList.add("dragging");
+      handle.setPointerCapture(e.pointerId);
+      const move = (m: PointerEvent) => {
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const x = Math.min(Math.max(0, m.clientX - dx), W - r.width);
+        const y = Math.min(Math.max(0, m.clientY - dy), H - r.height);
+        this.card.style.left = `${Math.round(x)}px`;
+        this.card.style.top = `${Math.round(y)}px`;
+      };
+      const up = () => {
+        handle.removeEventListener("pointermove", move);
+        handle.removeEventListener("pointerup", up);
+        handle.removeEventListener("pointercancel", up);
+        this.dragging = false;
+        this.card.classList.remove("dragging");
+        const c = this.card.getBoundingClientRect();
+        this.notePos = { fx: c.left / window.innerWidth, fy: c.top / window.innerHeight };
+        writePref(KEY_NOTE_POS, this.notePos);
+      };
+      handle.addEventListener("pointermove", move);
+      handle.addEventListener("pointerup", up);
+      handle.addEventListener("pointercancel", up);
+    });
+    // double-click the header: back to the middle
+    handle.addEventListener("dblclick", (e) => {
+      if ((e.target as Element).closest("button")) return;
+      this.notePos = null;
+      writePref(KEY_NOTE_POS, null);
+      this.place(true);
+    });
+  }
+
   /** Outline the row choice under the pointer (inside the column's ring). */
   private placeHover() {
     const h = this.hovered;
@@ -648,8 +735,22 @@ export class AssistSession {
     }
     if (!t) {
       this.ring.classList.remove("on");
-      this.card.classList.add("floating");
       this.card.dataset.side = "none";
+      if (this.step?.action === "note" && window.innerWidth >= 520) {
+        // a note points at nothing: in the middle of the window (clear of dialogs' corner buttons), or where the learner dragged it
+        if (this.dragging) return;
+        this.card.classList.remove("floating");
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const cw = this.card.offsetWidth;
+        const ch = this.card.offsetHeight;
+        const x = this.notePos ? this.notePos.fx * W : (W - cw) / 2;
+        const y = this.notePos ? this.notePos.fy * H : H * 0.42 - ch / 2;
+        this.card.style.left = `${Math.round(Math.min(Math.max(12, x), Math.max(12, W - cw - 12)))}px`;
+        this.card.style.top = `${Math.round(Math.min(Math.max(12, y), Math.max(12, H - ch - 12)))}px`;
+        return;
+      }
+      this.card.classList.add("floating");
       this.card.style.left = "";
       this.card.style.top = "";
       return;
