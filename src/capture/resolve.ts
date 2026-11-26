@@ -49,8 +49,43 @@ function candidatesForRole(role: string, doc: Document): Element[] {
   return Array.from(doc.querySelectorAll(sel)).filter((el) => getRole(el) === role);
 }
 
+/**
+ * D365 numbers each form it opens in a session and puts the number in its element ids:
+ * "ledgertrialbalancelistpage_2_StartDate" is "ledgertrialbalancelistpage_5_StartDate" the next time.
+ */
+const D365_ID = /^([a-z][a-z0-9]*)_(\d{1,4})_([A-Za-z][\w-]*)$/;
+const D365_ID_IN_CSS = /#([a-z][a-z0-9]*)_(\d{1,4})_([A-Za-z][\w-]*)/g;
+
+/** The selector with D365's form numbers left open, or null when it has none. */
+export function looseD365(sel: Selector): Selector | null {
+  const v = sel.value ?? "";
+  if (sel.kind === "id") {
+    const m = D365_ID.exec(v);
+    return m ? { kind: "css", value: `[id^="${m[1]}_"][id$="_${attr(m[3])}"]` } : null;
+  }
+  if (sel.kind === "css" && D365_ID_IN_CSS.test(v)) {
+    D365_ID_IN_CSS.lastIndex = 0;
+    return { kind: "css", value: v.replace(D365_ID_IN_CSS, (_m, form: string, _n: string, rest: string) => `[id^="${form}_"][id$="_${attr(rest)}"]`) };
+  }
+  D365_ID_IN_CSS.lastIndex = 0;
+  return null;
+}
+
 /** All elements matching one selector (visibility not checked). */
 export function matchesForSelector(sel: Selector, doc: Document = document): Element[] {
+  const exact = exactMatches(sel, doc);
+  if (sel.kind !== "id" && sel.kind !== "css") return exact;
+  if (exact.some((el) => isVisible(el))) return exact;
+  // recorded in another session of a D365 form: the same element under the form's new number
+  const loose = looseD365(sel);
+  if (!loose) return exact;
+  const formOf = (id: string) => D365_ID.exec(id)?.slice(1).filter((_x, i) => i !== 1).join("|");
+  const want = sel.kind === "id" ? formOf(sel.value) : undefined;
+  const more = exactMatches(loose, doc).filter((el) => !want || formOf(el.id) === want);
+  return [...exact, ...more.filter((el) => !exact.includes(el))];
+}
+
+function exactMatches(sel: Selector, doc: Document): Element[] {
   const v = sel.value ?? "";
   switch (sel.kind) {
     case "testid":

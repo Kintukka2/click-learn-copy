@@ -319,4 +319,30 @@ describe("event capture semantics", () => {
     expect(evs[1].value).toBe("7/14/2026");
     expect(evs[1].target!.label).toBe("From date");
   });
+
+  it("records a click on the box around a field (its padding or label area) as a click on the field", async () => {
+    await load(d365DateHtml);
+    await startCapture();
+    // the input container itself (188×61 on the live page), away from the input and the calendar button
+    await page.evaluate(() => (document.getElementById("ledgertrialbalancelistpage_2_StartDate")!.style.cssText = "width:188px;height:61px;overflow:hidden"));
+    await page.locator("#ledgertrialbalancelistpage_2_StartDate").dispatchEvent("pointerdown", { button: 0 });
+    const evs = await events();
+    expect(evs).toHaveLength(1);
+    expect(evs[0]).toMatchObject({ action: "click", target: { tag: "input", label: "From date" } });
+  });
+
+  it("finds a D365 element recorded in another session, when the form's number in its id has changed", async () => {
+    await load(d365DateHtml);
+    // recorded as the 2nd form opened in that session; this session opened it as the 5th
+    await page.evaluate(() => document.querySelectorAll("[id^=ledgertrialbalancelistpage_2_]").forEach((e) => (e.id = e.id.replace("_2_", "_5_"))));
+    const resolve = (t: Partial<Target>) =>
+      page.evaluate((x) => {
+        const r = (window as any).SteplightCapture.resolve(x);
+        return r ? { id: r.element.id, tag: r.element.tagName.toLowerCase() } : null;
+      }, { tag: "div", ...t } as Target);
+    expect(await resolve({ selectors: [{ kind: "css", value: "#ledgertrialbalancelistpage_2_StartDate > div > div > div" }] })).toMatchObject({ tag: "div" });
+    expect(await resolve({ selectors: [{ kind: "id", value: "ledgertrialbalancelistpage_2_StartDate" }] })).toEqual({ id: "ledgertrialbalancelistpage_5_StartDate", tag: "div" });
+    // another field of the form is not taken for it
+    expect(await resolve({ selectors: [{ kind: "id", value: "ledgertrialbalancelistpage_2_EndDate" }] })).toBeNull();
+  });
 });

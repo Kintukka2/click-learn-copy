@@ -354,6 +354,40 @@ var open = true, prl = document.getElementById("prl");
 document.getElementById("pr").addEventListener("click", function () { open = !open; prl.style.height = open ? "" : "0px"; });
 </script></body></html>`;
 
+  // D365's module pane: the module list on the left, the module's flyout (a tree) open beside it
+  const flyoutHtml = `<!doctype html><html><body style="margin:0">
+<nav style="position:fixed;left:0;top:0;width:260px;height:100%;padding-top:600px;box-sizing:border-box"><a id="gl" href="#gl" style="display:block;height:44px;line-height:44px">General ledger</a></nav>
+<div role="tree" style="position:fixed;left:276px;top:60px;width:710px;height:700px;background:#eee"><div role="treeitem" id="inq" tabindex="0" style="position:absolute;left:10px;top:600px;width:330px;height:44px">Inquiries and reports</div></div>
+</body></html>`;
+
+  it("keeps the card next to the element when a flyout is open beside it", async () => {
+    const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+    const errors = await serve(page, { html: flyoutHtml });
+    await page.goto("http://app.test/");
+    const steps = [
+      { id: "f1", action: "click", title: "Click the General ledger link.", target: tgt("link", "General ledger", "#gl") },
+      { id: "f2", action: "click", title: "Click Inquiries and reports.", target: { ...tgt("treeitem", "Inquiries and reports", "#inq"), tag: "div" } },
+    ];
+    await page.evaluate((p) => (window as any).SteplightAssist.start(p), { ...proc, id: "fly", title: "Run a trial balance", steps: steps.map((s, i) => ({ ...s, index: i + 1, url: "http://app.test/" })) });
+    /** Gap between the card and the highlighted element (0 when they touch). */
+    const gap = async () => {
+      const s = (await state(page))!;
+      const r = s.ring;
+      const c = s.card;
+      return Math.max(c.x - (r.x + r.width), r.x - (c.x + c.width), c.y - (r.y + r.height), r.y - (c.y + c.height), 0);
+    };
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#gl"))).toBe(true);
+    await page.waitForTimeout(900); // the open pop-ups are checked on the next search for the element
+    expect(await gap()).toBeLessThan(30);
+    await page.click("#gl");
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 2 of 2");
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "#inq"))).toBe(true);
+    await page.waitForTimeout(900);
+    expect(await gap()).toBeLessThan(30);
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
   it("treats an element clipped by a collapsed container as hidden", async () => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     const errors = await serve(page, { html: clipHtml });

@@ -643,13 +643,9 @@ export class AssistSession {
       return;
     }
     this.card.classList.remove("dock-top");
-    let box = { x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2 };
-    for (const p of this.popups) {
-      const x = Math.min(box.x, p.left);
-      const y = Math.min(box.y, p.top);
-      box = { x, y, width: Math.max(box.x + box.width, p.right) - x, height: Math.max(box.y + box.height, p.bottom) - y };
-    }
-    positionCard(this.card, box, W, H, 14, 12);
+    // next to the element itself, on a side that keeps clear of open pop-ups (a date picker, a menu flyout)
+    const box = { x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2 };
+    positionCard(this.card, box, W, H, 14, 12, this.popups.map((p) => ({ x: p.left, y: p.top, width: p.width, height: p.height })));
   }
 
   // ------------------------------------------------------------------ action detection
