@@ -132,6 +132,28 @@ async function stopRecording(): Promise<unknown> {
   }
 }
 
+/**
+ * After the author stops a recording: the Studio's page for the process, so the steps can be edited
+ * straight away. A Studio tab that has the process open already is reloaded and shown instead.
+ */
+async function openInStudio(s: RecState): Promise<void> {
+  const page = `${s.serverUrl}/studio/processes/${encodeURIComponent(s.processId)}`;
+  try {
+    const tabs = (await chrome.tabs.query({})) as { id: number; windowId: number; url?: string }[];
+    const open = tabs.find((t) => t.url === page || t.url?.startsWith(page + "?") || t.url?.startsWith(page + "#"));
+    if (open) {
+      await chrome.tabs.update(open.id, { active: true });
+      await chrome.windows.update(open.windowId, { focused: true }).catch(() => undefined);
+      await chrome.tabs.reload(open.id);
+      return;
+    }
+    const rec = (await chrome.tabs.get(s.tabId).catch(() => null)) as { windowId: number; index: number } | null;
+    await chrome.tabs.create({ url: page, active: true, ...(rec ? { windowId: rec.windowId, index: rec.index + 1, openerTabId: s.tabId } : {}) });
+  } catch {
+    /* the browser refused (e.g. the window is gone): the author opens the Studio themselves */
+  }
+}
+
 /** The server, when the message comes from a Studio page of the server this extension is connected to. */
 async function studioServer(sender: { tab?: unknown; url?: string }): Promise<string | null> {
   const server = await getServerUrl();
@@ -223,10 +245,10 @@ function onCaptureEvent(ev: CaptureEvent, tab: { id: number; windowId: number },
       if (state && state.token === s.token) {
         state.stepCount = j.stepCount ?? state.stepCount;
         lastError = "";
-        if (state.build && j.draftId) placedFor(state.build, j.placed!, j.draftId, j.step?.title ?? "");
+        if (state.build && j.draftId && ev.action !== "note") placedFor(state.build, j.placed!, j.draftId, j.step?.title ?? "");
         await persist();
       }
-      if (j.placed) chrome.tabs.sendMessage(s.tabId, { type: "steplight:placed", placed: j.placed, draftId: j.draftId, title: j.step?.title }).catch(() => undefined);
+      if (j.placed && ev.action !== "note") chrome.tabs.sendMessage(s.tabId, { type: "steplight:placed", placed: j.placed, draftId: j.draftId, title: j.step?.title }).catch(() => undefined);
     } catch (err) {
       lastError = `Could not send the step: ${(err as Error).message}`;
     }
@@ -314,8 +336,13 @@ chrome.runtime.onMessage.addListener((msg: { type: string; [k: string]: unknown 
         return { ok: true };
       case "steplight:start":
         return { state: await startRecording(msg as never) };
-      case "steplight:stop":
-        return { process: await stopRecording() };
+      case "steplight:stop": {
+        // the author stopped it (pill, popup, side panel, or the guide's card): the Studio shows the result
+        const s = state;
+        const process = await stopRecording();
+        if (s && process) await openInStudio(s);
+        return { process };
+      }
       case "steplight:state":
         return { state, error: lastError };
       // from the Studio, through the content script; any other page gets no answer

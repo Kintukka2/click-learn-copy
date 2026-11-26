@@ -3366,6 +3366,37 @@ select.input {
 .insp-section-head h3 .icon {
   color: var(--text-3);
 }
+/* Target element and Page: closed until the author wants the details */
+.insp-collapsible > summary {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.insp-collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+.insp-collapsible:not([open]) {
+  gap: 0;
+  padding-bottom: 16px;
+}
+.insp-collapsible > summary:hover h3 {
+  color: var(--text);
+}
+.insp-collapsible .insp-caret {
+  transition: transform 0.15s ease;
+}
+.insp-collapsible[open] .insp-caret {
+  transform: rotate(90deg);
+}
+.insp-collapsible:not([open]) > summary ~ * {
+  display: none;
+}
+.insp-summary-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
 .title-preview {
   display: flex;
   gap: 10px;
