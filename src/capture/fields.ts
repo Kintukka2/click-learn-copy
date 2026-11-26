@@ -37,6 +37,22 @@ export function fieldButtonOf(el: Element): FieldButton | undefined {
   return { kind: "button", name };
 }
 
+/**
+ * A click on a nameless box around one named field (D365 draws a field's label, input and
+ * calendar button in a div that takes clicks on its padding): the field it was meant for.
+ */
+export function fieldInside(el: Element): Element | null {
+  if (accessibleName(el) || el.matches(CONTROLS)) return null;
+  const controls = Array.from(el.querySelectorAll(CONTROLS)).filter((c) => (c as HTMLElement).offsetParent !== null || c.getClientRects().length > 0);
+  if (controls.length !== 1) return null;
+  const name = fieldName(controls[0]);
+  if (!name || name.length > 80) return null;
+  // only a box close around the field (label, input, buttons), not a whole panel with one field in it
+  const a = el.getBoundingClientRect();
+  const f = controls[0].getBoundingClientRect();
+  return a.width * a.height <= Math.max(1, f.width * f.height) * 6 ? controls[0] : null;
+}
+
 let pickerField: { input: HTMLInputElement; at: number } | null = null;
 
 /** Remember the date field whose calendar button was just clicked: its calendar pop-up fills it. */

@@ -9,7 +9,7 @@
 // that only forwards to its control. Anything inside [data-steplight-ignore] is ignored.
 import type { CaptureEvent, Target } from "../core/model.js";
 import { actionableElement, isFormControl, isIgnored, isLinkField, isTextField, norm } from "./dom.js";
-import { dateFieldForDay, forgetPickerField, noteFieldButton } from "./fields.js";
+import { dateFieldForDay, fieldInside, forgetPickerField, noteFieldButton } from "./fields.js";
 import { describeElement } from "./selectors.js";
 
 /** Receives each event and the element it happened on. */
@@ -93,7 +93,10 @@ function onPointerDown(e: Event) {
   if (dateField) return pickDate(dateField, el);
   flushFocusedField(el);
   noteFieldButton(el);
-  send(baseEvent("click", describeElement(el)), el);
+  // a click around a field (its label or padding) is a click on the field: named after its label,
+  // and replaced by what the author then types or picks there (see supersedes, recording.ts)
+  const field = fieldInside(el);
+  send(baseEvent("click", describeElement(field ?? el)), field ?? el);
 }
 
 /**

@@ -193,32 +193,50 @@ export class Stage {
 /**
  * Position a floating card next to a target rect (view pixels) inside a W×H area. Prefers below,
  * then above, right, left; falls back to the side with most room. Sets data-side and an arrow
- * offset (--sl-arrow) on the card.
+ * offset (--sl-arrow) on the card. `avoid`: rects the card should not cover (open pop-ups next to
+ * the element, e.g. a menu flyout): of the sides with room, the first that keeps clear of them, else
+ * the one that covers them least. The card always stays next to the target itself.
  */
-export function positionCard(card: HTMLElement, t: Rect, W: number, H: number, gap = 14, margin = 10) {
+export function positionCard(card: HTMLElement, t: Rect, W: number, H: number, gap = 14, margin = 10, avoid: Rect[] = []) {
   const cw = card.offsetWidth;
   const ch = card.offsetHeight;
   const room = { below: H - (t.y + t.height) - gap, above: t.y - gap, right: W - (t.x + t.width) - gap, left: t.x - gap };
-  let side: keyof typeof room = "below";
-  if (room.below >= ch + margin) side = "below";
-  else if (room.above >= ch + margin) side = "above";
-  else if (room.right >= cw + margin) side = "right";
-  else if (room.left >= cw + margin) side = "left";
-  else side = (Object.keys(room) as (keyof typeof room)[]).sort((a, b) => room[b] - room[a])[0];
-  let x: number;
-  let y: number;
-  if (side === "below" || side === "above") {
-    x = clamp(t.x + t.width / 2 - cw / 2, margin, Math.max(margin, W - cw - margin));
-    y = side === "below" ? t.y + t.height + gap : t.y - gap - ch;
-    y = clamp(y, margin, Math.max(margin, H - ch - margin));
-    card.style.setProperty("--sl-arrow", `${clamp(t.x + t.width / 2 - x, 18, cw - 18)}px`);
+  type Side = keyof typeof room;
+  const order: Side[] = ["below", "above", "right", "left"];
+  const at = (side: Side) => {
+    let x: number;
+    let y: number;
+    let arrow: number;
+    if (side === "below" || side === "above") {
+      x = clamp(t.x + t.width / 2 - cw / 2, margin, Math.max(margin, W - cw - margin));
+      y = side === "below" ? t.y + t.height + gap : t.y - gap - ch;
+      y = clamp(y, margin, Math.max(margin, H - ch - margin));
+      arrow = clamp(t.x + t.width / 2 - x, 18, cw - 18);
+    } else {
+      y = clamp(t.y + t.height / 2 - ch / 2, margin, Math.max(margin, H - ch - margin));
+      x = side === "right" ? t.x + t.width + gap : t.x - gap - cw;
+      x = clamp(x, margin, Math.max(margin, W - cw - margin));
+      arrow = clamp(t.y + t.height / 2 - y, 18, ch - 18);
+    }
+    const covers = avoid.reduce((sum, a) => sum + overlap({ x, y, width: cw, height: ch }, a), 0);
+    return { side, x, y, arrow, covers };
+  };
+  const fits = order.filter((side) => room[side] >= (side === "below" || side === "above" ? ch : cw) + margin);
+  let pick: ReturnType<typeof at>;
+  if (fits.length) {
+    const options = fits.map(at);
+    pick = options.find((o) => o.covers === 0) ?? options.reduce((a, b) => (b.covers < a.covers ? b : a));
   } else {
-    y = clamp(t.y + t.height / 2 - ch / 2, margin, Math.max(margin, H - ch - margin));
-    x = side === "right" ? t.x + t.width + gap : t.x - gap - cw;
-    x = clamp(x, margin, Math.max(margin, W - cw - margin));
-    card.style.setProperty("--sl-arrow", `${clamp(t.y + t.height / 2 - y, 18, ch - 18)}px`);
+    pick = at([...order].sort((a, b) => room[b] - room[a])[0]);
   }
-  card.dataset.side = side;
-  card.style.left = `${Math.round(x)}px`;
-  card.style.top = `${Math.round(y)}px`;
+  card.style.setProperty("--sl-arrow", `${pick.arrow}px`);
+  card.dataset.side = pick.side;
+  card.style.left = `${Math.round(pick.x)}px`;
+  card.style.top = `${Math.round(pick.y)}px`;
+}
+
+function overlap(a: Rect, b: Rect): number {
+  const w = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+  const h = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+  return w > 0 && h > 0 ? w * h : 0;
 }
