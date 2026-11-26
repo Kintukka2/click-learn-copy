@@ -156,6 +156,13 @@ export class AssistSession {
   private target: Element | null = null;
   /** A step where the learner picks the row: the same cell in every row, any of which completes it. */
   private choices: Element[] = [];
+  /** The row choice under the pointer, outlined inside the column's ring. */
+  private hoverRing!: HTMLElement;
+  private hovered: Element | null = null;
+  private onPointer = (e: Event) => {
+    const n = e.target as Node | null;
+    this.hovered = this.choices.length > 1 && n ? (this.choices.find((c) => c === n || c.contains(n)) ?? null) : null;
+  };
   private lastRect: DOMRect | null = null;
   private raf = 0;
   private poll = 0;
@@ -206,7 +213,9 @@ export class AssistSession {
     this.card.setAttribute("aria-live", "polite");
     this.card.setAttribute("data-steplight-ignore", "");
     this.card.setAttribute("lang", proc.lang);
-    this.shadow.append(style, this.ring, this.card);
+    this.hoverRing = el("div", "hover-ring");
+    this.hoverRing.setAttribute("data-steplight-ignore", "");
+    this.shadow.append(style, this.ring, this.hoverRing, this.card);
     if (opts.primaryColor) this.host.style.setProperty("--sl-primary", opts.primaryColor);
   }
 
@@ -220,11 +229,13 @@ export class AssistSession {
     window.addEventListener("popstate", this.onNav);
     window.addEventListener("resize", this.onResize);
     window.addEventListener("scroll", this.onResize, true);
+    document.addEventListener("pointerover", this.onPointer, true);
     this.opts.onEvent?.("start", { processId: this.proc.id, step: at });
     this.go(Math.max(0, Math.min(at, this.proc.steps.length - 1)));
     const tick = () => {
       if (this.stopped) return;
       this.place(false);
+      this.placeHover();
       this.raf = requestAnimationFrame(tick);
     };
     this.raf = requestAnimationFrame(tick);
@@ -243,6 +254,7 @@ export class AssistSession {
     window.removeEventListener("popstate", this.onNav);
     window.removeEventListener("resize", this.onResize);
     window.removeEventListener("scroll", this.onResize, true);
+    document.removeEventListener("pointerover", this.onPointer, true);
     this.host.remove();
     if (reason !== "silent") this.clearSaved();
     if (reason === "exit") this.opts.onEvent?.("exit", { processId: this.proc.id, step: this.i });
@@ -599,6 +611,31 @@ export class AssistSession {
     this.place(true);
   }
 
+  /** Outline the row choice under the pointer (inside the column's ring). */
+  private placeHover() {
+    const h = this.hovered;
+    if (!h || !h.isConnected || this.choices.length < 2 || !this.choices.includes(h) || !this.ring.classList.contains("on")) {
+      this.hoverRing.classList.remove("on");
+      return;
+    }
+    const r = h.getBoundingClientRect();
+    const pad = 2;
+    Object.assign(this.hoverRing.style, { left: `${r.left - pad}px`, top: `${r.top - pad}px`, width: `${r.width + pad * 2}px`, height: `${r.height + pad * 2}px` });
+    this.hoverRing.classList.add("on");
+  }
+
+  /** The visible part of the column of row choices (the rows on screen), or null when none is on screen. */
+  private columnRect(): DOMRect | null {
+    const H = window.innerHeight;
+    const rects = this.choices.map((c) => c.getBoundingClientRect()).filter((b) => b.width > 0 && b.height > 0 && b.bottom > 0 && b.top < H);
+    if (!rects.length) return null;
+    const x = Math.min(...rects.map((b) => b.left));
+    const y = Math.max(0, Math.min(...rects.map((b) => b.top)));
+    const right = Math.max(...rects.map((b) => b.right));
+    const bottom = Math.min(H, Math.max(...rects.map((b) => b.bottom)));
+    return new DOMRect(x, y, right - x, bottom - y);
+  }
+
   private place(force: boolean) {
     if (this.stopped) return;
     const t = this.target;
@@ -617,7 +654,9 @@ export class AssistSession {
       this.card.style.top = "";
       return;
     }
-    const r = t.getBoundingClientRect();
+    // a step where the learner picks the row: the ring goes round the whole column, any row of which counts
+    const column = this.choices.length > 1 ? this.columnRect() : null;
+    const r = column ?? t.getBoundingClientRect();
     if (!force && sameRect(this.lastRect, r)) return;
     this.lastRect = r;
     const pad = 4;
@@ -647,7 +686,9 @@ export class AssistSession {
     this.card.classList.remove("dock-top");
     // next to the element itself, on a side that keeps clear of open pop-ups (a date picker, a menu flyout)
     const box = { x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2 };
-    positionCard(this.card, box, W, H, 14, 12, this.popups.map((p) => ({ x: p.left, y: p.top, width: p.width, height: p.height })));
+    const avoid = this.popups.map((p) => ({ x: p.left, y: p.top, width: p.width, height: p.height }));
+    // beside a column rather than over its other rows
+    positionCard(this.card, box, W, H, 14, 12, avoid, column ? ["right", "left", "below", "above"] : undefined);
   }
 
   // ------------------------------------------------------------------ action detection

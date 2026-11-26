@@ -45,6 +45,22 @@
   border-color: var(--ok);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 28%, transparent), 0 0 0 9999px rgba(15, 23, 42, 0.12);
 }
+/* the row the pointer is on, inside the ring round a column of row choices */
+.hover-ring {
+  --p: var(--sl-primary, #2f6fed);
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--p) 14%, transparent);
+  outline: 2px solid var(--p);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+.hover-ring.on {
+  opacity: 1;
+}
 .beacon {
   position: absolute;
   inset: -2.5px;

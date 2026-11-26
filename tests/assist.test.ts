@@ -480,7 +480,7 @@ document.getElementById("filter").addEventListener("keydown", function (e) {
     await page.close();
   }, 30_000);
 
-  it("finds the grid of a learner's-choice row recorded in another D365 session (new form number, no column name)", async () => {
+  it("rings the whole column of a learner's-choice row, found across D365 sessions (new form number, no column name)", async () => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     // recorded as GridOverview_3_0_grid; in this session the form is the 4th opened
     const errors = await serve(page, { html: gridHtml.replace('id="prs"', 'id="GridOverview_4_0_grid"').replace(/#prs \[role=row\]/, "#GridOverview_4_0_grid [role=row]") });
@@ -491,9 +491,27 @@ document.getElementById("filter").addEventListener("keydown", function (e) {
     p.steps[0].target = { ...tgt("link", "000992", "#GridOverview_3_0_grid > div:nth-of-type(3) > div:nth-of-type(1) > a"), row: { grid: "#GridOverview_3_0_grid", inRow: "div:nth-of-type(1) > a" } };
     await page.evaluate((x) => (window as any).SteplightAssist.start(x), p);
     await expect.poll(async () => (await state(page))?.count).toBe("Step 1 of 2");
-    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "a[href='#000815']"))).toBe(true);
-    // any row counts, not just the highlighted one (the card sits over the others here: click in the page)
-    await page.evaluate(() => (document.querySelector("a[href='#001080']") as HTMLElement).click());
+    // the ring goes round the whole column (all three links), and the card sits beside it, not over it
+    const first = await rectOf(page, "a[href='#000815']");
+    const last = await rectOf(page, "a[href='#001080']");
+    await expect
+      .poll(async () => {
+        const r = (await state(page))!.ring;
+        return r.y <= first.y && r.y + r.height >= last.y + last.height && r.x <= first.x;
+      })
+      .toBe(true);
+    const s = (await state(page))!;
+    const overlaps = s.card.x < s.ring.x + s.ring.width && s.card.x + s.card.width > s.ring.x && s.card.y < s.ring.y + s.ring.height && s.card.y + s.card.height > s.ring.y;
+    expect(overlaps).toBe(false);
+    // the row under the pointer is outlined
+    await page.hover("a[href='#000992']");
+    const hover = () =>
+      page.evaluate(() => {
+        const h = document.querySelector("[data-steplight-assist]")!.shadowRoot!.querySelector(".hover-ring") as HTMLElement;
+        return h.classList.contains("on") ? h.getBoundingClientRect().toJSON() : null;
+      });
+    await expect.poll(async () => (await hover()) && near((await hover()) as DOMRect, await rectOf(page, "a[href='#000992']"))).toBe(true);
+    await page.click("a[href='#001080']"); // any row counts
     await expect.poll(async () => (await state(page))!.count).toBe("Step 2 of 2");
     expect(errors).toEqual([]);
     await page.close();
