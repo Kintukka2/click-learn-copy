@@ -480,6 +480,48 @@ document.getElementById("filter").addEventListener("keydown", function (e) {
     await page.close();
   }, 30_000);
 
+  it("finds the grid of a learner's-choice row recorded in another D365 session (new form number, no column name)", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    // recorded as GridOverview_3_0_grid; in this session the form is the 4th opened
+    const errors = await serve(page, { html: gridHtml.replace('id="prs"', 'id="GridOverview_4_0_grid"').replace(/#prs \[role=row\]/, "#GridOverview_4_0_grid [role=row]") });
+    await page.goto("http://app.test/");
+    const p = gridProc(true);
+    p.steps = p.steps.slice(1);
+    p.steps.forEach((st, i) => (st.index = i + 1));
+    p.steps[0].target = { ...tgt("link", "000992", "#GridOverview_3_0_grid > div:nth-of-type(3) > div:nth-of-type(1) > a"), row: { grid: "#GridOverview_3_0_grid", inRow: "div:nth-of-type(1) > a" } };
+    await page.evaluate((x) => (window as any).SteplightAssist.start(x), p);
+    await expect.poll(async () => (await state(page))?.count).toBe("Step 1 of 2");
+    await expect.poll(async () => near((await state(page))!.ring, await rectOf(page, "a[href='#000815']"))).toBe(true);
+    // any row counts, not just the highlighted one (the card sits over the others here: click in the page)
+    await page.evaluate(() => (document.querySelector("a[href='#001080']") as HTMLElement).click());
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 2 of 2");
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
+  it("shows a note on a card of its own, with a pulsing Next, and an action step on the plain card", async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = await serve(page, { html: gridHtml });
+    await page.goto("http://app.test/");
+    const steps = [
+      { id: "n1", action: "note", title: "**Purchase requisitions**.", description: "Every requisition you can see." },
+      { id: "n2", action: "click", title: "Click Edit.", target: tgt("button", "Edit", "#edit") },
+    ].map((st, i) => ({ ...st, index: i + 1, url: "http://app.test/" }));
+    await page.evaluate((x) => (window as any).SteplightAssist.start(x), { ...proc, id: "notes", title: "Notes", steps });
+    const look = () =>
+      page.evaluate(() => {
+        const card = document.querySelector("[data-steplight-assist]")!.shadowRoot!.querySelector(".card")!;
+        return { note: card.classList.contains("is-note"), pulse: !!card.querySelector(".fwd.pulse"), next: card.querySelector(".fwd")!.textContent };
+      });
+    await expect.poll(async () => (await state(page))?.count).toBe("Step 1 of 2");
+    expect(await look()).toEqual({ note: true, pulse: true, next: "Next" });
+    await page.evaluate(() => (document.querySelector("[data-steplight-assist]")!.shadowRoot!.querySelector(".fwd") as HTMLElement).click());
+    await expect.poll(async () => (await state(page))!.count).toBe("Step 2 of 2");
+    expect(await look()).toEqual({ note: false, pulse: false, next: "Skip" });
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
   it("keeps to the recorded record when the step is not the learner's choice", async () => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await serve(page, { html: gridHtml });

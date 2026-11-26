@@ -488,7 +488,8 @@ export class AssistSession {
     const st = this.step!;
     const n = this.proc.steps.length;
     const s = this.s;
-    this.card.className = "card";
+    // a note has nothing to find on the page: it looks different, and its Next pulses like a highlight
+    this.card.className = st.action === "note" ? "card is-note" : "card";
     this.card.innerHTML = "";
     this.card.setAttribute("aria-label", `${s.step} ${st.index} ${s.of} ${n}`);
     const head = el("div", "head");
@@ -522,6 +523,7 @@ export class AssistSession {
     const needsAction = (this.needsTarget(st) || st.action === "press") && !optional;
     const fwd = needsAction ? this.button(s.skip, "", () => this.next()) : this.button(s.next, "primary", () => this.next());
     fwd.classList.add("fwd");
+    if (st.action === "note") fwd.classList.add("pulse");
     const right = el("div", "right");
     if (this.opts.back !== false) right.append(back);
     for (const b of this.opts.buttons?.(st) ?? []) right.append(this.button(b.label, b.primary ? "primary" : "", b.onClick));

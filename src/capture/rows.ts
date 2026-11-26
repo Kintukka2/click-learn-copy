@@ -4,6 +4,7 @@
 // calendar (a date picker month), any day counts.
 import type { Rect, RowPlace } from "../core/model.js";
 import { accessibleName, isVisible, norm, visibleText } from "./dom.js";
+import { matchesForSelector } from "./resolve.js";
 
 const ROW = "tr, [role=row]";
 const GRID = "table, [role=grid], [role=treegrid], [role=table]";
@@ -143,7 +144,8 @@ function sameInRows(grid: Element, inRow: string): Element[] {
 function gridsFor(place: RowPlace, doc: Document): Element[] {
   let byPath: Element[] = [];
   try {
-    byPath = Array.from(doc.querySelectorAll(place.grid));
+    // the grid's path may start at a D365 id whose form number changed since it was recorded
+    byPath = matchesForSelector({ kind: "css", value: place.grid }, doc);
   } catch {
     /* invalid path */
   }
