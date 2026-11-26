@@ -332,6 +332,35 @@ describe("extension: record from the guide", () => {
     await studio.close();
   }, 60_000);
 
+  it("adds a note step from the pill's Note, and Stop opens the process in the Studio", async () => {
+    const pid = app.store.createProcess(projectId, { title: "Pill note", startUrl: APP, steps: [] })!.id;
+    const page = await ctx.newPage();
+    await page.goto(APP);
+    await page.bringToFront();
+    const tabId = await sw.evaluate(async (u) => Math.max(...((await chrome.tabs.query({})) as { id: number; url?: string }[]).filter((t) => t.url === u).map((t) => t.id)), page.url());
+    await sw.evaluate(({ s, p, t }) => (self as unknown as { steplight: { startRecording(o: unknown): Promise<unknown> } }).steplight.startRecording({ serverUrl: s, processId: p, tabId: t }), { s: origin, p: pid, t: tabId });
+    await page.waitForSelector("#steplight-recording-indicator [data-note]");
+    await page.click("#modules");
+    await page.click("#steplight-recording-indicator [data-note]");
+    await expect.poll(() => app.store.getProcess(pid)!.steps.map((s) => s.action), { timeout: 5000 }).toEqual(["click", "note"]);
+    const note = app.store.getProcess(pid)!.steps[1];
+    expect(note.title).toBe("Note");
+    expect(note.screenshot).toBeTruthy();
+    expect(note.target).toBeUndefined();
+    // paused: no Note
+    await page.click("#steplight-recording-indicator [data-pause]");
+    await expect.poll(() => page.$("#steplight-recording-indicator [data-note]"), { timeout: 5000 }).toBeNull();
+    await page.click("#steplight-recording-indicator [data-pause]");
+    await page.waitForSelector("#steplight-recording-indicator [data-note]");
+    const opened = ctx.waitForEvent("page");
+    await page.click("#steplight-recording-indicator [data-stop]");
+    const studio = await opened;
+    await expect.poll(() => studio.url(), { timeout: 10_000 }).toBe(`${origin}/studio/processes/${pid}`);
+    expect(await recState()).toBeNull();
+    await studio.close();
+    await page.close();
+  }, 30_000);
+
   it("answers only Studio pages of the server it is connected to", async () => {
     const ask = (page: Page) =>
       page.evaluate(

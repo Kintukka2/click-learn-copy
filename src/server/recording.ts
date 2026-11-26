@@ -120,9 +120,12 @@ function newStep(store: Store, proc: Process, payload: CapturePayload): Step {
     viewport: ev.viewport,
     capturedAt: now(),
   };
-  step.title = titleOf(step, proc.lang);
+  step.title = titleOf(step, proc.lang) || (step.action === "note" ? (NOTE_TITLE[proc.lang] ?? NOTE_TITLE.en) : "");
   return step;
 }
+
+/** The title of a note added while recording (the recorder's Note button), until the author writes one. */
+const NOTE_TITLE: Record<Lang, string> = { en: "Note", da: "Bemærk", de: "Hinweis", fr: "Remarque", es: "Nota", nl: "Opmerking", sv: "Obs" };
 
 /** Typing again into the field of `last`: it keeps the final value. */
 function retype(last: Step | undefined, ev: CaptureEvent, lang: Lang): boolean {

@@ -249,37 +249,7 @@ export function StepInspector({
       )}
 
       {isSource && (
-        <section className="insp-section">
-          <div className="insp-section-head">
-            <h3>
-              <Icon name="pencil" size={15} /> Instruction
-            </h3>
-            {s.action !== "note" &&
-              (s.titleEdited ? (
-                <Button size="sm" variant="ghost" icon="reset" onClick={onResetTitle} data-testid="reset-title">
-                  Reset to automatic
-                </Button>
-              ) : (
-                <Chip tone="brand" icon="zap">
-                  Automatic
-                </Chip>
-              ))}
-          </div>
-          <Field label="Title" htmlFor="st-title" hint={<>Use <code>**double asterisks**</code> for bold. <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> saves.</>}>
-            <DraftText id="st-title" className="input input-lg autosize" rows={2} value={s.title} onCommit={(v) => onPatch({ title: v })} data-testid="title-input" />
-          </Field>
-          <div className="title-preview" aria-label="Preview">
-            <span className="muted small">Preview</span>
-            <span dangerouslySetInnerHTML={{ __html: richText(s.title) }} />
-          </div>
-          <Field label="Description" htmlFor="st-desc" hint="Optional. Shown under the instruction in guides and players.">
-            <DraftText id="st-desc" className="input autosize" rows={2} value={s.description ?? ""} placeholder="Add an explanation, a business rule or a tip…" onCommit={(v) => onPatch({ description: v })} />
-          </Field>
-        </section>
-      )}
-
-      {isSource && (s.action !== "note" || s.draft) && (
-        <section className="insp-section">
+        <section className="insp-section" data-testid="action-section">
           <div className="insp-section-head">
             <h3>
               <Icon name="pointer" size={15} /> Action
@@ -323,15 +293,46 @@ export function StepInspector({
         </section>
       )}
 
-      {isSource && fromGuide && s.action !== "note" && s.action !== "press" && <DraftElement step={s} onPatch={onPatch} />}
-
-      {t && !fromGuide && (
+      {isSource && (
         <section className="insp-section">
           <div className="insp-section-head">
             <h3>
-              <Icon name="target" size={15} /> Target element
+              <Icon name="pencil" size={15} /> Instruction
             </h3>
+            {s.action !== "note" &&
+              (s.titleEdited ? (
+                <Button size="sm" variant="ghost" icon="reset" onClick={onResetTitle} data-testid="reset-title">
+                  Reset to automatic
+                </Button>
+              ) : (
+                <Chip tone="brand" icon="zap">
+                  Automatic
+                </Chip>
+              ))}
           </div>
+          <Field label="Title" htmlFor="st-title" hint={<>Use <code>**double asterisks**</code> for bold. <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> saves.</>}>
+            <DraftText id="st-title" className="input input-lg autosize" rows={2} value={s.title} onCommit={(v) => onPatch({ title: v })} data-testid="title-input" />
+          </Field>
+          <div className="title-preview" aria-label="Preview">
+            <span className="muted small">Preview</span>
+            <span dangerouslySetInnerHTML={{ __html: richText(s.title) }} />
+          </div>
+          <Field label="Description" htmlFor="st-desc" hint="Optional. Shown under the instruction in guides and players.">
+            <DraftText id="st-desc" className="input autosize" rows={2} value={s.description ?? ""} placeholder="Add an explanation, a business rule or a tip…" onCommit={(v) => onPatch({ description: v })} />
+          </Field>
+        </section>
+      )}
+
+      {isSource && fromGuide && s.action !== "note" && s.action !== "press" && <DraftElement step={s} onPatch={onPatch} />}
+
+      {t && !fromGuide && (
+        <details className="insp-section insp-collapsible" data-testid="target-section">
+          <summary className="insp-section-head">
+            <h3>
+              <Icon name="chevronRight" size={15} className="insp-caret" /> <Icon name="target" size={15} /> Target element
+            </h3>
+            <span className="muted small insp-summary-text">{t.name || t.label || `<${t.tag}>`}</span>
+          </summary>
           <dl className="kv">
             <div>
               <dt>Element</dt>
@@ -388,15 +389,16 @@ export function StepInspector({
               </div>
             ))}
           </div>
-        </section>
+        </details>
       )}
 
-      <section className="insp-section">
-        <div className="insp-section-head">
+      <details className="insp-section insp-collapsible" data-testid="page-section">
+        <summary className="insp-section-head">
           <h3>
-            <Icon name="globe" size={15} /> Page
+            <Icon name="chevronRight" size={15} className="insp-caret" /> <Icon name="globe" size={15} /> Page
           </h3>
-        </div>
+          {s.pageTitle && <span className="muted small insp-summary-text">{s.pageTitle}</span>}
+        </summary>
         <dl className="kv">
           <div>
             <dt>URL</dt>
@@ -427,7 +429,7 @@ export function StepInspector({
             </div>
           )}
         </dl>
-      </section>
+      </details>
     </div>
   );
 }

@@ -37,7 +37,9 @@ function pillHtml(count: number, fromGuide: boolean) {
   return (
     `<span style="width:9px;height:9px;border-radius:50%;${dot}"></span>` +
     label +
-    `<button type="button" data-pause style="${PILL_BUTTON};margin-left:6px">${paused ? "Resume" : "Pause"}</button>` +
+    // a note step: the page as it is now, with no action (not while paused: nothing is recorded)
+    (paused ? "" : `<button type="button" data-note title="Add a note step with a screenshot of this page" style="${PILL_BUTTON};margin-left:6px">Note</button>`) +
+    `<button type="button" data-pause style="${PILL_BUTTON}${paused ? ";margin-left:6px" : ""}">${paused ? "Resume" : "Pause"}</button>` +
     `<button type="button" data-stop style="${PILL_BUTTON}">Stop</button>`
   );
 }
@@ -67,6 +69,7 @@ function showPill(count: number, fromGuide: boolean) {
       el.addEventListener("click", (e) => {
         if ((e.target as Element).closest("[data-stop]")) void chrome.runtime.sendMessage({ type: "steplight:stop" });
         else if ((e.target as Element).closest("[data-pause]")) void chrome.runtime.sendMessage({ type: "steplight:pause", paused: !paused });
+        else if ((e.target as Element).closest("[data-note]")) addNote();
       });
       document.documentElement.appendChild(el);
     }
@@ -253,6 +256,15 @@ function onPlaced(msg: { placed: string; draftId?: string; title?: string }) {
 }
 
 // ---------------------------------------------------------------- recording
+
+/** The pill's Note: a note step with a screenshot of the page as it is (the author writes the text in the Studio). */
+function addNote() {
+  if (paused || !isRecording()) return;
+  const ev = { action: "note" as const, url: location.href, pageTitle: document.title, viewport: { width: innerWidth, height: innerHeight }, timestamp: Date.now() };
+  // recording from a guide, it goes before the step shown
+  const st = build?.session.current;
+  void sendForScreenshot({ type: "steplight:event", event: ev, build: st ? { stepId: st.id, onTarget: false } : undefined });
+}
 
 function begin(count: number, plan?: BuildPlan, isPaused = false) {
   paused = isPaused;
