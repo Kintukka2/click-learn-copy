@@ -12,3 +12,12 @@ These apply to every video, deck, page, post or pitch made about Steplight.
 - Name ClickLearn only in investor material, never in client-facing ads. Client copy says "legacy desktop tools".
 - Keep "the problem" high level ("Every software release breaks the training", "release after release"). Don't back it with niche examples such as named platforms, their release waves or release dates.
 - Every claim must be traceable to the code, the docs, the tests or `research/`. Market figures are labelled as third-party numbers.
+
+## Extension version
+
+Every change that ships in the browser extension bumps `version` in `extension/manifest.json`, in the same pull request as the change, so the version Chrome shows tells which build is loaded.
+
+- The extension is built from `extension/` and the code it bundles from `src/`: `src/capture`, `src/assist`, `src/core` and `src/players`. A change to any of them counts.
+- New features (one or several in one pull request) bump the minor version: 0.9.0 → 0.10.0. Fixes only bump the patch: 0.9.0 → 0.9.1.
+- Studio-only and server-only changes (`studio/`, `src/server`, `src/generators`, `src/portal`) leave the version alone.
+- Mention the new version in the pull request description.
