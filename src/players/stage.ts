@@ -195,14 +195,15 @@ export class Stage {
  * then above, right, left; falls back to the side with most room. Sets data-side and an arrow
  * offset (--sl-arrow) on the card. `avoid`: rects the card should not cover (open pop-ups next to
  * the element, e.g. a menu flyout): of the sides with room, the first that keeps clear of them, else
- * the one that covers them least. The card always stays next to the target itself.
+ * the one that covers them least. The card always stays next to the target itself. `prefer`: the
+ * order to try the sides in (a column is best read with the card beside it).
  */
-export function positionCard(card: HTMLElement, t: Rect, W: number, H: number, gap = 14, margin = 10, avoid: Rect[] = []) {
+export function positionCard(card: HTMLElement, t: Rect, W: number, H: number, gap = 14, margin = 10, avoid: Rect[] = [], prefer?: ("below" | "above" | "right" | "left")[]) {
   const cw = card.offsetWidth;
   const ch = card.offsetHeight;
   const room = { below: H - (t.y + t.height) - gap, above: t.y - gap, right: W - (t.x + t.width) - gap, left: t.x - gap };
   type Side = keyof typeof room;
-  const order: Side[] = ["below", "above", "right", "left"];
+  const order: Side[] = prefer ?? ["below", "above", "right", "left"];
   const at = (side: Side) => {
     let x: number;
     let y: number;
