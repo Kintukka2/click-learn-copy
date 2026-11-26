@@ -344,5 +344,8 @@ describe("event capture semantics", () => {
     expect(await resolve({ selectors: [{ kind: "id", value: "ledgertrialbalancelistpage_2_StartDate" }] })).toEqual({ id: "ledgertrialbalancelistpage_5_StartDate", tag: "div" });
     // another field of the form is not taken for it
     expect(await resolve({ selectors: [{ kind: "id", value: "ledgertrialbalancelistpage_2_EndDate" }] })).toBeNull();
+    // the grid ids of D365's list pages carry the number too
+    await page.evaluate(() => (document.getElementById("calc")!.parentElement!.insertAdjacentHTML("beforeend", '<div id="GridOverview_4_0_grid"><div><a href="#j1">100A-000256</a></div></div>')));
+    expect(await resolve({ selectors: [{ kind: "css", value: "#GridOverview_3_0_grid > div > a" }] })).toEqual({ id: "", tag: "a" });
   });
 });
